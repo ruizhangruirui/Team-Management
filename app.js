@@ -280,6 +280,7 @@ let remoteSaveTimer = 0;
 let suppressRemoteSave = false;
 let isSavingRemote = false;
 let remoteAuthEmail = "";
+let normalizedDefaultCache = null;
 
 const $ = (selector) => document.querySelector(selector);
 const elements = {
@@ -966,14 +967,76 @@ function sharedStatePayload() {
   };
 }
 
+function sharedDataShape(data = {}) {
+  return {
+    org: data.org || {},
+    accounts: (data.accounts || []).map((account) => ({
+      id: account.id,
+      name: account.name,
+      email: String(account.email || "").toLowerCase(),
+      role: account.role,
+      scopeType: account.scopeType,
+      scopeId: account.scopeId,
+      scopeIds: account.scopeIds || [],
+    })).sort((a, b) => a.email.localeCompare(b.email) || a.id.localeCompare(b.id)),
+    people: (data.people || []).map((person) => ({
+      id: person.id,
+      accountId: person.accountId || "",
+      employeeNo: person.employeeNo,
+      name: person.name,
+      teamId: person.teamId,
+      role: person.role,
+      level: person.level,
+      contractType: person.contractType,
+      startDate: person.startDate,
+      notes: person.notes || "",
+      talentTags: person.talentTags || [],
+      awards: person.awards || [],
+      growth: person.growth || [],
+      records: person.records || [],
+    })).sort((a, b) => String(a.employeeNo).localeCompare(String(b.employeeNo))),
+    talentTags: data.talentTags || [],
+    awardNames: data.awardNames || [],
+    talentActionTypes: data.talentActionTypes || [],
+    cultureActivityTypes: data.cultureActivityTypes || [],
+    orgGoals: data.orgGoals || [],
+    cultureActivities: data.cultureActivities || [],
+    talentActions: data.talentActions || [],
+    formerPeople: data.formerPeople || [],
+  };
+}
+
+function stableStringify(value) {
+  if (Array.isArray(value)) return `[${value.map(stableStringify).join(",")}]`;
+  if (value && typeof value === "object") {
+    return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${stableStringify(value[key])}`).join(",")}}`;
+  }
+  return JSON.stringify(value);
+}
+
+function sharedFingerprint(data = {}) {
+  return stableStringify(sharedDataShape(data));
+}
+
+function normalizedDefaultState() {
+  if (!normalizedDefaultCache) normalizedDefaultCache = normalizeState(structuredClone(defaultState));
+  return normalizedDefaultCache;
+}
+
+function differsFromDefault(data = {}) {
+  return sharedFingerprint(data) !== sharedFingerprint(normalizedDefaultState());
+}
+
 function configurationScore(data = {}) {
   const defaultEmails = new Set(defaultState.accounts.map((account) => account.email.toLowerCase()));
   const customAccounts = (data.accounts || []).filter((account) => !defaultEmails.has(String(account.email || "").toLowerCase())).length;
   const org = data.org || {};
   const units = org.units || [];
   const defaultUnitNames = new Set(defaultState.org.units.map((unit) => unit.name));
+  const defaultTeamsById = new Map(normalizedDefaultState().org.units.flatMap((unit) => (unit.teams || []).map((team) => [team.id, team.name])));
   const customUnits = units.filter((unit) => !defaultUnitNames.has(unit.name)).length;
   const customTeams = units.flatMap((unit) => unit.teams || []).filter((team) => !String(team.id || "").startsWith("team-")).length;
+  const renamedTeams = units.flatMap((unit) => unit.teams || []).filter((team) => defaultTeamsById.has(team.id) && defaultTeamsById.get(team.id) !== team.name).length;
   const defaultTags = new Set(defaultState.talentTags);
   const defaultAwards = new Set(defaultState.awardNames);
   const defaultActionTypes = new Set(defaultState.talentActionTypes);
@@ -990,6 +1053,7 @@ function configurationScore(data = {}) {
     customAccounts * 10,
     customUnits * 8,
     customTeams * 5,
+    renamedTeams * 4,
     ((data.orgGoals || []).length + (data.cultureActivities || []).length + (data.talentActions || []).length) * 4,
     configuredPeople * 2,
     (data.formerPeople || []).length * 3,
@@ -1013,7 +1077,12 @@ async function loadRemoteState() {
   if (error && error.code !== "PGRST116") throw error;
   const remoteData = data?.data && typeof data.data === "object" ? data.data : {};
   remoteStateWasEmpty = !Object.keys(remoteData).length;
-  const shouldUseLocal = remoteStateWasEmpty || configurationScore(localSnapshot) > configurationScore(remoteData);
+  const localChanged = differsFromDefault(localSnapshot);
+  const remoteChanged = differsFromDefault(remoteData);
+  const shouldUseLocal =
+    remoteStateWasEmpty ||
+    (localChanged && !remoteChanged) ||
+    (localChanged && remoteChanged && configurationScore(localSnapshot) > configurationScore(remoteData));
   state = normalizeState({
     ...(shouldUseLocal ? localSnapshot : remoteData),
     sessionAccountId,
