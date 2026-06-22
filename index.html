@@ -320,10 +320,7 @@
             <span data-i18n="accountsAndPermissions">领导关系与权限</span>
             <small data-i18n="ownerCanAssign">Owner 可添加账号、设置领导关系与访问范围。</small>
           </summary>
-          <div class="governance-warning">
-            <strong data-i18n="governanceWarningTitle">高影响设置</strong>
-            <span data-i18n="governanceWarningText">账号、领导关系与访问范围会影响人员信息可见性。保存前系统会要求再次确认。</span>
-          </div>
+          <p class="settings-note" data-i18n="governanceWarningText">账号、领导关系与访问范围会影响人员信息可见性。保存前系统会要求再次确认。</p>
           <p class="hint" data-i18n="hrbpSetupHint">HRBP 设置：新增或编辑账号时选择 HRBP 角色，然后在右侧 HRBP 面板里分配其覆盖 Team。</p>
           <div class="account-form account-form-wide is-hidden" aria-hidden="true">
             <label>
@@ -367,13 +364,6 @@
         </details>
         <details class="profile-section settings-section owner-only">
           <summary class="section-title">
-            <span data-i18n="organizationSettings">组织设置</span>
-          </summary>
-          <label for="instituteName" data-i18n="mainInstitute">主研究所</label>
-          <input id="instituteName" type="text" />
-        </details>
-        <details class="profile-section settings-section owner-only">
-          <summary class="section-title">
             <span data-i18n="roleSettings">角色设置</span>
             <small data-i18n="roleSettingsHint">可修改角色显示名称；权限逻辑仍由系统内置角色类型控制。</small>
           </summary>
@@ -382,8 +372,12 @@
         <details class="profile-section settings-section owner-only">
           <summary class="section-title">
             <span data-i18n="orgEditor">组织编辑</span>
+            <small data-i18n="orgEditHint">Owner 可新增组织和 Team；有人员的 Team 不能直接删除。</small>
           </summary>
-          <p class="hint" data-i18n="orgEditHint">Owner 可新增组织和 Team；有人员的 Team 不能直接删除。</p>
+          <div class="settings-subsection compact-admin-row">
+            <label for="instituteName" data-i18n="mainInstitute">主研究所</label>
+            <input id="instituteName" type="text" />
+          </div>
           <div class="org-create-actions">
             <details class="org-create-group">
               <summary><span data-i18n="createBusinessUnit">创建 Business Unit</span></summary>
@@ -505,19 +499,17 @@
           <summary class="section-title">
             <span data-i18n="talentSettings">人才标签设置</span>
           </summary>
-          <div class="form-grid">
-            <label>
+          <div class="settings-paired-controls">
+            <label class="inline-setting-control">
               <span data-i18n="newTalentTag">新增优秀标签</span>
               <input id="newTalentTag" type="text" placeholder="AI / 领军人物 / 优秀人才" />
+              <button id="addTalentTagBtn" type="button" data-i18n="addTag">添加标签</button>
             </label>
-            <label>
+            <label class="inline-setting-control">
               <span data-i18n="newAwardName">新增奖项名称</span>
               <input id="newAwardName" type="text" placeholder="年度创新奖" />
+              <button id="addAwardNameBtn" type="button" data-i18n="addAwardName">添加奖项</button>
             </label>
-          </div>
-          <div class="dialog-actions">
-            <button id="addTalentTagBtn" type="button" data-i18n="addTag">添加标签</button>
-            <button id="addAwardNameBtn" type="button" data-i18n="addAwardName">添加奖项</button>
           </div>
           <div id="talentSettingList" class="tag-cloud"></div>
         </details>
@@ -525,19 +517,17 @@
           <summary class="section-title">
             <span data-i18n="developmentSettings">人才发展设置</span>
           </summary>
-          <div class="form-grid">
-            <label>
+          <div class="settings-paired-controls">
+            <label class="inline-setting-control">
               <span data-i18n="newActionType">新增行动类型</span>
               <input id="newActionType" type="text" placeholder="IDP / Succession" />
+              <button id="addActionTypeBtn" type="button" data-i18n="addActionType">添加行动类型</button>
             </label>
-            <label>
+            <label class="inline-setting-control">
               <span data-i18n="newActivityType">新增活动类型</span>
               <input id="newActivityType" type="text" placeholder="技术分享 / 峰会参会" />
+              <button id="addActivityTypeBtn" type="button" data-i18n="addActivityType">添加活动类型</button>
             </label>
-          </div>
-          <div class="dialog-actions">
-            <button id="addActionTypeBtn" type="button" data-i18n="addActionType">添加行动类型</button>
-            <button id="addActivityTypeBtn" type="button" data-i18n="addActivityType">添加活动类型</button>
           </div>
           <div id="developmentSettingList" class="settings-list"></div>
         </details>
@@ -837,6 +827,6 @@
     <div id="toast" class="toast" aria-live="polite"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="./app.js?v=20260622-access-search-password-note"></script>
+    <script src="./app.js?v=20260622-settings-refinement"></script>
   </body>
 </html>

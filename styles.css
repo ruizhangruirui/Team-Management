@@ -235,28 +235,30 @@ textarea:focus {
 }
 
 .account-create {
-  background: transparent;
-  border-style: dashed;
+  background: #ffffff;
+  border: 1px solid var(--line);
   box-shadow: none;
-  margin: 8px 0 10px;
+  margin: 6px 0 12px;
 }
 
 .account-create > summary {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 24px;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 10px;
-  background: #f8fafc;
-  padding: 9px 12px;
+  background: #ffffff;
+  padding: 11px 12px;
 }
 
 .account-create > summary > span {
   min-width: 0;
   overflow-wrap: anywhere;
   color: var(--text);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 800;
   line-height: 1.3;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
 }
 
 .account-create:not([open]) > :not(summary) {
@@ -264,17 +266,10 @@ textarea:focus {
 }
 
 .account-create > summary::after {
-  content: "+";
-  display: inline-grid;
-  place-items: center;
-  flex: 0 0 auto;
-  width: 24px;
-  height: 24px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: #f8fafc;
+  content: "▾";
   color: var(--primary);
-  font-weight: 900;
+  font-size: 14px;
+  font-weight: 800;
 }
 
 .account-create[open] > summary {
@@ -282,7 +277,7 @@ textarea:focus {
 }
 
 .account-create[open] > summary::after {
-  content: "-";
+  transform: rotate(180deg);
 }
 
 .readonly-field {
@@ -550,22 +545,22 @@ textarea:focus {
 .org-edit-type-group summary::after,
 .org-edit-group summary::after,
 .org-create-group summary::after {
-  content: "+";
+  content: "▾";
   display: inline-grid;
   flex: 0 0 auto;
   place-items: center;
-  width: 22px;
-  height: 22px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
+  width: 18px;
+  height: 18px;
+  border: 0;
+  border-radius: 0;
   color: var(--primary);
-  font-weight: 900;
+  font-weight: 800;
 }
 
 .org-edit-type-group[open] > summary::after,
 .org-edit-group[open] > summary::after,
 .org-create-group[open] > summary::after {
-  content: "-";
+  transform: rotate(180deg);
 }
 
 .org-edit-type-group summary > span,
@@ -598,13 +593,23 @@ textarea:focus {
 
 .org-create-actions {
   display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
-  margin-top: 12px;
+  margin-top: 10px;
 }
 
 .org-create-group {
   box-shadow: none;
-  background: #fbfdff;
+  background: #ffffff;
+  border: 1px solid var(--line);
+}
+
+.org-create-group summary {
+  background: #ffffff;
+  padding: 10px 12px;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
 }
 
 .compact-form-grid {
@@ -908,36 +913,22 @@ h1 {
 }
 
 .settings-leadership-grid {
-  grid-template-columns: minmax(0, 1fr);
-  gap: 14px;
-  margin-top: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 12px;
 }
 
 .settings-leadership-grid > section {
-  background: #fbfdff;
+  background: #ffffff;
   box-shadow: none;
+  padding: 14px;
 }
 
-.governance-warning {
-  display: grid;
-  gap: 4px;
-  margin: 12px 0;
-  padding: 12px 14px;
-  border: 1px solid #d9e4f5;
-  border-radius: 8px;
-  background: #f6f9fd;
-  color: var(--text);
-}
-
-.governance-warning strong {
-  font-size: 13px;
-  font-weight: 750;
-}
-
-.governance-warning span {
+.settings-note {
+  margin: 10px 16px 0;
   color: var(--muted);
   font-size: 12px;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 .org-chart {
@@ -1958,6 +1949,41 @@ dialog::backdrop {
 .settings-subsection {
   border-top: 1px solid var(--line);
   padding-top: 14px;
+}
+
+.compact-admin-row {
+  grid-template-columns: 160px minmax(260px, 420px);
+  align-items: center;
+  border-top: 0;
+  padding-top: 0;
+}
+
+.compact-admin-row label {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.settings-paired-controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.inline-setting-control {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: end;
+}
+
+.inline-setting-control span {
+  grid-column: 1 / -1;
+}
+
+.inline-setting-control button {
+  min-height: 38px;
+  white-space: nowrap;
 }
 
 .history-timeline {

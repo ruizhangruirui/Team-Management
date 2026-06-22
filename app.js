@@ -159,8 +159,8 @@ const translations = {
     viewTeam: "查看 Team",
     showingPeople: "显示 {shown} / {total} 人",
     loadMore: "加载更多",
-    orgEditor: "组织编辑", unitType: "Business Unit 类型", unitName: "Business Unit 名称", addUnit: "新增 Business Unit",
-    parentUnit: "所属 Business Unit", teamName: "Team 名称", addTeam: "新增 Team", orgEditHint: "一级结构包括 Research Lab、Independent Research Team、Platform。独立研究 Team 是一级节点，也可直接承载人员；有人员的节点不能直接删除。",
+    orgEditor: "组织结构配置", unitType: "Business Unit 类型", unitName: "Business Unit 名称", addUnit: "新增 Business Unit",
+    parentUnit: "所属 Business Unit", teamName: "Team 名称", addTeam: "新增 Team", orgEditHint: "低频高影响设置。新增、重命名或删除组织节点前请确认员工归属。",
     researchLab: "Research Lab", independentResearchTeam: "Independent Research Team", platformUnit: "Platform", businessUnits: "Business Units", createBusinessUnit: "创建 Business Unit", createTeamUnderUnit: "创建下级 Team", noTeamsUnderStandalone: "独立研究 Team 本身就是 Team，不需要再添加下级 Team。",
     annualWorkGoals: "年度重点与目标", annualWorkHint: "记录各 Lab / Team 当年的主要工作和目标。", targetScope: "记录对象", goalYear: "年份", mainWork: "主要工作", mainGoals: "主要目标", saveGoal: "保存目标",
     cultureActivities: "氛围建设", cultureHint: "记录团队活动、峰会参与、分享会和跨团队协作。", activityType: "活动类型", activityDate: "日期", participants: "参与人数", activitySummary: "活动记录", addActivity: "添加活动",
@@ -245,8 +245,8 @@ const translations = {
     viewTeam: "View Team",
     showingPeople: "Showing {shown} / {total}",
     loadMore: "Load more",
-    orgEditor: "Org Editor", unitType: "Business Unit Type", unitName: "Business Unit Name", addUnit: "Add Business Unit",
-    parentUnit: "Parent Business Unit", teamName: "Team Name", addTeam: "Add Team", orgEditHint: "Top-level structure includes Research Labs, Independent Research Teams, and Platforms. An independent research team is a top-level node and can directly hold employees. Nodes with employees cannot be deleted.",
+    orgEditor: "Organization Structure", unitType: "Business Unit Type", unitName: "Business Unit Name", addUnit: "Add Business Unit",
+    parentUnit: "Parent Business Unit", teamName: "Team Name", addTeam: "Add Team", orgEditHint: "Low-frequency, high-impact settings. Confirm employee placement before adding, renaming, or deleting nodes.",
     researchLab: "Research Lab", independentResearchTeam: "Independent Research Team", platformUnit: "Platform", businessUnits: "Business Units", createBusinessUnit: "Create Business Unit", createTeamUnderUnit: "Create Team", noTeamsUnderStandalone: "An independent research team is itself a team, so no child team is needed.",
     annualWorkGoals: "Annual Work & Goals", annualWorkHint: "Record each Lab / Team's major work and goals for the year.", targetScope: "Scope", goalYear: "Year", mainWork: "Major Work", mainGoals: "Main Goals", saveGoal: "Save Goal",
     cultureActivities: "Culture & Engagement", cultureHint: "Record team events, summits, talks, and cross-team collaboration.", activityType: "Activity Type", activityDate: "Date", participants: "Participants", activitySummary: "Activity Notes", addActivity: "Add Activity",
@@ -1612,8 +1612,8 @@ function renderAccountAdmin() {
 function renderNewAccountForm(kind) {
   const isHrbpForm = kind === "hrbp";
   const title = isHrbpForm
-    ? (state.language === "en" ? "Add HRBP Account" : "新增 HRBP 账号")
-    : (state.language === "en" ? "Add Business Leadership Account" : "新增业务主管账号");
+    ? (state.language === "en" ? "Create HRBP Access Assignment" : "创建 HRBP 授权记录")
+    : (state.language === "en" ? "Create Leadership Access Assignment" : "创建业务主管授权记录");
   const roleSelect = isHrbpForm
     ? `<input data-new-account-role="${kind}" type="hidden" value="hrbp" /><div class="readonly-field"><span>${t("permissionRole")}</span><strong>HRBP</strong></div>`
     : `<label><span>${t("permissionRole")}</span><select data-new-account-role="${kind}">${businessRoleOptions()}</select></label>`;
