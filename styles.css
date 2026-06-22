@@ -466,6 +466,10 @@ textarea:focus {
   min-width: 0;
 }
 
+.account-field-wide {
+  grid-column: 1 / -1;
+}
+
 .readonly-field {
   background: #f8fafc;
   color: var(--muted);
@@ -481,6 +485,7 @@ textarea:focus {
   display: flex;
   gap: 8px;
   justify-content: flex-end;
+  flex-wrap: wrap;
 }
 
 .account-save-hint {
@@ -593,7 +598,12 @@ textarea:focus {
 .org-edit-team-list,
 .org-edit-list {
   display: grid;
-  gap: 10px;
+  gap: 12px;
+}
+
+.account-group-body > label {
+  display: grid;
+  gap: 6px;
 }
 
 .account-group-body,
@@ -1681,6 +1691,14 @@ dialog {
   border-radius: 10px;
   padding: 0;
   box-shadow: 0 34px 90px rgba(15, 23, 42, 0.28);
+}
+
+#settingsDialog {
+  width: min(1180px, calc(100vw - 32px));
+}
+
+#profileDialog {
+  width: min(920px, calc(100vw - 32px));
 }
 
 dialog::backdrop {

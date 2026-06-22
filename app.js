@@ -1782,9 +1782,9 @@ function renderAccountRow(account) {
       <summary>
         <span><strong>${escapeHtml(account.name)}</strong><small>${roleLabel(account.role)} · ${scopeLabel(account)}</small></span>
       </summary>
-      <label><span>${t("accountName")}</span><input data-account-name="${account.id}" value="${escapeHtml(account.name)}" /></label>
-      <label><span>${t("email")}</span><input data-account-email="${account.id}" type="email" value="${escapeHtml(account.email)}" /></label>
-      <label><span>${t("selectEmployeeForAccess")}</span><input data-account-person-search="${account.id}" type="search" placeholder="${escapeHtml(t("employeeSearchPlaceholder"))}" /><select data-account-person="${account.id}">${employeeAccessOptions(account.personId || state.people.find((person) => person.accountId === account.id)?.id || "")}</select></label>
+      <label class="account-field-wide"><span>${t("accountName")}</span><input data-account-name="${account.id}" value="${escapeHtml(account.name)}" /></label>
+      <label class="account-field-wide"><span>${t("email")}</span><input data-account-email="${account.id}" type="email" value="${escapeHtml(account.email)}" /></label>
+      <label class="account-field-wide"><span>${t("selectEmployeeForAccess")}</span><input data-account-person-search="${account.id}" type="search" placeholder="${escapeHtml(t("employeeSearchPlaceholder"))}" /><select data-account-person="${account.id}">${employeeAccessOptions(account.personId || state.people.find((person) => person.accountId === account.id)?.id || "")}</select></label>
       <label><span>${t("permissionRole")}</span><select data-account-role="${account.id}">${roleOptions(account.role)}</select></label>
       <label><span>${t("scope")}</span><select data-account-scope="${account.id}" ${multi ? `multiple size="${Math.min(5, state.org.units.length)}"` : ""}>${scopeOptionsForRole(account.role, multi ? accountScopeIds(account) : account.scopeId)}</select>${scopeHelp}</label>
       <div class="account-actions">
