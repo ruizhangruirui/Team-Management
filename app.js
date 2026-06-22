@@ -138,7 +138,7 @@ const translations = {
     newTalentRecord: "新增记录", newManagerRecord: "新增主管记录", newTalentInsight: "新增人才洞察", recordType: "记录类型", recordDate: "记录日期", content: "内容",
     managerAchievement: "优秀事迹", managerPerformance: "平时表现", talentInsight: "人才洞察", talentRisk: "人才风险", developmentSuggestion: "培养建议",
     addRecord: "添加记录", allTeams: "全部团队", allUnits: "全部 Business Unit", peopleUnit: "人", noManager: "暂不分配",
-    noMatchedPeople: "暂无匹配人员。", notFilled: "未填写", noNotes: "暂无备注", tenure: "在职时长",
+    noMatchedPeople: "暂无匹配人员。", notFilled: "未填写", noNotes: "暂无备注", noTeam: "无 Team", tenure: "在职时长",
     recordCount: "条人才记录", canAdd: "可添加", readOnly: "只读", noRecords: "暂无人才记录。",
     loginFailed: "邮箱或密码不正确。", loginNoRole: "登录成功，但该邮箱还没有在系统里配置角色权限。请 Owner 在设置里添加同邮箱账号。", loginServiceUnavailable: "登录服务暂时无响应，请检查网络、Supabase 用户是否已创建，或稍后重试。", remoteLoadFailed: "无法读取 Supabase 共享数据，请确认 app_state 表和 RLS policy 已创建。", remoteSaveFailed: "保存到 Supabase 失败，请稍后重试。", demoHint: "请使用 Supabase 中已创建且已授权的邮箱登录；救援账号：owner1@example.com / owner123。",
     ownerPermission: "Owner 可添加/删除员工、创建邮箱账号并授权；Research Center Director 可查看所有员工。",
@@ -224,7 +224,7 @@ const translations = {
     newTalentRecord: "New Record", newManagerRecord: "New Manager Record", newTalentInsight: "New Talent Insight", recordType: "Record Type", recordDate: "Record Date", content: "Content",
     managerAchievement: "Achievement", managerPerformance: "Performance Note", talentInsight: "Talent Insight", talentRisk: "Talent Risk", developmentSuggestion: "Development Suggestion",
     addRecord: "Add Record", allTeams: "All Teams", allUnits: "All Business Units", peopleUnit: "people", noManager: "No manager",
-    noMatchedPeople: "No matching people.", notFilled: "Not filled", noNotes: "No notes", tenure: "Tenure",
+    noMatchedPeople: "No matching people.", notFilled: "Not filled", noNotes: "No notes", noTeam: "No Team", tenure: "Tenure",
     recordCount: "talent records", canAdd: "Can add", readOnly: "Read only", noRecords: "No talent records yet.",
     loginFailed: "Email or password is incorrect.", loginNoRole: "Sign-in succeeded, but this email has no role in Team Management. Ask an Owner to add the same email in Settings.", loginServiceUnavailable: "The login service is not responding. Check the network, Supabase user setup, or try again later.", remoteLoadFailed: "Cannot load shared Supabase data. Check that the app_state table and RLS policies exist.", remoteSaveFailed: "Failed to save to Supabase. Please try again.", demoHint: "Use a Supabase email that is authorized in settings. Rescue login: owner1@example.com / owner123.",
     ownerPermission: "Owners can add/delete employees, create email accounts, and authorize scope. Research Center Directors can view all employees.",
@@ -399,6 +399,7 @@ function normalizeState(raw) {
   ensureDemoHrbp(next);
   next.people = next.people.map((person) => ({
     ...person,
+    businessUnitId: person.businessUnitId || unitByTeamForState(next, person.teamId)?.id || next.org.units[0]?.id || "",
     contractType: normalizeContractType(person.contractType),
     talentTags: Array.isArray(person.talentTags) ? person.talentTags : [],
     awards: Array.isArray(person.awards) ? person.awards : [],
@@ -1190,7 +1191,19 @@ function currentAccount() {
 
 function accountByEmail(email) {
   const normalized = String(email || "").trim().toLowerCase();
-  return state.accounts.find((account) => account.email.toLowerCase() === normalized) || null;
+  const rolePriority = { owner: 60, researchDirector: 50, labDirector: 40, platformLead: 40, plr: 35, teamManager: 30, hrbp: 20 };
+  return state.accounts
+    .filter((account) => account.email.toLowerCase() === normalized)
+    .sort((a, b) => (rolePriority[b.role] || 0) - (rolePriority[a.role] || 0))[0] || null;
+}
+
+function emailConflictExists(email, personId = "", excludeAccountId = "") {
+  const normalized = String(email || "").trim().toLowerCase();
+  return state.accounts.some((account) =>
+    account.id !== excludeAccountId &&
+    account.email.toLowerCase() === normalized &&
+    (!personId || account.personId !== personId)
+  );
 }
 
 function isDemoOnlyAccountState() {
@@ -1278,6 +1291,21 @@ function unitByTeam(teamId) {
   return state.org.units.find((unit) => unit.id === team?.unitId);
 }
 
+function personUnitId(person) {
+  if (!person) return "";
+  if (person.businessUnitId && state.org.units.some((unit) => unit.id === person.businessUnitId)) return person.businessUnitId;
+  return unitByTeam(person.teamId)?.id || "";
+}
+
+function personUnit(person) {
+  const unitId = personUnitId(person);
+  return state.org.units.find((unit) => unit.id === unitId) || null;
+}
+
+function personTeam(person) {
+  return person?.teamId ? teamById(person.teamId) : null;
+}
+
 function unitTypeLabel(type) {
   if (type === "platform") return t("platformUnit");
   if (type === "researchTeam") return t("independentResearchTeam");
@@ -1292,6 +1320,12 @@ function unitDisplayName(unit) {
 function teamDisplayName(team) {
   if (!team) return "";
   return team.unitType === "researchTeam" ? team.unitName : `${team.unitName} / ${team.name}`;
+}
+
+function personOrgPath(person) {
+  const unit = personUnit(person);
+  const team = personTeam(person);
+  return [unit?.name, team?.name].filter(Boolean).join(" / ");
 }
 
 function canAddChildTeam(unit) {
@@ -1342,14 +1376,15 @@ function visibleTeams() {
 }
 
 function visiblePeople() {
-  const account = currentAccount();
   const teamIds = new Set(visibleTeams().map((team) => team.id));
-  return state.people.filter((person) => teamIds.has(person.teamId));
+  const unitIds = new Set(visibleUnits().map((unit) => unit.id));
+  return state.people.filter((person) => person.teamId ? teamIds.has(person.teamId) : unitIds.has(personUnitId(person)));
 }
 
 function canViewPerson(person) {
   if (!person) return false;
-  return visibleTeams().some((team) => team.id === person.teamId);
+  if (person.teamId) return visibleTeams().some((team) => team.id === person.teamId);
+  return visibleUnits().some((unit) => unit.id === personUnitId(person));
 }
 
 function canAddDeleteEmployees() {
@@ -1364,7 +1399,7 @@ function canAddManagerRecord(person) {
   const account = currentAccount();
   if (!account) return false;
   if (isGlobalViewer()) return true;
-  const unit = unitByTeam(person.teamId);
+  const unit = personUnit(person);
   if (["labDirector", "plr", "platformLead"].includes(account.role)) return account.scopeId === unit?.id;
   return account.role === "teamManager" && account.scopeId === person.teamId;
 }
@@ -1396,8 +1431,8 @@ function openTalentActionsForPerson(personId) {
 function filteredPeople() {
   const query = state.searchText.trim().toLowerCase();
   return visiblePeople().filter((person) => {
-    const team = teamById(person.teamId);
-    const unit = unitByTeam(person.teamId);
+    const team = personTeam(person);
+    const unit = personUnit(person);
     const inUnit = state.selectedUnitId === "all" || unit?.id === state.selectedUnitId;
     const inTeam = state.selectedTeamId === "all" || person.teamId === state.selectedTeamId;
     const text = [person.employeeNo, person.name, person.role, person.level, person.contractType, ...(person.talentTags || []), team?.name, unit?.name].join(" ").toLowerCase();
@@ -1607,7 +1642,7 @@ function employeeAccessOptions(selectedPersonId = "") {
   return [`<option value="">${escapeHtml(t("selectEmployeeForAccess"))}</option>`, ...state.people
     .slice()
     .sort((a, b) => String(a.employeeNo).localeCompare(String(b.employeeNo)))
-    .map((person) => `<option value="${person.id}" ${person.id === selectedPersonId ? "selected" : ""}>${escapeHtml(person.employeeNo)} · ${escapeHtml(person.name)}</option>`)]
+    .map((person) => `<option value="${person.id}" ${person.id === selectedPersonId ? "selected" : ""}>${escapeHtml(person.employeeNo)} · ${escapeHtml(person.name)} · ${escapeHtml(personOrgPath(person) || t("notFilled"))}</option>`)]
     .join("");
 }
 
@@ -1854,11 +1889,10 @@ function renderBulkArchivePeopleList() {
     .sort((a, b) => String(a.employeeNo).localeCompare(String(b.employeeNo)));
   elements.bulkArchivePeopleList.innerHTML = people.length
     ? people.map((person) => {
-      const team = teamById(person.teamId);
       return `<label class="migration-row archive-row">
         <input type="checkbox" data-bulk-archive-person="${person.id}" />
         <span><strong>${escapeHtml(person.employeeNo)}</strong> ${escapeHtml(person.name)}</span>
-        <small>${escapeHtml(teamDisplayName(team))} · ${escapeHtml(person.role)} · ${escapeHtml(person.level || "")}</small>
+        <small>${escapeHtml(personOrgPath(person))} · ${escapeHtml(person.role)} · ${escapeHtml(person.level || "")}</small>
       </label>`;
     }).join("")
     : `<div class="empty-state">${t("noMatchedPeople")}</div>`;
@@ -1869,10 +1903,9 @@ function renderFormerEmployeeArchive() {
   const people = (state.formerPeople || []).slice(0, 80);
   elements.formerEmployeeList.innerHTML = people.length
     ? people.map((person) => {
-      const team = teamById(person.teamId);
       const archivedBy = accountName(person.archivedBy);
-      const businessUnitName = person.archivedBusinessUnit || unitByTeam(person.teamId)?.name || "";
-      const teamName = person.archivedTeam || team?.name || "";
+      const businessUnitName = person.archivedBusinessUnit || personUnit(person)?.name || "";
+      const teamName = person.archivedTeam || personTeam(person)?.name || "";
       return `<article class="record-item compact-record">
         <header><strong>${escapeHtml(person.employeeNo)} · ${escapeHtml(person.name)}</strong><small>${escapeHtml(person.archivedAt || "")} · ${escapeHtml(archivedBy)}</small></header>
         <p>${escapeHtml([businessUnitName, teamName].filter(Boolean).join(" / "))} · ${escapeHtml(person.role || "")} · ${escapeHtml(person.level || "")} · ${escapeHtml(person.contractType || "")}</p>
@@ -1959,10 +1992,11 @@ function talentVisibleTeams() {
 function talentFilteredPeople() {
   const teamIds = new Set(talentVisibleTeams().map((team) => team.id));
   return visiblePeople().filter((person) => {
-    const unit = unitByTeam(person.teamId);
+    const unit = personUnit(person);
     const inUnit = state.selectedTalentUnitId === "all" || unit?.id === state.selectedTalentUnitId;
     const inTeam = state.selectedTalentTeamId === "all" || person.teamId === state.selectedTalentTeamId;
-    return teamIds.has(person.teamId) && inUnit && inTeam;
+    const inVisibleTeamScope = person.teamId ? teamIds.has(person.teamId) : state.selectedTalentTeamId === "all";
+    return inVisibleTeamScope && inUnit && inTeam;
   });
 }
 
@@ -2040,7 +2074,7 @@ function renderTalentDevelopment() {
   renderTalentDashboard(visibleActions, talentPeople);
   renderDevelopmentTree(visibleGoals, visibleActivities);
   elements.talentActionPerson.innerHTML = talentPeople
-    .map((person) => `<option value="${person.id}">${escapeHtml(person.employeeNo)} · ${escapeHtml(person.name)} · ${escapeHtml(teamById(person.teamId)?.name || "")}</option>`)
+    .map((person) => `<option value="${person.id}">${escapeHtml(person.employeeNo)} · ${escapeHtml(person.name)} · ${escapeHtml(personOrgPath(person))}</option>`)
     .join("");
   elements.talentActionDueDate.value = elements.talentActionDueDate.value || today();
   if (!editingTalentActionId) elements.addTalentActionBtn.textContent = t("addTalentAction");
@@ -2072,10 +2106,9 @@ function renderTalentDashboard(actions, people = visiblePeople()) {
 
 function renderTalentActionCard(action) {
   const person = state.people.find((item) => item.id === action.personId);
-  const team = person ? teamById(person.teamId) : null;
   return `<article class="record-item compact-record">
     <header><strong>${escapeHtml(action.type)} · ${escapeHtml(person ? `${person.employeeNo} ${person.name}` : t("notFilled"))}</strong><small>${escapeHtml(action.priority)} · ${escapeHtml(action.status)} · ${escapeHtml(action.dueDate || "")}</small></header>
-    <p>${escapeHtml(team ? teamDisplayName(team) : "")}</p>
+    <p>${escapeHtml(person ? personOrgPath(person) : "")}</p>
     <p>${escapeHtml(action.note || t("noNotes"))}</p>
     <div class="record-actions owner-hrbp-write">
       <button type="button" data-edit-talent-action="${action.id}">${t("edit")}</button>
@@ -2171,6 +2204,12 @@ function scopeLabel(account) {
   return teamById(account.scopeId)?.name || "";
 }
 
+function personAccessRoles(person) {
+  return state.accounts
+    .filter((account) => account.personId === person.id || account.id === person.accountId)
+    .map((account) => `${roleLabel(account.role)} · ${scopeLabel(account)}`);
+}
+
 function renderTeamFilter() {
   const units = visibleUnits();
   elements.labList.innerHTML = "";
@@ -2185,7 +2224,7 @@ function renderTeamFilter() {
   }
   units.forEach((unit) => {
     const teamIds = new Set(unit.teams.map((team) => team.id));
-    const count = visiblePeople().filter((person) => teamIds.has(person.teamId)).length;
+    const count = visiblePeople().filter((person) => teamIds.has(person.teamId) || (!person.teamId && personUnitId(person) === unit.id)).length;
     const item = document.createElement("div");
     item.className = `team-button${state.selectedUnitId === unit.id ? " active" : ""}`;
     item.dataset.unitId = unit.id;
@@ -2198,10 +2237,14 @@ function renderTeamFilter() {
     state.selectedTeamId = "all";
   }
   elements.teamList.innerHTML = "";
-  const showAllTeams = teams.length > 1;
+  const directPeopleInScope = visiblePeople().filter((person) => {
+    if (person.teamId) return false;
+    return state.selectedUnitId === "all" || personUnitId(person) === state.selectedUnitId;
+  }).length;
+  const showAllTeams = teams.length > 1 || directPeopleInScope > 0;
   if (!showAllTeams && teams[0]) state.selectedTeamId = teams[0].id;
   const scopedPeopleCount = visiblePeople().filter((person) => {
-    const unit = unitByTeam(person.teamId);
+    const unit = personUnit(person);
     return state.selectedUnitId === "all" || unit?.id === state.selectedUnitId;
   }).length;
   if (showAllTeams) {
@@ -2236,7 +2279,8 @@ function renderOrgChart() {
     <div class="org-units">
       ${units.map((unit) => {
         const visibleTeamsForUnit = unit.teams.filter((team) => visibleTeamIds.has(team.id));
-        const unitPeopleCount = visibleTeamsForUnit.reduce((sum, team) => sum + visiblePeopleList.filter((person) => person.teamId === team.id).length, 0);
+        const unitDirectPeople = visiblePeopleList.filter((person) => !person.teamId && personUnitId(person) === unit.id);
+        const unitPeopleCount = unitDirectPeople.length + visibleTeamsForUnit.reduce((sum, team) => sum + visiblePeopleList.filter((person) => person.teamId === team.id).length, 0);
         const unitLeaderLabel = unit.type === "platform" ? roleLabel("platformLead") : unit.type === "researchTeam" ? roleLabel("teamManager") : roleLabel("labDirector");
         const unitLeaderId = unit.type === "researchTeam" ? unit.teams[0]?.managerAccountId : unit.directorAccountId;
         return `<details class="org-unit">
@@ -2246,6 +2290,7 @@ function renderOrgChart() {
           <div class="org-unit-body">
             <p class="leader-line"><b>${unitLeaderLabel}</b><span>${escapeHtml(accountName(unitLeaderId))}</span></p>
             ${unit.plrAccountId ? `<p class="leader-line"><b>PLR</b><span>${escapeHtml(accountName(unit.plrAccountId))}</span></p>` : ""}
+            ${unitDirectPeople.length ? `<div class="tree-members unit-members">${unitDirectPeople.map((person) => `<button type="button" class="tree-member" data-person-id="${person.id}"><span class="tree-member-main"><b>${escapeHtml(person.employeeNo)}</b><strong>${escapeHtml(person.name)}</strong></span><small>${escapeHtml([person.level, person.role].filter(Boolean).join(" · "))}</small></button>`).join("")}</div>` : ""}
           <div class="org-teams">
             ${visibleTeamsForUnit.map((team) => {
               const teamPeople = visiblePeopleList.filter((person) => person.teamId === team.id);
@@ -2316,8 +2361,8 @@ function renderPeople() {
   }
   elements.peopleGrid.innerHTML = "";
   visibleSlice.forEach((person) => {
-    const team = teamById(person.teamId);
-    const unit = unitByTeam(person.teamId);
+    const team = personTeam(person);
+    const unit = personUnit(person);
     const card = document.createElement("button");
     card.type = "button";
     card.className = "person-card";
@@ -2326,7 +2371,7 @@ function renderPeople() {
     const openActions = openTalentActionsForPerson(person.id);
     const actionTags = openActions.slice(0, 2).map((action) => `<span class="pill action-pill">${escapeHtml(action.type)}</span>`).join("");
     const highlightTags = `${tags}${awardTags}${actionTags}`;
-    card.innerHTML = `<header><div><h3>${escapeHtml(person.employeeNo)} · ${escapeHtml(person.name)}</h3><p>${escapeHtml(unit?.name || "")} / ${escapeHtml(team?.name || "")}</p></div><div class="card-badges"><span class="badge level-badge">${t("level")} ${escapeHtml(person.level || t("notFilled"))}</span><span class="badge">${escapeHtml(person.contractType)}</span></div></header>
+    card.innerHTML = `<header><div><h3>${escapeHtml(person.employeeNo)} · ${escapeHtml(person.name)}</h3><p>${escapeHtml(personOrgPath(person))}</p></div><div class="card-badges"><span class="badge level-badge">${t("level")} ${escapeHtml(person.level || t("notFilled"))}</span><span class="badge">${escapeHtml(person.contractType)}</span></div></header>
       <div class="metric-grid"><div class="metric"><strong>${tenureLabel(person.startDate)}</strong><small>${t("tenure")}</small></div><div class="metric"><strong>${person.awards?.length || 0}</strong><small>${t("awardName")}</small></div><div class="metric"><strong>${openActions.length}</strong><small>${t("openTalentActions")}</small></div></div>
       ${highlightTags ? `<div class="tag-cloud">${highlightTags}</div>` : ""}
       <p>${escapeHtml(person.role)}</p>
@@ -2377,7 +2422,7 @@ function renderPeopleStatistics() {
     count: people.filter((person) => person.contractType === contract).length,
   })), total);
   renderBreakdown(elements.levelBreakdown, countRows(people, (person) => person.level).slice(0, 8), total);
-  renderBreakdown(elements.orgBreakdown, countRows(people, (person) => unitByTeam(person.teamId)?.name).slice(0, 8), total);
+  renderBreakdown(elements.orgBreakdown, countRows(people, (person) => personUnit(person)?.name).slice(0, 8), total);
   renderBreakdown(elements.talentStats, [
     { label: t("taggedPeople"), count: people.filter((person) => person.talentTags?.length).length },
     { label: t("awardedPeople"), count: people.filter((person) => person.awards?.length).length },
@@ -2386,12 +2431,12 @@ function renderPeopleStatistics() {
 }
 
 function refreshFormOptions() {
-  elements.personForm.elements.teamId.innerHTML = allTeams().map((team) => `<option value="${team.id}">${escapeHtml(teamDisplayName(team))}</option>`).join("");
+  elements.personForm.elements.teamId.innerHTML = [`<option value="">${t("noTeam")}</option>`, ...allTeams().map((team) => `<option value="${team.id}">${escapeHtml(teamDisplayName(team))}</option>`)].join("");
   elements.personForm.elements.institute.innerHTML = state.org.units.map((unit) => `<option value="${unit.id}">${escapeHtml(unit.name)}</option>`).join("");
   elements.personForm.elements.managerId.innerHTML = [`<option value="">${t("noManager")}</option>`, ...state.accounts.filter((account) => account.role === "teamManager").map((account) => `<option value="${account.id}">${escapeHtml(account.name)}</option>`)].join("");
   elements.profileManager.innerHTML = elements.personForm.elements.managerId.innerHTML;
   elements.deleteEmployeeForm.elements.personId.innerHTML = state.people
-    .map((person) => `<option value="${person.id}">${escapeHtml(person.employeeNo)} · ${escapeHtml(person.name)} · ${escapeHtml(teamDisplayName(teamById(person.teamId)))}</option>`)
+    .map((person) => `<option value="${person.id}">${escapeHtml(person.employeeNo)} · ${escapeHtml(person.name)} · ${escapeHtml(personOrgPath(person))}</option>`)
     .join("");
 }
 
@@ -2430,10 +2475,10 @@ function openProfile(personId) {
 
 function renderProfile() {
   const person = state.people.find((item) => item.id === activePersonId);
-  const team = teamById(person.teamId);
-  const unit = unitByTeam(person.teamId);
+  const team = personTeam(person);
+  const unit = personUnit(person);
   elements.profileName.textContent = `${person.employeeNo} · ${person.name}`;
-  elements.profileMeta.textContent = `${unit?.name || ""} / ${team?.name || ""}`;
+  elements.profileMeta.textContent = personOrgPath(person);
   if (editingBasicInfo) renderBasicInfoEditor(person);
   else renderBasicInfoView(person, team, unit);
   elements.editBasicInfoBtn.classList.toggle("is-hidden", !canAddDeleteEmployees() || editingBasicInfo);
@@ -2457,23 +2502,28 @@ function renderProfile() {
 
 function renderBasicInfoView(person, team, unit) {
   elements.profileBasics.className = "info-list";
+  const accessRoles = personAccessRoles(person);
   elements.profileBasics.innerHTML = [
-    [t("employeeNo"), person.employeeNo], [t("name"), person.name], [t("businessUnit"), unitDisplayName(unit)], [t("team"), team?.name],
+    [t("employeeNo"), person.employeeNo], [t("name"), person.name], [t("businessUnit"), unitDisplayName(unit)], [t("team"), team?.name || t("noTeam")],
     [t("role"), person.role], [t("level"), person.level], [t("contractType"), person.contractType], [t("startDate"), person.startDate],
-    [t("tenure"), tenureLabel(person.startDate)], [t("notes"), person.notes || t("noNotes")],
+    [t("tenure"), tenureLabel(person.startDate)], ["Access Roles", accessRoles.join("; ") || t("notFilled")], [t("notes"), person.notes || t("noNotes")],
   ].map(([label, value]) => `<div class="info-item"><small>${label}</small><strong>${escapeHtml(value)}</strong></div>`).join("");
 }
 
 function renderBasicInfoEditor(person) {
   elements.profileBasics.className = "basic-info-form";
+  const unitOptions = state.org.units
+    .map((unit) => `<option value="${unit.id}">${escapeHtml(unit.name)}</option>`)
+    .join("");
   const teamOptions = allTeams()
-    .map((team) => `<option value="${team.id}">${escapeHtml(teamDisplayName(team))}</option>`)
+    .map((team) => `<option value="${team.id}" data-unit-id="${team.unitId}">${escapeHtml(teamDisplayName(team))}</option>`)
     .join("");
   elements.profileBasics.innerHTML = `
     <div class="form-grid">
       <label><span>${t("employeeNo")}</span><input id="editEmployeeNo" type="text" value="${escapeHtml(person.employeeNo || "")}" /></label>
       <label><span>${t("name")}</span><input id="editPersonName" type="text" value="${escapeHtml(person.name || "")}" /></label>
-      <label><span>${t("team")}</span><select id="editPersonTeam">${teamOptions}</select></label>
+      <label><span>${t("businessUnit")}</span><select id="editPersonBusinessUnit">${unitOptions}</select></label>
+      <label><span>${t("team")}</span><select id="editPersonTeam"><option value="">${t("noTeam")}</option>${teamOptions}</select></label>
       <label><span>${t("role")}</span><input id="editPersonRole" type="text" value="${escapeHtml(person.role || "")}" /></label>
       <label><span>${t("level")}</span><input id="editPersonLevel" type="text" value="${escapeHtml(person.level || "")}" /></label>
       <label><span>${t("contractType")}</span><select id="editPersonContractType">${CONTRACT_TYPES.map((type) => `<option value="${type}">${type}</option>`).join("")}</select></label>
@@ -2484,8 +2534,19 @@ function renderBasicInfoEditor(person) {
       <button id="cancelBasicInfoBtn" type="button">${t("cancel")}</button>
       <button id="saveBasicInfoBtn" type="button" class="primary">${t("saveBasicInfo")}</button>
     </div>`;
+  $("#editPersonBusinessUnit").value = personUnitId(person) || state.org.units[0]?.id || "";
   $("#editPersonTeam").value = person.teamId || "";
   $("#editPersonContractType").value = normalizeContractType(person.contractType);
+  const syncTeamOptions = () => {
+    const unitId = $("#editPersonBusinessUnit").value;
+    $("#editPersonTeam").querySelectorAll("option[data-unit-id]").forEach((option) => {
+      option.hidden = option.dataset.unitId !== unitId;
+    });
+    const selectedOption = $("#editPersonTeam").selectedOptions[0];
+    if (selectedOption?.dataset.unitId && selectedOption.dataset.unitId !== unitId) $("#editPersonTeam").value = "";
+  };
+  $("#editPersonBusinessUnit").addEventListener("change", syncTeamOptions);
+  syncTeamOptions();
 }
 
 function saveBasicInfo() {
@@ -2494,13 +2555,14 @@ function saveBasicInfo() {
   if (!person) return;
   const employeeNo = $("#editEmployeeNo")?.value.trim();
   const name = $("#editPersonName")?.value.trim();
+  const businessUnitId = $("#editPersonBusinessUnit")?.value;
   const teamId = $("#editPersonTeam")?.value;
   const role = $("#editPersonRole")?.value.trim();
   const level = normalizeLevelValue($("#editPersonLevel")?.value.trim());
   const contractType = normalizeContractType($("#editPersonContractType")?.value);
   const startDate = $("#editPersonStartDate")?.value || today();
   const notes = $("#editPersonNotes")?.value.trim();
-  if (!employeeNo || !name || !teamId || !role || !level || !startDate) {
+  if (!employeeNo || !name || !businessUnitId || !role || !level || !startDate) {
     showValidation("validationRequired");
     return;
   }
@@ -2514,11 +2576,9 @@ function saveBasicInfo() {
   }
   if (!confirmAction(t("saveBasicInfo"))) return;
   state.people = state.people.map((item) => item.id === person.id
-    ? { ...item, employeeNo, name, teamId, role, level, contractType, startDate, notes }
+    ? { ...item, employeeNo, name, businessUnitId, teamId, role, level, contractType, startDate, notes }
     : item);
-  if (person.accountId) {
-    state.accounts = state.accounts.map((account) => account.id === person.accountId ? { ...account, name } : account);
-  }
+  state.accounts = state.accounts.map((account) => account.id === person.accountId || account.personId === person.id ? { ...account, name } : account);
   editingBasicInfo = false;
   saveAndRender();
   renderProfile();
@@ -2595,18 +2655,20 @@ function addPerson(event) {
   event.preventDefault();
   if (!canAddDeleteEmployees()) return;
   const data = new FormData(elements.personForm);
-  if (!data.get("employeeNo")?.trim() || !data.get("name")?.trim() || !data.get("teamId")) {
+  if (!data.get("employeeNo")?.trim() || !data.get("name")?.trim() || !data.get("institute") || !data.get("role")?.trim()) {
     showValidation("validationRequired");
     return;
   }
   if (!confirmAction(t("addEmployee"))) return;
+  const teamId = data.get("teamId");
+  const businessUnitId = teamId ? unitByTeam(teamId)?.id || data.get("institute") : data.get("institute");
   state.people.push({
-    id: `p-${crypto.randomUUID()}`, employeeNo: data.get("employeeNo").trim(), name: data.get("name").trim(), teamId: data.get("teamId"),
+    id: `p-${crypto.randomUUID()}`, employeeNo: data.get("employeeNo").trim(), name: data.get("name").trim(), businessUnitId, teamId,
     role: data.get("role").trim(), level: data.get("level").trim() || t("notFilled"), contractType: data.get("contractType"),
     startDate: data.get("startDate"), notes: data.get("notes").trim(), talentTags: [], awards: [], growth: [], records: [],
   });
   const managerId = data.get("managerId");
-  if (managerId) assignTeamManager(data.get("teamId"), managerId);
+  if (managerId && teamId) assignTeamManager(teamId, managerId);
   elements.personDialog.close();
   elements.personForm.reset();
   saveAndRender();
@@ -2634,8 +2696,8 @@ function archiveEmployee(event) {
     return;
   }
   if (!confirmAction(t("confirmDeleteEmployee", { name: `${person.employeeNo} ${person.name}` }))) return;
-  const team = teamById(person.teamId);
-  const unit = unitByTeam(person.teamId);
+  const team = personTeam(person);
+  const unit = personUnit(person);
   state.formerPeople.unshift({
     ...person,
     archivedBusinessUnit: unitDisplayName(unit),
@@ -2672,8 +2734,8 @@ function archiveSelectedEmployees() {
     .filter((person) => selected.has(person.id))
     .map((person) => ({
       ...person,
-      archivedBusinessUnit: unitDisplayName(unitByTeam(person.teamId)),
-      archivedTeam: teamById(person.teamId)?.name || "",
+      archivedBusinessUnit: unitDisplayName(personUnit(person)),
+      archivedTeam: personTeam(person)?.name || "",
       archivedAt,
       archivedBy: state.sessionAccountId,
       archiveReason: reason,
@@ -2694,8 +2756,8 @@ function downloadFormerEmployeesArchive() {
   const rows = [
     ["employeeNo", "name", "businessUnit", "team", "role", "level", "contractType", "startDate", "archivedAt", "archivedBy", "archiveReason", "notes"],
     ...(state.formerPeople || []).map((person) => {
-      const team = teamById(person.teamId);
-      const unit = unitByTeam(person.teamId);
+      const team = personTeam(person);
+      const unit = personUnit(person);
       return [
         person.employeeNo,
         person.name,
@@ -2785,6 +2847,15 @@ function findImportTeam(record) {
   return match?.id || "";
 }
 
+function findImportBusinessUnit(record, teamId = "") {
+  if (teamId) return unitByTeam(teamId)?.id || "";
+  const unitName = importValue(record, ["businessUnit", "business unit", "unit", "lab", "platform", "组织", "业务单元"]);
+  const normalized = unitName.toLowerCase().trim();
+  if (!normalized) return "";
+  return state.org.units.find((unit) => [unit.id, unit.name, unitDisplayName(unit)]
+    .some((candidate) => String(candidate || "").toLowerCase().trim() === normalized))?.id || "";
+}
+
 function buildImportPeople(text) {
   const rows = parseDelimitedText(text);
   if (rows.length < 2) return [];
@@ -2797,10 +2868,12 @@ function buildImportPeople(text) {
     const employeeNo = importValue(record, ["employeeNo", "employee no", "employeeId", "employee id", "工号"]);
     const name = importValue(record, ["name", "姓名", "员工姓名"]);
     const teamId = findImportTeam(record);
-    if (!employeeNo || !name || !teamId) return null;
+    const businessUnitId = findImportBusinessUnit(record, teamId);
+    if (!employeeNo || !name || !businessUnitId) return null;
     return {
       employeeNo,
       name,
+      businessUnitId,
       teamId,
       role: importValue(record, ["role", "岗位", "职位", "title"]) || t("notFilled"),
       level: importValue(record, ["level", "职级", "grade"]) || t("notFilled"),
@@ -2929,20 +3002,23 @@ function syncAccountPerson(account) {
 function syncAccountPersonForState(targetState, account) {
   if (!["labDirector", "plr", "platformLead", "teamManager", "hrbp"].includes(account.role)) return;
   const allTargetTeams = targetState.org.units.flatMap((unit) => unit.teams.map((team) => ({ ...team, unitId: unit.id })));
+  const unitId = ["labDirector", "plr", "platformLead"].includes(account.role) ? account.scopeId : "";
   const teamId = account.role === "hrbp"
     ? ensurePeopleOperationsTeam(targetState)
     : account.role === "teamManager" && allTargetTeams.some((team) => team.id === account.scopeId)
     ? account.scopeId
     : ["labDirector", "plr", "platformLead"].includes(account.role)
-      ? targetState.org.units.find((item) => item.id === account.scopeId)?.teams[0]?.id || allTargetTeams[0]?.id || ""
+      ? ""
       : allTargetTeams[0]?.id || "";
-  if (!teamId) return;
+  const businessUnitId = unitId || unitByTeamForState(targetState, teamId)?.id || targetState.org.units[0]?.id || "";
+  if (!businessUnitId) return;
   const existing = targetState.people.find((person) => person.id === account.personId || person.accountId === account.id || person.name.toLowerCase() === account.name.toLowerCase());
-  const roleName = roleLabel(account.role);
   if (existing) {
+    const isUnitLeadershipRole = ["labDirector", "plr", "platformLead"].includes(account.role);
+    const looksLikeLegacyAccessCard = looksLikeRoleTitleName(existing.role) || /Created from Leadership & Access account/i.test(String(existing.notes || ""));
     targetState.people = targetState.people.map((person) =>
       person.id === existing.id
-        ? { ...person, accountId: account.id, name: account.name, role: roleName, teamId: person.teamId || teamId, level: leadershipLevelForRole(account.role) }
+        ? { ...person, accountId: person.accountId || account.id, businessUnitId: businessUnitId || person.businessUnitId, teamId: isUnitLeadershipRole && looksLikeLegacyAccessCard ? "" : person.teamId || teamId }
         : person,
     );
     return;
@@ -2953,8 +3029,9 @@ function syncAccountPersonForState(targetState, account) {
     accountId: account.id,
     employeeNo: nextFormattedEmployeeNo("Employee", usedEmployeeNos, targetState.people.length),
     name: account.name,
+    businessUnitId,
     teamId,
-    role: roleName,
+    role: roleLabel(account.role),
     level: leadershipLevelForRole(account.role),
     contractType: "Employee",
     startDate: today(),
@@ -3495,7 +3572,7 @@ function addAccount() {
     showValidation("validationRequired");
     return;
   }
-  if (state.accounts.some((account) => account.email.toLowerCase() === email)) {
+  if (emailConflictExists(email)) {
     showValidation("duplicateEmail");
     return;
   }
@@ -3539,7 +3616,7 @@ function addAccountFromPanel(kind, root) {
     showValidation("validationRequired");
     return;
   }
-  if (state.accounts.some((account) => account.email.toLowerCase() === email)) {
+  if (emailConflictExists(email, personId)) {
     showValidation("duplicateEmail");
     return;
   }
@@ -3580,7 +3657,7 @@ function saveAccountEdit(accountId, root = document) {
     showValidation("validationRequired");
     return;
   }
-  if (state.accounts.some((item) => item.id !== accountId && item.email.toLowerCase() === email)) {
+  if (emailConflictExists(email, personId, accountId)) {
     showValidation("duplicateEmail");
     return;
   }
