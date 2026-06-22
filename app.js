@@ -966,6 +966,40 @@ function sharedStatePayload() {
   };
 }
 
+function configurationScore(data = {}) {
+  const defaultEmails = new Set(defaultState.accounts.map((account) => account.email.toLowerCase()));
+  const customAccounts = (data.accounts || []).filter((account) => !defaultEmails.has(String(account.email || "").toLowerCase())).length;
+  const org = data.org || {};
+  const units = org.units || [];
+  const defaultUnitNames = new Set(defaultState.org.units.map((unit) => unit.name));
+  const customUnits = units.filter((unit) => !defaultUnitNames.has(unit.name)).length;
+  const customTeams = units.flatMap((unit) => unit.teams || []).filter((team) => !String(team.id || "").startsWith("team-")).length;
+  const defaultTags = new Set(defaultState.talentTags);
+  const defaultAwards = new Set(defaultState.awardNames);
+  const defaultActionTypes = new Set(defaultState.talentActionTypes);
+  const defaultActivityTypes = new Set(defaultState.cultureActivityTypes);
+  const configuredPeople = (data.people || []).filter((person) =>
+    (person.talentTags || []).length ||
+    (person.awards || []).length ||
+    (person.growth || []).length ||
+    (person.records || []).length ||
+    person.notes,
+  ).length;
+  return [
+    org.center?.name && org.center.name !== defaultState.org.center.name ? 20 : 0,
+    customAccounts * 10,
+    customUnits * 8,
+    customTeams * 5,
+    ((data.orgGoals || []).length + (data.cultureActivities || []).length + (data.talentActions || []).length) * 4,
+    configuredPeople * 2,
+    (data.formerPeople || []).length * 3,
+    (data.talentTags || []).filter((tag) => !defaultTags.has(tag)).length,
+    (data.awardNames || []).filter((award) => !defaultAwards.has(award)).length,
+    (data.talentActionTypes || []).filter((type) => !defaultActionTypes.has(type)).length,
+    (data.cultureActivityTypes || []).filter((type) => !defaultActivityTypes.has(type)).length,
+  ].reduce((sum, value) => sum + value, 0);
+}
+
 async function loadRemoteState() {
   if (!supabaseClient) return false;
   const sessionAccountId = state.sessionAccountId;
@@ -979,8 +1013,9 @@ async function loadRemoteState() {
   if (error && error.code !== "PGRST116") throw error;
   const remoteData = data?.data && typeof data.data === "object" ? data.data : {};
   remoteStateWasEmpty = !Object.keys(remoteData).length;
+  const shouldUseLocal = remoteStateWasEmpty || configurationScore(localSnapshot) > configurationScore(remoteData);
   state = normalizeState({
-    ...(remoteStateWasEmpty ? localSnapshot : remoteData),
+    ...(shouldUseLocal ? localSnapshot : remoteData),
     sessionAccountId,
     language,
   });
