@@ -1243,6 +1243,62 @@ h1 {
   height: 38px;
 }
 
+.review-pack-layout {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.72fr) minmax(360px, 1.28fr);
+  gap: 18px;
+  align-items: stretch;
+}
+
+.review-pack-control {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  border: 1px solid #d9e3f1;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #fbfdff 0%, #f7faff 100%);
+  padding: 16px;
+}
+
+.review-pack-control p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.review-pack-control .button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: auto;
+}
+
+.review-pack-preview {
+  border: 1px solid #d9e3f1;
+  border-radius: 8px;
+  background: #f6f8fb;
+  padding: 14px;
+}
+
+.review-pack-paper {
+  min-height: 360px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: #fff;
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.06);
+  padding: 22px;
+}
+
+.review-pack-paper pre {
+  margin: 0;
+  white-space: pre-wrap;
+  color: #152238;
+  font-family: "SFMono-Regular", "Menlo", "Consolas", monospace;
+  font-size: 12.5px;
+  line-height: 1.72;
+}
+
 .talent-collapse {
   display: block;
 }
@@ -2135,7 +2191,8 @@ dialog::backdrop {
 
   .talent-filter-grid,
   .talent-action-editor,
-  .talent-action-fields {
+  .talent-action-fields,
+  .review-pack-layout {
     grid-template-columns: 1fr;
   }
 

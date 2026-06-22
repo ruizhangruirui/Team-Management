@@ -171,6 +171,7 @@ const translations = {
     actionPerson: "对象员工", actionType: "行动类型", actionPriority: "优先级", actionStatus: "状态", actionDueDate: "目标日期", actionNote: "行动说明", addTalentAction: "添加人才行动", multiSelectPeopleHint: "可按 Ctrl/Cmd 或 Shift 多选员工。",
     priorityHigh: "高", priorityMedium: "中", priorityLow: "低", statusOpen: "进行中", statusDone: "已完成", statusWatch: "观察中",
     noTalentActions: "暂无人才行动计划。", openTalentActions: "进行中人才行动", confirmTalentAction: "为 {name} 添加人才行动", confirmTalentActions: "为 {count} 名员工添加人才行动",
+    talentReviewPack: "人才评审包", talentReviewPackHint: "选择员工，自动生成一页式人才盘点材料，用于评审会或主管沟通。", reviewPackPerson: "评审对象", reviewPackDescription: "演示版会从员工卡片、主管记录、HRBP 人才洞察、成长轨迹、标签奖项和行动计划里提取信息，生成结构化 memo。", generateReviewPack: "生成评审包", copyReviewPack: "复制", downloadReviewPack: "下载", reviewPackEmpty: "请选择员工并生成评审包。", reviewPackCopied: "评审包已复制。",
     talentSettings: "人才标签设置", newTalentTag: "新增优秀标签", newAwardName: "新增奖项名称", addTag: "添加标签", addAwardName: "添加奖项",
     developmentSettings: "人才发展设置", newActionType: "新增行动类型", newActivityType: "新增活动类型", addActionType: "添加行动类型", addActivityType: "添加活动类型",
     roleSettings: "角色设置", roleSettingsHint: "可修改角色显示名称；权限逻辑仍由系统内置角色类型控制。", roleDisplayName: "角色显示名称", selectEmployeeForAccess: "绑定员工身份", selectEmployeeHint: "这里是把登录账号绑定到系统里的员工本人；可见范围由授权范围或 HRBP 覆盖 Team 决定。", employeeSearchPlaceholder: "按工号、姓名、Business Unit、Team 或岗位检索",
@@ -257,6 +258,7 @@ const translations = {
     actionPerson: "Employees", actionType: "Action Type", actionPriority: "Priority", actionStatus: "Status", actionDueDate: "Due Date", actionNote: "Action Note", addTalentAction: "Add Talent Action", multiSelectPeopleHint: "Hold Ctrl/Cmd or Shift to select multiple employees.",
     priorityHigh: "High", priorityMedium: "Medium", priorityLow: "Low", statusOpen: "Open", statusDone: "Done", statusWatch: "Watch",
     noTalentActions: "No talent action plans yet.", openTalentActions: "Open talent actions", confirmTalentAction: "Add talent action for {name}", confirmTalentActions: "Add talent action for {count} employees",
+    talentReviewPack: "Talent Review Pack", talentReviewPackHint: "Select one employee and generate a one-page review memo for talent calibration or manager discussion.", reviewPackPerson: "Review Person", reviewPackDescription: "The demo pulls from the employee card, manager records, HRBP insights, growth path, tags, awards, and action plans to create a structured memo.", generateReviewPack: "Generate Review Pack", copyReviewPack: "Copy", downloadReviewPack: "Download", reviewPackEmpty: "Select an employee and generate a review pack.", reviewPackCopied: "Review pack copied.",
     talentSettings: "Talent Tag Settings", newTalentTag: "New Talent Tag", newAwardName: "New Award Name", addTag: "Add Tag", addAwardName: "Add Award Name",
     developmentSettings: "Talent Development Settings", newActionType: "New Action Type", newActivityType: "New Activity Type", addActionType: "Add Action Type", addActivityType: "Add Activity Type",
     roleSettings: "Role Settings", roleSettingsHint: "Edit role display names. Permission behavior remains tied to the built-in role type.", roleDisplayName: "Role Display Name", selectEmployeeForAccess: "Link Employee Identity", selectEmployeeHint: "This links the login account to one employee profile. Visibility is controlled by Scope or HRBP covered Teams.", employeeSearchPlaceholder: "Search by ID, name, Business Unit, Team, or job title",
@@ -310,6 +312,7 @@ const elements = {
   goalScopeSelect: $("#goalScopeSelect"), goalYear: $("#goalYear"), currentSituationInput: $("#currentSituationInput"), goalInput: $("#goalInput"), gapInput: $("#gapInput"), majorWorkInput: $("#majorWorkInput"), addGoalBtn: $("#addGoalBtn"), goalList: $("#goalList"),
   activityScopeSelect: $("#activityScopeSelect"), activityType: $("#activityType"), activityDate: $("#activityDate"), activityParticipants: $("#activityParticipants"), activitySummary: $("#activitySummary"), addActivityBtn: $("#addActivityBtn"), activityList: $("#activityList"),
   talentDashboard: $("#talentDashboard"), talentUnitFilter: $("#talentUnitFilter"), talentTeamFilter: $("#talentTeamFilter"), talentActionPerson: $("#talentActionPerson"), talentActionType: $("#talentActionType"), talentActionPriority: $("#talentActionPriority"), talentActionStatus: $("#talentActionStatus"), talentActionDueDate: $("#talentActionDueDate"), talentActionNote: $("#talentActionNote"), addTalentActionBtn: $("#addTalentActionBtn"), talentActionList: $("#talentActionList"),
+  reviewPackPerson: $("#reviewPackPerson"), reviewPackOutput: $("#reviewPackOutput"), generateReviewPackBtn: $("#generateReviewPackBtn"), copyReviewPackBtn: $("#copyReviewPackBtn"), downloadReviewPackBtn: $("#downloadReviewPackBtn"),
   developmentTree: $("#developmentTree"),
   newTalentTag: $("#newTalentTag"), newAwardName: $("#newAwardName"), addTalentTagBtn: $("#addTalentTagBtn"), addAwardNameBtn: $("#addAwardNameBtn"), talentSettingList: $("#talentSettingList"),
   newActionType: $("#newActionType"), newActivityType: $("#newActivityType"), addActionTypeBtn: $("#addActionTypeBtn"), addActivityTypeBtn: $("#addActivityTypeBtn"), developmentSettingList: $("#developmentSettingList"), roleSettingList: $("#roleSettingList"),
@@ -2106,6 +2109,12 @@ function renderTalentDevelopment() {
   elements.talentActionPerson.innerHTML = talentPeople
     .map((person) => `<option value="${person.id}">${escapeHtml(person.employeeNo)} · ${escapeHtml(person.name)} · ${escapeHtml(personOrgPath(person))}</option>`)
     .join("");
+  elements.reviewPackPerson.innerHTML = talentPeople
+    .map((person) => `<option value="${person.id}">${escapeHtml(person.employeeNo)} · ${escapeHtml(person.name)} · ${escapeHtml(personOrgPath(person))}</option>`)
+    .join("");
+  if (!talentPeople.some((person) => person.id === elements.reviewPackPerson.value)) {
+    elements.reviewPackPerson.value = talentPeople[0]?.id || "";
+  }
   elements.talentActionDueDate.value = elements.talentActionDueDate.value || today();
   if (!editingTalentActionId) elements.addTalentActionBtn.textContent = t("addTalentAction");
   elements.talentActionList.innerHTML = visibleActions.length
@@ -2132,6 +2141,123 @@ function renderTalentDashboard(actions, people = visiblePeople()) {
     [t("successorCount"), successors.length],
   ];
   elements.talentDashboard.innerHTML = cards.map(([label, value]) => `<div class="stat-card"><strong>${value}</strong><span>${escapeHtml(label)}</span></div>`).join("");
+}
+
+function goalSummaryForPerson(person) {
+  const scopes = [`unit:${person.businessUnitId}`];
+  if (person.teamId) scopes.push(`team:${person.teamId}`);
+  return state.orgGoals
+    .filter((goal) => scopes.includes(goal.scope))
+    .slice(0, 3)
+    .map((goal) => {
+      const label = scopeLabelByValue(goal.scope);
+      const parts = [
+        goal.currentSituation ? `Current: ${goal.currentSituation}` : "",
+        goal.goal ? `Goal: ${goal.goal}` : "",
+        goal.gap ? `Gap: ${goal.gap}` : "",
+        goal.majorWork ? `Work: ${goal.majorWork}` : "",
+      ].filter(Boolean);
+      return `${goal.year || ""} ${label}: ${parts.join(" | ")}`;
+    });
+}
+
+function recordsByTypes(person, types) {
+  const accepted = new Set(types);
+  return [...(person.records || [])]
+    .filter((record) => accepted.has(record.type))
+    .sort((a, b) => String(b.date).localeCompare(String(a.date)))
+    .slice(0, 5);
+}
+
+function generateTalentReviewPack() {
+  const person = state.people.find((item) => item.id === elements.reviewPackPerson.value);
+  if (!person) {
+    elements.reviewPackOutput.textContent = t("reviewPackEmpty");
+    return;
+  }
+  const team = findTeam(person.teamId);
+  const unit = findUnit(person.businessUnitId);
+  const actions = state.talentActions.filter((action) => action.personId === person.id && !action.archived);
+  const managerRecords = recordsByTypes(person, ["优秀事迹", "平时表现"]);
+  const talentInsights = recordsByTypes(person, ["Talent Insight", "人才风险", "培养建议", "HRBP记录"]);
+  const tags = person.talentTags?.length ? person.talentTags.join(", ") : "None";
+  const awards = person.awards?.length
+    ? person.awards.map((award) => `${award.name}${award.date ? ` (${award.date})` : ""}`).join("; ")
+    : "None";
+  const growth = person.growth?.length
+    ? person.growth.slice(-5).map((item) => `- ${item.date || ""} ${item.type}: ${item.note || ""}`).join("\n")
+    : "- No growth records yet";
+  const goals = goalSummaryForPerson(person);
+  const actionLines = actions.length
+    ? actions.map((action) => `- ${action.type}: ${action.status} / ${action.priority}, due ${action.dueDate || "TBD"}; ${action.note || "No note"}`).join("\n")
+    : "- No open talent actions";
+  const managerLines = managerRecords.length
+    ? managerRecords.map((record) => `- ${record.date}: ${record.type} - ${record.content}`).join("\n")
+    : "- No manager records yet";
+  const insightLines = talentInsights.length
+    ? talentInsights.map((record) => `- ${record.date}: ${record.type} - ${record.content}`).join("\n")
+    : "- No HRBP talent insights yet";
+  const goalLines = goals.length ? goals.map((goal) => `- ${goal}`).join("\n") : "- No linked annual goal yet";
+  const discussionPoints = [
+    actions.some((action) => action.type === "Retention Risk") ? "- Review retention risk, manager intervention, and owner." : "- Confirm next development move and accountable owner.",
+    person.talentTags?.length ? "- Validate whether current tags still match evidence from recent work." : "- Decide whether the employee should enter a named talent pool.",
+    "- Align next 90-day action with team current situation, goal, and gap.",
+  ].join("\n");
+
+  elements.reviewPackOutput.textContent = [
+    `TALENT REVIEW PACK`,
+    `${person.name} / ${person.employeeNo}`,
+    "",
+    `Basic Profile`,
+    `- Job Title: ${person.role || "Not filled"}`,
+    `- Level: ${person.level || "Not filled"}`,
+    `- Contract: ${person.contractType || "Not filled"}`,
+    `- Business Unit: ${unitDisplayName(unit) || "Not filled"}`,
+    `- Team: ${team?.name || "None"}`,
+    `- Tenure: ${tenureLabel(person.startDate)}`,
+    "",
+    `Talent Signals`,
+    `- Tags: ${tags}`,
+    `- Awards: ${awards}`,
+    "",
+    `Manager Records`,
+    managerLines,
+    "",
+    `Talent Insights / HRBP Notes`,
+    insightLines,
+    "",
+    `Growth Path`,
+    growth,
+    "",
+    `Talent Action Plan`,
+    actionLines,
+    "",
+    `Org Context`,
+    goalLines,
+    "",
+    `Suggested Discussion Points`,
+    discussionPoints,
+  ].join("\n");
+}
+
+async function copyTalentReviewPack() {
+  const text = elements.reviewPackOutput.textContent.trim();
+  if (!text || text === t("reviewPackEmpty")) return;
+  await navigator.clipboard.writeText(text);
+  showToast(t("reviewPackCopied"));
+}
+
+function downloadTalentReviewPack() {
+  const text = elements.reviewPackOutput.textContent.trim();
+  if (!text || text === t("reviewPackEmpty")) return;
+  const person = state.people.find((item) => item.id === elements.reviewPackPerson.value);
+  const filename = `talent-review-pack-${(person?.employeeNo || "employee").replace(/[^a-z0-9_-]/gi, "")}.txt`;
+  const url = URL.createObjectURL(new Blob([text], { type: "text/plain;charset=utf-8" }));
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(url);
 }
 
 function renderTalentActionCard(action) {
@@ -4062,6 +4188,9 @@ elements.addActivityTypeBtn.addEventListener("click", () => addConfigType("activ
 elements.addGoalBtn.addEventListener("click", addGoal);
 elements.addActivityBtn.addEventListener("click", addActivity);
 elements.addTalentActionBtn.addEventListener("click", addTalentAction);
+elements.generateReviewPackBtn.addEventListener("click", generateTalentReviewPack);
+elements.copyReviewPackBtn.addEventListener("click", copyTalentReviewPack);
+elements.downloadReviewPackBtn.addEventListener("click", downloadTalentReviewPack);
 elements.showAddPersonBtn.addEventListener("click", () => { if (canAddDeleteEmployees()) elements.personDialog.showModal(); });
 elements.showDeletePersonBtn.addEventListener("click", openDeleteEmployeeDialog);
 elements.closeDialogBtn.addEventListener("click", () => elements.personDialog.close());

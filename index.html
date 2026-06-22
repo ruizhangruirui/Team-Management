@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>人才管理系统 / Talent Management</title>
-    <link rel="stylesheet" href="./styles.css?v=20260622-ink-signature" />
+    <link rel="stylesheet" href="./styles.css?v=20260622-review-pack-demo" />
   </head>
   <body>
     <section id="loginView" class="login-view">
@@ -243,6 +243,32 @@
             </label>
             <button id="addTalentActionBtn" type="button" class="primary owner-hrbp-write" data-i18n="addTalentAction">添加人才行动</button>
             <div id="talentActionList" class="record-list"></div>
+          </details>
+
+          <details class="admin-placeholder talent-collapse">
+            <summary class="section-title">
+              <span data-i18n="talentReviewPack">人才评审包</span>
+              <small data-i18n="talentReviewPackHint">选择员工，自动生成一页式人才盘点材料，用于评审会或主管沟通。</small>
+            </summary>
+            <div class="review-pack-layout">
+              <div class="review-pack-control">
+                <label>
+                  <span data-i18n="reviewPackPerson">评审对象</span>
+                  <select id="reviewPackPerson"></select>
+                </label>
+                <p data-i18n="reviewPackDescription">演示版会从员工卡片、主管记录、HRBP 人才洞察、成长轨迹、标签奖项和行动计划里提取信息，生成结构化 memo。</p>
+                <div class="button-row">
+                  <button id="generateReviewPackBtn" type="button" class="primary" data-i18n="generateReviewPack">生成评审包</button>
+                  <button id="copyReviewPackBtn" type="button" data-i18n="copyReviewPack">复制</button>
+                  <button id="downloadReviewPackBtn" type="button" data-i18n="downloadReviewPack">下载</button>
+                </div>
+              </div>
+              <div class="review-pack-preview">
+                <div class="review-pack-paper">
+                  <pre id="reviewPackOutput" data-i18n="reviewPackEmpty">请选择员工并生成评审包。</pre>
+                </div>
+              </div>
+            </div>
           </details>
 
           <details class="admin-placeholder talent-collapse">
