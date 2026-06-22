@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>人才管理系统 / Talent Management</title>
-    <link rel="stylesheet" href="./styles.css?v=20260622-supabase-shared-state" />
+    <link rel="stylesheet" href="./styles.css?v=20260622-free-password-reset" />
   </head>
   <body>
     <section id="loginView" class="login-view">
@@ -28,9 +28,31 @@
         </label>
         <p id="loginError" class="error-text"></p>
         <button type="submit" class="primary" data-i18n="login">登录</button>
+        <button id="forgotPasswordBtn" type="button" class="ghost-button" data-i18n="forgotPassword">忘记密码？</button>
         <p class="hint" id="demoLoginHint"></p>
       </form>
     </section>
+
+    <dialog id="resetPasswordDialog">
+      <form id="resetPasswordForm" method="dialog">
+        <div class="dialog-head">
+          <h2 data-i18n="setNewPassword">设置新密码</h2>
+        </div>
+        <p class="hint" data-i18n="setNewPasswordHint">请输入新密码。保存后即可用新密码登录。</p>
+        <label>
+          <span data-i18n="newPassword">新密码</span>
+          <input id="resetPasswordInput" type="password" autocomplete="new-password" />
+        </label>
+        <label>
+          <span data-i18n="confirmNewPassword">确认新密码</span>
+          <input id="resetPasswordConfirmInput" type="password" autocomplete="new-password" />
+        </label>
+        <p id="resetPasswordError" class="error-text"></p>
+        <div class="dialog-actions">
+          <button id="saveResetPasswordBtn" type="submit" class="primary" data-i18n="savePassword">保存密码</button>
+        </div>
+      </form>
+    </dialog>
 
     <div class="app-shell">
       <aside class="sidebar">
@@ -827,6 +849,6 @@
     <div id="toast" class="toast" aria-live="polite"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="./app.js?v=20260622-settings-refinement"></script>
+    <script src="./app.js?v=20260622-free-password-reset"></script>
   </body>
 </html>

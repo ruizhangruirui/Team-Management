@@ -108,7 +108,7 @@ const defaultState = {
 const translations = {
   zh: {
     loginTitle: "登录", email: "邮箱", password: "密码", login: "登录", logout: "退出登录",
-    changePassword: "修改密码", currentPassword: "当前密码", newPassword: "新密码", confirmNewPassword: "确认新密码", savePassword: "保存密码", temporaryPassword: "密码备注", passwordRecordHint: "仅用于 Team Management 内部记录，不会自动创建或修改 Supabase Auth 密码。真实登录密码请在 Supabase 用户或用户本人修改密码时设置。", passwordManagedInSupabase: "由 Supabase 管理",
+    changePassword: "修改密码", currentPassword: "当前密码", newPassword: "新密码", confirmNewPassword: "确认新密码", savePassword: "保存密码", forgotPassword: "忘记密码？", setNewPassword: "设置新密码", setNewPasswordHint: "请输入新密码。保存后即可用新密码登录。", resetPasswordSent: "如果该邮箱存在于 Supabase，重置密码邮件将会发送。", resetPasswordUnavailable: "当前未连接 Supabase，无法发送重置密码邮件。", passwordResetSaved: "新密码已保存。",
     language: "语言 / Language", accountsAndPermissions: "领导关系与 HRBP 覆盖",
     accountName: "账号姓名", permissionRole: "授权角色", scope: "授权范围", addAccount: "添加账号",
     ownerCanAssign: "Owner 可添加账号、设置领导关系与访问范围。Research Center Director 与 Owner 可看所有人。",
@@ -140,7 +140,7 @@ const translations = {
     addRecord: "添加记录", allTeams: "全部团队", allUnits: "全部 Business Unit", peopleUnit: "人", noManager: "暂不分配",
     noMatchedPeople: "暂无匹配人员。", notFilled: "未填写", noNotes: "暂无备注", noTeam: "无 Team", tenure: "在职时长",
     recordCount: "条人才记录", canAdd: "可添加", readOnly: "只读", noRecords: "暂无人才记录。",
-    loginFailed: "邮箱或密码不正确。", loginNoRole: "登录成功，但该邮箱还没有在系统里配置角色权限。请 Owner 在设置里添加同邮箱账号。", loginServiceUnavailable: "登录服务暂时无响应，请检查网络、Supabase 用户是否已创建，或稍后重试。", remoteLoadFailed: "无法读取 Supabase 共享数据，请确认 app_state 表和 RLS policy 已创建。", remoteSaveFailed: "保存到 Supabase 失败，请稍后重试。", demoHint: "请使用 Supabase 中已创建且已授权的邮箱登录；救援账号：owner1@example.com / owner123。",
+    loginFailed: "邮箱或密码不正确。", loginNoRole: "登录成功，但该邮箱还没有在系统里配置角色权限。请 Owner 在设置里添加同邮箱账号。", loginServiceUnavailable: "登录服务暂时无响应，请检查网络、Supabase 用户是否已创建，或稍后重试。", remoteLoadFailed: "无法读取 Supabase 共享数据，请确认 app_state 表和 RLS policy 已创建。", remoteSaveFailed: "保存到 Supabase 失败，请稍后重试。", demoHint: "请使用 Supabase 中已创建且已授权的邮箱登录；救援账号：owner1@example.com / owner123。密码由 Supabase 管理，忘记密码可用重置邮件。",
     ownerPermission: "Owner 可添加/删除员工、创建邮箱账号并授权；Research Center Director 可查看所有员工。",
     directorPermission: "Research Center Director 可查看所有 Lab、Platform、Team 与全部人员详情。",
     labPermission: "Lab Director / PLR 可查看其 Lab 下所有 Team 和人员详情。",
@@ -194,7 +194,7 @@ const translations = {
   },
   en: {
     loginTitle: "Sign In", email: "Email", password: "Password", login: "Sign In", logout: "Sign Out",
-    changePassword: "Change Password", currentPassword: "Current Password", newPassword: "New Password", confirmNewPassword: "Confirm New Password", savePassword: "Save Password", temporaryPassword: "Password Note", passwordRecordHint: "Internal Team Management record only. It does not create or update the Supabase Auth password. Set the real login password in Supabase or through the user's own password change.", passwordManagedInSupabase: "Managed in Supabase",
+    changePassword: "Change Password", currentPassword: "Current Password", newPassword: "New Password", confirmNewPassword: "Confirm New Password", savePassword: "Save Password", forgotPassword: "Forgot password?", setNewPassword: "Set New Password", setNewPasswordHint: "Enter a new password. After saving, use it to sign in.", resetPasswordSent: "If this email exists in Supabase, a password reset email will be sent.", resetPasswordUnavailable: "Supabase is not connected, so password reset email cannot be sent.", passwordResetSaved: "New password saved.",
     language: "Language / 语言", accountsAndPermissions: "Leadership & HRBP Coverage",
     accountName: "Account Name", permissionRole: "Permission Role", scope: "Scope", addAccount: "Add Account",
     ownerCanAssign: "Owners can add accounts, set leadership relationships, and authorize access scope. Research Center Directors and Owners can see everyone.",
@@ -226,7 +226,7 @@ const translations = {
     addRecord: "Add Record", allTeams: "All Teams", allUnits: "All Business Units", peopleUnit: "people", noManager: "No manager",
     noMatchedPeople: "No matching people.", notFilled: "Not filled", noNotes: "No notes", noTeam: "No Team", tenure: "Tenure",
     recordCount: "talent records", canAdd: "Can add", readOnly: "Read only", noRecords: "No talent records yet.",
-    loginFailed: "Email or password is incorrect.", loginNoRole: "Sign-in succeeded, but this email has no role in Team Management. Ask an Owner to add the same email in Settings.", loginServiceUnavailable: "The login service is not responding. Check the network, Supabase user setup, or try again later.", remoteLoadFailed: "Cannot load shared Supabase data. Check that the app_state table and RLS policies exist.", remoteSaveFailed: "Failed to save to Supabase. Please try again.", demoHint: "Use a Supabase email that is authorized in settings. Rescue login: owner1@example.com / owner123.",
+    loginFailed: "Email or password is incorrect.", loginNoRole: "Sign-in succeeded, but this email has no role in Team Management. Ask an Owner to add the same email in Settings.", loginServiceUnavailable: "The login service is not responding. Check the network, Supabase user setup, or try again later.", remoteLoadFailed: "Cannot load shared Supabase data. Check that the app_state table and RLS policies exist.", remoteSaveFailed: "Failed to save to Supabase. Please try again.", demoHint: "Use a Supabase email that is authorized in settings. Rescue login: owner1@example.com / owner123. Passwords are managed by Supabase; use reset email if forgotten.",
     ownerPermission: "Owners can add/delete employees, create email accounts, and authorize scope. Research Center Directors can view all employees.",
     directorPermission: "Research Center Directors can view all Labs, Platforms, Teams, and employee details.",
     labPermission: "Lab Directors / PLRs can view all teams and employee details under their Lab.",
@@ -292,11 +292,13 @@ let remoteSaveTimer = 0;
 let suppressRemoteSave = false;
 let isSavingRemote = false;
 let remoteAuthEmail = "";
+let passwordRecoveryEmail = "";
 let normalizedDefaultCache = null;
 
 const $ = (selector) => document.querySelector(selector);
 const elements = {
   loginView: $("#loginView"), loginForm: $("#loginForm"), loginError: $("#loginError"), demoLoginHint: $("#demoLoginHint"), loginLanguageSwitcher: $("#loginLanguageSwitcher"),
+  forgotPasswordBtn: $("#forgotPasswordBtn"), resetPasswordDialog: $("#resetPasswordDialog"), resetPasswordForm: $("#resetPasswordForm"), resetPasswordInput: $("#resetPasswordInput"), resetPasswordConfirmInput: $("#resetPasswordConfirmInput"), resetPasswordError: $("#resetPasswordError"),
   languageSwitcher: $("#languageSwitcher"), signedInName: $("#signedInName"), signedInMeta: $("#signedInMeta"), logoutBtn: $("#logoutBtn"), settingsBtn: $("#settingsBtn"),
   currentPasswordInput: $("#currentPasswordInput"), newPasswordInput: $("#newPasswordInput"), confirmPasswordInput: $("#confirmPasswordInput"), changePasswordBtn: $("#changePasswordBtn"),
   settingsDialog: $("#settingsDialog"), settingsForm: $("#settingsForm"), closeSettingsBtn: $("#closeSettingsBtn"),
@@ -1623,7 +1625,6 @@ function renderNewAccountForm(kind) {
       <label><span>${t("selectEmployeeForAccess")}</span><input data-new-account-person-search="${kind}" type="search" placeholder="${escapeHtml(t("employeeSearchPlaceholder"))}" /><select data-new-account-person="${kind}">${employeeAccessOptions()}</select><small class="hint">${t("selectEmployeeHint")}</small></label>
       <label><span>${t("accountName")}</span><input data-new-account-name="${kind}" type="text" /></label>
       <label><span>${t("email")}</span><input data-new-account-email="${kind}" type="email" /></label>
-      <label><span>${t("temporaryPassword")}</span><input data-new-account-password="${kind}" type="text" /><small class="hint">${t("passwordRecordHint")}</small></label>
       ${roleSelect}
       <label><span>${t("scope")}</span><select data-new-account-scope="${kind}" ${isHrbpForm ? "multiple size=\"8\"" : ""}>${newAccountScopeOptions(isHrbpForm ? "hrbp" : "researchDirector")}</select>${isHrbpForm ? `<small class="hint">${state.language === "en" ? "Select one or more Teams, then confirm." : "可选择一个或多个 Team，然后确认创建。"}</small>` : ""}</label>
       <button type="button" class="primary" data-add-account-kind="${kind}">${t("addAccount")}</button>
@@ -1782,7 +1783,6 @@ function renderAccountRow(account) {
       </summary>
       <label><span>${t("accountName")}</span><input data-account-name="${account.id}" value="${escapeHtml(account.name)}" /></label>
       <label><span>${t("email")}</span><input data-account-email="${account.id}" type="email" value="${escapeHtml(account.email)}" /></label>
-      <label><span>${t("password")}</span><input class="readonly-field" type="text" value="${escapeHtml(account.password)}" readonly /><small class="hint">${t("passwordRecordHint")}</small></label>
       <label><span>${t("selectEmployeeForAccess")}</span><input data-account-person-search="${account.id}" type="search" placeholder="${escapeHtml(t("employeeSearchPlaceholder"))}" /><select data-account-person="${account.id}">${employeeAccessOptions(account.personId || state.people.find((person) => person.accountId === account.id)?.id || "")}</select></label>
       <label><span>${t("permissionRole")}</span><select data-account-role="${account.id}">${roleOptions(account.role)}</select></label>
       <label><span>${t("scope")}</span><select data-account-scope="${account.id}" ${multi ? `multiple size="${Math.min(5, state.org.units.length)}"` : ""}>${scopeOptionsForRole(account.role, multi ? accountScopeIds(account) : account.scopeId)}</select>${scopeHelp}</label>
@@ -3596,7 +3596,7 @@ function addAccount() {
   const scopeType = role === "researchDirector" ? "center" : ["teamManager", "hrbp"].includes(role) ? "team" : "unit";
   const name = elements.newAccountName.value.trim();
   const email = elements.newAccountEmail.value.trim().toLowerCase();
-  const password = elements.newAccountPassword.value || t("passwordManagedInSupabase");
+  const password = "";
   if (!name || !email || !scopeId) {
     showValidation("validationRequired");
     return;
@@ -3637,10 +3637,9 @@ function addAccountFromPanel(kind, root) {
   const scopeType = role === "owner" || role === "researchDirector" ? "center" : ["teamManager", "hrbp"].includes(role) ? "team" : "unit";
   const nameInput = root.querySelector(`[data-new-account-name="${kind}"]`);
   const emailInput = root.querySelector(`[data-new-account-email="${kind}"]`);
-  const passwordInput = root.querySelector(`[data-new-account-password="${kind}"]`);
   const name = nameInput?.value.trim() || selectedPerson?.name || "";
   const email = emailInput?.value.trim().toLowerCase();
-  const password = passwordInput?.value || t("passwordManagedInSupabase");
+  const password = "";
   if (!personId || !name || !email || !role || !scopeId || (role === "hrbp" && !selectedScopeIds.length)) {
     showValidation("validationRequired");
     return;
@@ -3666,7 +3665,6 @@ function addAccountFromPanel(kind, root) {
   syncAccountPerson(account);
   nameInput.value = "";
   emailInput.value = "";
-  passwordInput.value = "";
   saveAndRender();
   showToast(t("accountCreated"));
 }
@@ -3796,6 +3794,81 @@ async function changeOwnPassword() {
   showToast(t("passwordSaved"));
 }
 
+function resetRedirectUrl() {
+  return `${window.location.origin}${window.location.pathname}`;
+}
+
+async function sendPasswordResetEmail() {
+  const email = String(new FormData(elements.loginForm).get("email") || "").trim().toLowerCase();
+  elements.loginError.textContent = "";
+  if (!email) {
+    showValidation("validationRequired");
+    return;
+  }
+  if (!supabaseClient) {
+    elements.loginError.textContent = t("resetPasswordUnavailable");
+    return;
+  }
+  elements.forgotPasswordBtn.disabled = true;
+  try {
+    const { error } = await withTimeout(supabaseClient.auth.resetPasswordForEmail(email, { redirectTo: resetRedirectUrl() }));
+    if (error) {
+      elements.loginError.textContent = error.message || t("loginServiceUnavailable");
+      return;
+    }
+    showToast(t("resetPasswordSent"));
+  } catch (error) {
+    console.error(error);
+    elements.loginError.textContent = t("loginServiceUnavailable");
+  } finally {
+    elements.forgotPasswordBtn.disabled = false;
+  }
+}
+
+async function saveRecoveredPassword(event) {
+  event.preventDefault();
+  if (!supabaseClient) return;
+  const newPassword = elements.resetPasswordInput.value;
+  const confirmPassword = elements.resetPasswordConfirmInput.value;
+  elements.resetPasswordError.textContent = "";
+  if (!newPassword || !confirmPassword) {
+    elements.resetPasswordError.textContent = t("validationRequired");
+    return;
+  }
+  if (newPassword.length < 6) {
+    elements.resetPasswordError.textContent = t("passwordTooShort");
+    return;
+  }
+  if (newPassword !== confirmPassword) {
+    elements.resetPasswordError.textContent = t("passwordMismatch");
+    return;
+  }
+  const { error } = await supabaseClient.auth.updateUser({ password: newPassword });
+  if (error) {
+    elements.resetPasswordError.textContent = error.message || t("remoteSaveFailed");
+    return;
+  }
+  elements.resetPasswordInput.value = "";
+  elements.resetPasswordConfirmInput.value = "";
+  elements.resetPasswordDialog.close();
+  showToast(t("passwordResetSaved"));
+  if (!passwordRecoveryEmail) return;
+  try {
+    await loadRemoteState();
+    const account = accountByEmail(passwordRecoveryEmail);
+    if (account) {
+      remoteAuthEmail = passwordRecoveryEmail;
+      completeLogin(account);
+      return;
+    }
+    await clearRemoteAuth();
+    elements.loginError.textContent = t("loginNoRole");
+  } catch (error) {
+    console.error(error);
+    elements.loginError.textContent = t("remoteLoadFailed");
+  }
+}
+
 elements.loginForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const data = new FormData(elements.loginForm);
@@ -3859,6 +3932,17 @@ elements.loginForm.addEventListener("submit", async (event) => {
     if (loginButton) loginButton.disabled = false;
   }
 });
+elements.forgotPasswordBtn.addEventListener("click", sendPasswordResetEmail);
+elements.resetPasswordForm.addEventListener("submit", saveRecoveredPassword);
+
+if (supabaseClient) {
+  supabaseClient.auth.onAuthStateChange((event, session) => {
+    if (event !== "PASSWORD_RECOVERY") return;
+    passwordRecoveryEmail = session?.user?.email?.toLowerCase() || "";
+    elements.resetPasswordError.textContent = "";
+    elements.resetPasswordDialog.showModal();
+  });
+}
 
 elements.logoutBtn.addEventListener("click", async () => {
   state.sessionAccountId = "";
