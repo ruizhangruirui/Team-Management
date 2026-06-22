@@ -24,6 +24,15 @@ const defaultState = {
   awardNames: ["年度创新奖", "优秀人才奖", "技术突破奖"],
   talentActionTypes: ["IDP", "Succession", "Key Role Backup", "Retention Risk", "Learning"],
   cultureActivityTypes: ["团队活动", "峰会参会", "技术分享", "跨团队共创"],
+  roleSettings: {
+    owner: "Owner",
+    researchDirector: "Research Center Director",
+    labDirector: "Lab Director",
+    plr: "PLR",
+    platformLead: "Lead",
+    hrbp: "HRBP",
+    teamManager: "Lead",
+  },
   orgGoals: [],
   cultureActivities: [],
   talentActions: [],
@@ -163,6 +172,7 @@ const translations = {
     noTalentActions: "暂无人才行动计划。", openTalentActions: "进行中人才行动", confirmTalentAction: "为 {name} 添加人才行动", confirmTalentActions: "为 {count} 名员工添加人才行动",
     talentSettings: "人才标签设置", newTalentTag: "新增优秀标签", newAwardName: "新增奖项名称", addTag: "添加标签", addAwardName: "添加奖项",
     developmentSettings: "人才发展设置", newActionType: "新增行动类型", newActivityType: "新增活动类型", addActionType: "添加行动类型", addActivityType: "添加活动类型",
+    roleSettings: "角色设置", roleSettingsHint: "可修改角色显示名称；权限逻辑仍由系统内置角色类型控制。", roleDisplayName: "角色显示名称", selectEmployeeForAccess: "选择员工授权", selectEmployeeHint: "今后新增 Leadership / HRBP 账号应先选择员工，再绑定 Supabase 邮箱与权限。",
     actionTypeSettings: "行动类型", activityTypeSettings: "活动类型", archive: "存档", archived: "已存档", edit: "编辑", updateTalentAction: "更新人才行动",
     talentHighlights: "优秀标签与获奖记录", talentTag: "优秀标签", awardName: "奖项名称", awardDate: "获奖日期", awardNote: "说明", addAward: "添加奖项",
     editTalentHighlights: "添加 / 编辑标签与奖项", editGrowthPath: "添加成长轨迹",
@@ -248,6 +258,7 @@ const translations = {
     noTalentActions: "No talent action plans yet.", openTalentActions: "Open talent actions", confirmTalentAction: "Add talent action for {name}", confirmTalentActions: "Add talent action for {count} employees",
     talentSettings: "Talent Tag Settings", newTalentTag: "New Talent Tag", newAwardName: "New Award Name", addTag: "Add Tag", addAwardName: "Add Award Name",
     developmentSettings: "Talent Development Settings", newActionType: "New Action Type", newActivityType: "New Activity Type", addActionType: "Add Action Type", addActivityType: "Add Activity Type",
+    roleSettings: "Role Settings", roleSettingsHint: "Edit role display names. Permission behavior remains tied to the built-in role type.", roleDisplayName: "Role Display Name", selectEmployeeForAccess: "Select Employee for Access", selectEmployeeHint: "New Leadership / HRBP access should start from an employee, then bind the Supabase email and scope.",
     actionTypeSettings: "Action Types", activityTypeSettings: "Activity Types", archive: "Archive", archived: "Archived", edit: "Edit", updateTalentAction: "Update Talent Action",
     talentHighlights: "Talent Tags & Awards", talentTag: "Talent Tag", awardName: "Award Name", awardDate: "Award Date", awardNote: "Note", addAward: "Add Award",
     editTalentHighlights: "Add / Edit Tags & Awards", editGrowthPath: "Add Growth Path",
@@ -269,7 +280,8 @@ const translations = {
   },
 };
 
-let state = normalizeState(loadState());
+let state = null;
+state = normalizeState(loadState());
 let activePersonId = "";
 let editingTalentActionId = "";
 let editingBasicInfo = false;
@@ -297,7 +309,7 @@ const elements = {
   talentDashboard: $("#talentDashboard"), talentUnitFilter: $("#talentUnitFilter"), talentTeamFilter: $("#talentTeamFilter"), talentActionPerson: $("#talentActionPerson"), talentActionType: $("#talentActionType"), talentActionPriority: $("#talentActionPriority"), talentActionStatus: $("#talentActionStatus"), talentActionDueDate: $("#talentActionDueDate"), talentActionNote: $("#talentActionNote"), addTalentActionBtn: $("#addTalentActionBtn"), talentActionList: $("#talentActionList"),
   developmentTree: $("#developmentTree"),
   newTalentTag: $("#newTalentTag"), newAwardName: $("#newAwardName"), addTalentTagBtn: $("#addTalentTagBtn"), addAwardNameBtn: $("#addAwardNameBtn"), talentSettingList: $("#talentSettingList"),
-  newActionType: $("#newActionType"), newActivityType: $("#newActivityType"), addActionTypeBtn: $("#addActionTypeBtn"), addActivityTypeBtn: $("#addActivityTypeBtn"), developmentSettingList: $("#developmentSettingList"),
+  newActionType: $("#newActionType"), newActivityType: $("#newActivityType"), addActionTypeBtn: $("#addActionTypeBtn"), addActivityTypeBtn: $("#addActivityTypeBtn"), developmentSettingList: $("#developmentSettingList"), roleSettingList: $("#roleSettingList"),
   instituteName: $("#instituteName"), labList: $("#labList"), teamList: $("#teamList"), pageTitle: $("#pageTitle"), pageSubtitle: $("#pageSubtitle"), totalPeople: $("#totalPeople"), regularPeople: $("#regularPeople"), avgTenure: $("#avgTenure"),
   searchInput: $("#searchInput"), showAddPersonBtn: $("#showAddPersonBtn"), showDeletePersonBtn: $("#showDeletePersonBtn"), orgChart: $("#orgChart"),
   employeeImportFile: $("#employeeImportFile"), employeeImportMode: $("#employeeImportMode"), employeeImportText: $("#employeeImportText"), importEmployeesBtn: $("#importEmployeesBtn"), clearImportBtn: $("#clearImportBtn"), downloadImportTemplateBtn: $("#downloadImportTemplateBtn"), employeeImportResult: $("#employeeImportResult"),
@@ -360,6 +372,7 @@ function normalizeState(raw) {
   next.awardNames = Array.isArray(raw.awardNames) ? raw.awardNames : structuredClone(defaultState.awardNames);
   next.talentActionTypes = Array.isArray(raw.talentActionTypes) ? raw.talentActionTypes : structuredClone(defaultState.talentActionTypes);
   next.cultureActivityTypes = Array.isArray(raw.cultureActivityTypes) ? raw.cultureActivityTypes : structuredClone(defaultState.cultureActivityTypes);
+  next.roleSettings = { ...defaultState.roleSettings, ...(raw.roleSettings || {}) };
   next.orgGoals = Array.isArray(raw.orgGoals) ? raw.orgGoals : structuredClone(defaultState.orgGoals);
   next.cultureActivities = Array.isArray(raw.cultureActivities) ? raw.cultureActivities : structuredClone(defaultState.cultureActivities);
   next.talentActions = Array.isArray(raw.talentActions) ? raw.talentActions : structuredClone(defaultState.talentActions);
@@ -1001,6 +1014,7 @@ function sharedDataShape(data = {}) {
     awardNames: data.awardNames || [],
     talentActionTypes: data.talentActionTypes || [],
     cultureActivityTypes: data.cultureActivityTypes || [],
+    roleSettings: data.roleSettings || {},
     orgGoals: data.orgGoals || [],
     cultureActivities: data.cultureActivities || [],
     talentActions: data.talentActions || [],
@@ -1439,6 +1453,7 @@ function render() {
 
   renderAccountAdmin();
   renderOrgAdmin();
+  renderRoleSettings();
   renderTalentSettings();
   renderDevelopmentSettings();
   renderTalentDevelopment();
@@ -1489,15 +1504,19 @@ function renderActivePage() {
 }
 
 function roleLabel(role) {
-  return {
-    owner: "Owner",
-    researchDirector: "Research Center Director",
-    labDirector: "Lab Director",
-    plr: "PLR",
-    platformLead: "Platform Lead",
-    hrbp: "HRBP",
-    teamManager: "Team Lead",
-  }[role] || role;
+  return state?.roleSettings?.[role] || defaultState.roleSettings[role] || role;
+}
+
+function roleEntries(includeOwner = false) {
+  const entries = [
+    ["researchDirector", roleLabel("researchDirector")],
+    ["labDirector", roleLabel("labDirector")],
+    ["plr", roleLabel("plr")],
+    ["platformLead", roleLabel("platformLead")],
+    ["hrbp", roleLabel("hrbp")],
+    ["teamManager", roleLabel("teamManager")],
+  ];
+  return includeOwner ? [["owner", roleLabel("owner")], ...entries] : entries;
 }
 
 function permissionText(role) {
@@ -1551,14 +1570,7 @@ function renderAccountAdmin() {
   bindAccountEditors(elements.accountList);
   bindAccountEditors(elements.hrbpAssignmentList);
   bindNewAccountForms();
-  elements.newAccountRole.innerHTML = [
-    ["researchDirector", "Research Center Director"],
-    ["labDirector", "Lab Director"],
-    ["plr", "PLR"],
-    ["platformLead", "Platform Lead"],
-    ["hrbp", "HRBP"],
-    ["teamManager", "Team Lead"],
-  ].map(([value, label]) => `<option value="${value}">${label}</option>`).join("");
+  elements.newAccountRole.innerHTML = roleEntries().map(([value, label]) => `<option value="${value}">${escapeHtml(label)}</option>`).join("");
   renderScopeOptions();
 }
 
@@ -1573,6 +1585,7 @@ function renderNewAccountForm(kind) {
   return `<details class="account-group account-create">
     <summary><span>${escapeHtml(title)}</span></summary>
     <div class="account-form account-form-wide" data-new-account-form="${kind}">
+      <label><span>${t("selectEmployeeForAccess")}</span><select data-new-account-person="${kind}">${employeeAccessOptions()}</select><small class="hint">${t("selectEmployeeHint")}</small></label>
       <label><span>${t("accountName")}</span><input data-new-account-name="${kind}" type="text" /></label>
       <label><span>${t("email")}</span><input data-new-account-email="${kind}" type="email" /></label>
       <label><span>${t("temporaryPassword")}</span><input data-new-account-password="${kind}" type="text" /></label>
@@ -1584,13 +1597,18 @@ function renderNewAccountForm(kind) {
 }
 
 function businessRoleOptions(selectedRole = "researchDirector") {
-  return [
-    ["researchDirector", "Research Center Director"],
-    ["labDirector", "Lab Director"],
-    ["plr", "PLR"],
-    ["platformLead", "Platform Lead"],
-    ["teamManager", "Team Lead"],
-  ].map(([value, label]) => `<option value="${value}" ${value === selectedRole ? "selected" : ""}>${label}</option>`).join("");
+  return roleEntries()
+    .filter(([value]) => value !== "hrbp")
+    .map(([value, label]) => `<option value="${value}" ${value === selectedRole ? "selected" : ""}>${escapeHtml(label)}</option>`)
+    .join("");
+}
+
+function employeeAccessOptions(selectedPersonId = "") {
+  return [`<option value="">${escapeHtml(t("selectEmployeeForAccess"))}</option>`, ...state.people
+    .slice()
+    .sort((a, b) => String(a.employeeNo).localeCompare(String(b.employeeNo)))
+    .map((person) => `<option value="${person.id}" ${person.id === selectedPersonId ? "selected" : ""}>${escapeHtml(person.employeeNo)} · ${escapeHtml(person.name)}</option>`)]
+    .join("");
 }
 
 function newAccountScopeOptions(role, selectedScope = "") {
@@ -1629,6 +1647,14 @@ function bindNewAccountForms() {
     });
     root.querySelectorAll("[data-add-account-kind]").forEach((button) => {
       button.addEventListener("click", () => addAccountFromPanel(button.dataset.addAccountKind, root));
+    });
+    root.querySelectorAll("[data-new-account-person]").forEach((select) => {
+      select.addEventListener("change", () => {
+        const kind = select.dataset.newAccountPerson;
+        const person = state.people.find((item) => item.id === select.value);
+        const nameInput = root.querySelector(`[data-new-account-name="${kind}"]`);
+        if (person && nameInput && !nameInput.value.trim()) nameInput.value = person.name;
+      });
     });
   });
 }
@@ -1693,6 +1719,7 @@ function renderAccountRow(account) {
       <label><span>${t("accountName")}</span><input data-account-name="${account.id}" value="${escapeHtml(account.name)}" /></label>
       <label><span>${t("email")}</span><input data-account-email="${account.id}" type="email" value="${escapeHtml(account.email)}" /></label>
       <label><span>${t("password")}</span><input class="readonly-field" type="text" value="${escapeHtml(account.password)}" readonly /></label>
+      <label><span>${t("selectEmployeeForAccess")}</span><select data-account-person="${account.id}">${employeeAccessOptions(account.personId || state.people.find((person) => person.accountId === account.id)?.id || "")}</select></label>
       <label><span>${t("permissionRole")}</span><select data-account-role="${account.id}">${roleOptions(account.role)}</select></label>
       <label><span>${t("scope")}</span><select data-account-scope="${account.id}" ${multi ? `multiple size="${Math.min(5, state.org.units.length)}"` : ""}>${scopeOptionsForRole(account.role, multi ? accountScopeIds(account) : account.scopeId)}</select>${scopeHelp}</label>
       <div class="account-actions">
@@ -1704,15 +1731,9 @@ function renderAccountRow(account) {
 }
 
 function roleOptions(selectedRole) {
-  return [
-    ["owner", "Owner"],
-    ["researchDirector", "Research Center Director"],
-    ["labDirector", "Lab Director"],
-    ["plr", "PLR"],
-    ["platformLead", "Platform Lead"],
-    ["hrbp", "HRBP"],
-    ["teamManager", "Team Lead"],
-  ].map(([value, label]) => `<option value="${value}" ${value === selectedRole ? "selected" : ""}>${label}</option>`).join("");
+  return roleEntries(true)
+    .map(([value, label]) => `<option value="${value}" ${value === selectedRole ? "selected" : ""}>${escapeHtml(label)}</option>`)
+    .join("");
 }
 
 function isSelectedScope(selectedScope, id) {
@@ -1866,6 +1887,33 @@ function renderTalentSettings() {
   const tags = state.talentTags.map((tag) => `<span class="pill">${escapeHtml(tag)}</span>`);
   const awards = state.awardNames.map((award) => `<span class="pill award-pill">${escapeHtml(award)}</span>`);
   elements.talentSettingList.innerHTML = [...tags, ...awards].join("") || `<span class="hint">${t("noTags")}</span>`;
+}
+
+function renderRoleSettings() {
+  if (!elements.roleSettingList) return;
+  elements.roleSettingList.innerHTML = `<p class="hint">${t("roleSettingsHint")}</p>${roleEntries(true).map(([role, label]) => `<div class="inline-form">
+    <label><span>${escapeHtml(role)}</span><input data-role-label="${role}" value="${escapeHtml(label)}" /></label>
+    <button type="button" data-save-role-label="${role}">${t("save")}</button>
+  </div>`).join("")}`;
+  elements.roleSettingList.querySelectorAll("[data-save-role-label]").forEach((button) => {
+    button.addEventListener("click", () => saveRoleLabel(button.dataset.saveRoleLabel));
+  });
+}
+
+function saveRoleLabel(role) {
+  if (!isOwner()) return;
+  const input = elements.roleSettingList.querySelector(`[data-role-label="${role}"]`);
+  const label = input?.value.trim();
+  if (!label) {
+    showValidation("validationRequired");
+    return;
+  }
+  if (!confirmAction(`${t("roleDisplayName")} · ${role} -> ${label}`)) {
+    input.value = roleLabel(role);
+    return;
+  }
+  state.roleSettings = { ...state.roleSettings, [role]: label };
+  saveAndRender();
 }
 
 function renderEditableTypeRows(items, type) {
@@ -2061,7 +2109,7 @@ function renderDevelopmentTree(visibleGoals, visibleActivities) {
             return `<details class="dev-team">
               <summary><span>${escapeHtml(team.name)}</span><small>${goals.length} goals · ${activities.length} activities</small></summary>
               <div class="dev-team-body">
-                <p class="leader-line"><b>${t("teamManager")}</b><span>${escapeHtml(accountName(team.managerAccountId))}</span></p>
+                <p class="leader-line"><b>${escapeHtml(roleLabel("teamManager"))}</b><span>${escapeHtml(accountName(team.managerAccountId))}</span></p>
                 ${renderGoalCards(goals)}
                 ${renderActivityCards(activities)}
               </div>
@@ -2189,7 +2237,7 @@ function renderOrgChart() {
       ${units.map((unit) => {
         const visibleTeamsForUnit = unit.teams.filter((team) => visibleTeamIds.has(team.id));
         const unitPeopleCount = visibleTeamsForUnit.reduce((sum, team) => sum + visiblePeopleList.filter((person) => person.teamId === team.id).length, 0);
-        const unitLeaderLabel = unit.type === "platform" ? t("platformLead") : unit.type === "researchTeam" ? t("teamManager") : t("labDirector");
+        const unitLeaderLabel = unit.type === "platform" ? roleLabel("platformLead") : unit.type === "researchTeam" ? roleLabel("teamManager") : roleLabel("labDirector");
         const unitLeaderId = unit.type === "researchTeam" ? unit.teams[0]?.managerAccountId : unit.directorAccountId;
         return `<details class="org-unit">
           <summary>
@@ -2206,7 +2254,7 @@ function renderOrgChart() {
                   <span>${escapeHtml(team.name)}</span>
                   <small>${teamPeople.length} ${t("members")}</small>
                 </button>
-                <small class="leader-line team-manager-line"><b>${t("teamManager")}</b><span>${escapeHtml(accountName(team.managerAccountId))}</span></small>
+                <small class="leader-line team-manager-line"><b>${escapeHtml(roleLabel("teamManager"))}</b><span>${escapeHtml(accountName(team.managerAccountId))}</span></small>
                 <div class="tree-members">${teamPeople.map((person) => `<button type="button" class="tree-member" data-person-id="${person.id}"><span class="tree-member-main"><b>${escapeHtml(person.employeeNo)}</b><strong>${escapeHtml(person.name)}</strong></span><small>${escapeHtml([person.level, person.role].filter(Boolean).join(" · "))}</small></button>`).join("") || `<div class="empty-state">${t("noMatchedPeople")}</div>`}</div>
               </div>`;
             }).join("")}
@@ -2889,7 +2937,7 @@ function syncAccountPersonForState(targetState, account) {
       ? targetState.org.units.find((item) => item.id === account.scopeId)?.teams[0]?.id || allTargetTeams[0]?.id || ""
       : allTargetTeams[0]?.id || "";
   if (!teamId) return;
-  const existing = targetState.people.find((person) => person.accountId === account.id || person.name.toLowerCase() === account.name.toLowerCase());
+  const existing = targetState.people.find((person) => person.id === account.personId || person.accountId === account.id || person.name.toLowerCase() === account.name.toLowerCase());
   const roleName = roleLabel(account.role);
   if (existing) {
     targetState.people = targetState.people.map((person) =>
@@ -3475,6 +3523,8 @@ function addAccount() {
 function addAccountFromPanel(kind, root) {
   if (!isOwner()) return;
   const role = root.querySelector(`[data-new-account-role="${kind}"]`)?.value;
+  const personId = root.querySelector(`[data-new-account-person="${kind}"]`)?.value;
+  const selectedPerson = state.people.find((person) => person.id === personId);
   const scopeSelect = root.querySelector(`[data-new-account-scope="${kind}"]`);
   const selectedScopeIds = scopeSelect ? [...scopeSelect.selectedOptions].map((option) => option.value) : [];
   const scopeId = role === "hrbp" ? "teams" : scopeSelect?.value;
@@ -3482,10 +3532,10 @@ function addAccountFromPanel(kind, root) {
   const nameInput = root.querySelector(`[data-new-account-name="${kind}"]`);
   const emailInput = root.querySelector(`[data-new-account-email="${kind}"]`);
   const passwordInput = root.querySelector(`[data-new-account-password="${kind}"]`);
-  const name = nameInput?.value.trim();
+  const name = nameInput?.value.trim() || selectedPerson?.name || "";
   const email = emailInput?.value.trim().toLowerCase();
   const password = passwordInput?.value;
-  if (!name || !email || !password || !role || !scopeId || (role === "hrbp" && !selectedScopeIds.length)) {
+  if (!personId || !name || !email || !password || !role || !scopeId || (role === "hrbp" && !selectedScopeIds.length)) {
     showValidation("validationRequired");
     return;
   }
@@ -3500,6 +3550,7 @@ function addAccountFromPanel(kind, root) {
     email,
     password,
     role,
+    personId,
     scopeType,
     scopeId,
     scopeIds: role === "hrbp" ? selectedScopeIds : undefined,
@@ -3521,6 +3572,7 @@ function saveAccountEdit(accountId, root = document) {
   const name = root.querySelector(`[data-account-name="${accountId}"]`)?.value.trim();
   const email = root.querySelector(`[data-account-email="${accountId}"]`)?.value.trim().toLowerCase();
   const role = root.querySelector(`[data-account-role="${accountId}"]`)?.value;
+  const personId = root.querySelector(`[data-account-person="${accountId}"]`)?.value || "";
   const scopeSelect = root.querySelector(`[data-account-scope="${accountId}"]`);
   const scopeIds = role === "hrbp" ? accountScopeIds(account) : [];
   const scopeId = role === "hrbp" ? "teams" : scopeSelect?.value;
@@ -3539,7 +3591,7 @@ function saveAccountEdit(accountId, root = document) {
   if (!confirmAction(t("confirmEditAccount", { email }))) return;
   const scopeType = role === "owner" || role === "researchDirector" ? "center" : ["teamManager", "hrbp"].includes(role) ? "team" : "unit";
   clearLeadershipRefs(accountId);
-  const updatedAccount = { ...account, name, email, role, scopeType, scopeId, scopeIds: role === "hrbp" ? scopeIds : undefined };
+  const updatedAccount = { ...account, name, email, role, personId, scopeType, scopeId, scopeIds: role === "hrbp" ? scopeIds : undefined };
   state.accounts = state.accounts.map((item) => item.id === accountId ? updatedAccount : item);
   applyLeadershipAssignment(updatedAccount);
   syncAccountPerson(updatedAccount);

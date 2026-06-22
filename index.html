@@ -374,6 +374,13 @@
         </details>
         <details class="profile-section settings-section owner-only">
           <summary class="section-title">
+            <span data-i18n="roleSettings">角色设置</span>
+            <small data-i18n="roleSettingsHint">可修改角色显示名称；权限逻辑仍由系统内置角色类型控制。</small>
+          </summary>
+          <div id="roleSettingList" class="settings-list"></div>
+        </details>
+        <details class="profile-section settings-section owner-only">
+          <summary class="section-title">
             <span data-i18n="orgEditor">组织编辑</span>
           </summary>
           <p class="hint" data-i18n="orgEditHint">Owner 可新增组织和 Team；有人员的 Team 不能直接删除。</p>
@@ -830,6 +837,6 @@
     <div id="toast" class="toast" aria-live="polite"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="./app.js?v=20260622-supabase-auth-required"></script>
+    <script src="./app.js?v=20260622-configurable-role-labels"></script>
   </body>
 </html>
