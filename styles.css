@@ -65,13 +65,13 @@ body {
 .product-signature {
   position: relative;
   margin: 0;
-  color: #7c8aa0;
+  color: #8390a3;
   font-family:
     "Inter", "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, BlinkMacSystemFont,
     "Segoe UI", sans-serif;
   font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.18em;
+  font-weight: 650;
+  letter-spacing: 0.2em;
   line-height: 1.5;
   text-align: center;
   text-transform: uppercase;
@@ -87,10 +87,18 @@ body {
 }
 
 .product-signature span {
-  color: var(--primary-dark);
-  font-weight: 900;
-  letter-spacing: 0.08em;
+  display: inline-block;
+  margin-left: 3px;
+  color: #123a6d;
+  font-family:
+    "Snell Roundhand", "Apple Chancery", "Bodoni 72", Didot, "Times New Roman", serif;
+  font-size: 18px;
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: 0.015em;
+  line-height: 1;
   text-transform: none;
+  transform: translateY(2px);
 }
 
 .error-text {
