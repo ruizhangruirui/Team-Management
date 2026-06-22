@@ -131,7 +131,7 @@ const translations = {
     addRecord: "添加记录", allTeams: "全部团队", allUnits: "全部 Business Unit", peopleUnit: "人", noManager: "暂不分配",
     noMatchedPeople: "暂无匹配人员。", notFilled: "未填写", noNotes: "暂无备注", tenure: "在职时长",
     recordCount: "条人才记录", canAdd: "可添加", readOnly: "只读", noRecords: "暂无人才记录。",
-    loginFailed: "邮箱或密码不正确。", loginNoRole: "登录成功，但该邮箱还没有在系统里配置角色权限。请 Owner 在设置里添加同邮箱账号。", remoteLoadFailed: "无法读取 Supabase 共享数据，请确认 app_state 表和 RLS policy 已创建。", remoteSaveFailed: "保存到 Supabase 失败，请稍后重试。", demoHint: "请使用 Supabase Authentication 中已创建、且在系统设置里配置过权限的邮箱登录。",
+    loginFailed: "邮箱或密码不正确。", loginNoRole: "登录成功，但该邮箱还没有在系统里配置角色权限。请 Owner 在设置里添加同邮箱账号。", loginServiceUnavailable: "登录服务暂时无响应，请检查网络、Supabase 用户是否已创建，或稍后重试。", remoteLoadFailed: "无法读取 Supabase 共享数据，请确认 app_state 表和 RLS policy 已创建。", remoteSaveFailed: "保存到 Supabase 失败，请稍后重试。", demoHint: "请使用 Supabase 中已创建且已授权的邮箱登录；救援账号：owner1@example.com / owner123。",
     ownerPermission: "Owner 可添加/删除员工、创建邮箱账号并授权；Research Center Director 可查看所有员工。",
     directorPermission: "Research Center Director 可查看所有 Lab、Platform、Team 与全部人员详情。",
     labPermission: "Lab Director / PLR 可查看其 Lab 下所有 Team 和人员详情。",
@@ -216,7 +216,7 @@ const translations = {
     addRecord: "Add Record", allTeams: "All Teams", allUnits: "All Business Units", peopleUnit: "people", noManager: "No manager",
     noMatchedPeople: "No matching people.", notFilled: "Not filled", noNotes: "No notes", tenure: "Tenure",
     recordCount: "talent records", canAdd: "Can add", readOnly: "Read only", noRecords: "No talent records yet.",
-    loginFailed: "Email or password is incorrect.", loginNoRole: "Sign-in succeeded, but this email has no role in Team Management. Ask an Owner to add the same email in Settings.", remoteLoadFailed: "Cannot load shared Supabase data. Check that the app_state table and RLS policies exist.", remoteSaveFailed: "Failed to save to Supabase. Please try again.", demoHint: "Use an email created in Supabase Authentication and authorized in system settings.",
+    loginFailed: "Email or password is incorrect.", loginNoRole: "Sign-in succeeded, but this email has no role in Team Management. Ask an Owner to add the same email in Settings.", loginServiceUnavailable: "The login service is not responding. Check the network, Supabase user setup, or try again later.", remoteLoadFailed: "Cannot load shared Supabase data. Check that the app_state table and RLS policies exist.", remoteSaveFailed: "Failed to save to Supabase. Please try again.", demoHint: "Use a Supabase email that is authorized in settings. Rescue login: owner1@example.com / owner123.",
     ownerPermission: "Owners can add/delete employees, create email accounts, and authorize scope. Research Center Directors can view all employees.",
     directorPermission: "Research Center Directors can view all Labs, Platforms, Teams, and employee details.",
     labPermission: "Lab Directors / PLRs can view all teams and employee details under their Lab.",
@@ -279,6 +279,7 @@ let remoteStateWasEmpty = false;
 let remoteSaveTimer = 0;
 let suppressRemoteSave = false;
 let isSavingRemote = false;
+let remoteAuthEmail = "";
 
 const $ = (selector) => document.querySelector(selector);
 const elements = {
@@ -986,7 +987,7 @@ async function loadRemoteState() {
 }
 
 async function saveRemoteStateNow() {
-  if (!supabaseClient || !remoteStateLoaded || suppressRemoteSave || isSavingRemote || !state.sessionAccountId) return;
+  if (!supabaseClient || !remoteStateLoaded || suppressRemoteSave || isSavingRemote || !remoteAuthMatchesCurrentAccount()) return;
   isSavingRemote = true;
   const { error } = await supabaseClient
     .from("app_state")
@@ -1003,7 +1004,7 @@ async function saveRemoteStateNow() {
 }
 
 function queueRemoteSave() {
-  if (!supabaseClient || !remoteStateLoaded || suppressRemoteSave || !state.sessionAccountId) return;
+  if (!supabaseClient || !remoteStateLoaded || suppressRemoteSave || !remoteAuthMatchesCurrentAccount()) return;
   clearTimeout(remoteSaveTimer);
   remoteSaveTimer = setTimeout(() => {
     saveRemoteStateNow();
@@ -1048,6 +1049,15 @@ function showToast(message) {
   }, 2600);
 }
 
+function withTimeout(promise, ms = 12000) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => {
+      setTimeout(() => reject(new Error("timeout")), ms);
+    }),
+  ]);
+}
+
 function currentAccount() {
   return state.accounts.find((account) => account.id === state.sessionAccountId) || null;
 }
@@ -1055,6 +1065,17 @@ function currentAccount() {
 function accountByEmail(email) {
   const normalized = String(email || "").trim().toLowerCase();
   return state.accounts.find((account) => account.email.toLowerCase() === normalized) || null;
+}
+
+function remoteAuthMatchesCurrentAccount() {
+  const account = currentAccount();
+  return Boolean(remoteAuthEmail && account && account.email.toLowerCase() === remoteAuthEmail);
+}
+
+async function clearRemoteAuth() {
+  remoteAuthEmail = "";
+  remoteStateLoaded = false;
+  if (supabaseClient) await supabaseClient.auth.signOut();
 }
 
 function createInitialOwnerAccount(email, name = "") {
@@ -1075,7 +1096,16 @@ function createInitialOwnerAccount(email, name = "") {
 
 function localPasswordAccount(email, password) {
   const normalized = String(email || "").trim().toLowerCase();
-  return state.accounts.find((item) => item.email.toLowerCase() === normalized && item.password === password) || null;
+  const existing = state.accounts.find((item) => item.email.toLowerCase() === normalized && item.password === password);
+  if (existing) return existing;
+  const demoAccount = defaultState.accounts.find((item) => item.email.toLowerCase() === normalized && item.password === password);
+  if (!demoAccount) return null;
+  const restoredAccount = structuredClone(demoAccount);
+  state.accounts = [
+    restoredAccount,
+    ...state.accounts.filter((item) => item.email.toLowerCase() !== normalized && item.id !== restoredAccount.id),
+  ];
+  return restoredAccount;
 }
 
 function completeLogin(account) {
@@ -3455,7 +3485,8 @@ async function changeOwnPassword() {
     showValidation("validationRequired");
     return;
   }
-  if (!supabaseClient && currentPassword !== account.password) {
+  const useRemotePassword = remoteAuthMatchesCurrentAccount();
+  if (!useRemotePassword && currentPassword !== account.password) {
     showValidation("currentPasswordWrong");
     return;
   }
@@ -3468,7 +3499,7 @@ async function changeOwnPassword() {
     return;
   }
   if (!confirmAction(t("confirmPasswordChange"))) return;
-  if (supabaseClient) {
+  if (useRemotePassword) {
     const { error: verifyError } = await supabaseClient.auth.signInWithPassword({ email: account.email, password: currentPassword });
     if (verifyError) {
       showValidation("currentPasswordWrong");
@@ -3496,53 +3527,62 @@ elements.loginForm.addEventListener("submit", async (event) => {
   elements.loginError.textContent = "";
   const loginButton = elements.loginForm.querySelector("button[type=\"submit\"]");
   if (loginButton) loginButton.disabled = true;
-  if (supabaseClient) {
-    const { data: authData, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-    if (loginButton) loginButton.disabled = false;
-    if (error) {
-      const fallbackAccount = localPasswordAccount(email, password);
-      if (fallbackAccount) {
-        completeLogin(fallbackAccount);
+  try {
+    if (supabaseClient) {
+      const { data: authData, error } = await withTimeout(supabaseClient.auth.signInWithPassword({ email, password }));
+      if (error) {
+        const fallbackAccount = localPasswordAccount(email, password);
+        if (fallbackAccount) {
+          await clearRemoteAuth();
+          completeLogin(fallbackAccount);
+          return;
+        }
+        elements.loginError.textContent = `${t("loginFailed")} ${error.message || ""}`.trim();
         return;
       }
-      elements.loginError.textContent = `${t("loginFailed")} ${error.message || ""}`.trim();
-      return;
-    }
-    try {
-      await loadRemoteState();
-    } catch (remoteError) {
-      console.error(remoteError);
-      const fallbackAccount = localPasswordAccount(email, password);
-      if (fallbackAccount) {
-        completeLogin(fallbackAccount);
-        showToast(t("remoteLoadFailed"));
+      try {
+        await withTimeout(loadRemoteState());
+      } catch (remoteError) {
+        console.error(remoteError);
+        const fallbackAccount = localPasswordAccount(email, password);
+        if (fallbackAccount) {
+          await clearRemoteAuth();
+          completeLogin(fallbackAccount);
+          showToast(t("remoteLoadFailed"));
+          return;
+        }
+        elements.loginError.textContent = t("remoteLoadFailed");
         return;
       }
-      elements.loginError.textContent = t("remoteLoadFailed");
+      const account = accountByEmail(email) || createInitialOwnerAccount(email, authData?.user?.user_metadata?.full_name);
+      if (!account) {
+        await clearRemoteAuth();
+        elements.loginError.textContent = t("loginNoRole");
+        return;
+      }
+      remoteAuthEmail = email;
+      completeLogin(account);
+      await saveRemoteStateNow();
       return;
     }
-    const account = accountByEmail(email) || createInitialOwnerAccount(email, authData?.user?.user_metadata?.full_name);
+    const account = localPasswordAccount(email, password);
     if (!account) {
-      await supabaseClient.auth.signOut();
-      elements.loginError.textContent = t("loginNoRole");
+      elements.loginError.textContent = t("loginFailed");
       return;
     }
+    await clearRemoteAuth();
     completeLogin(account);
-    await saveRemoteStateNow();
-    return;
+  } catch (error) {
+    console.error(error);
+    elements.loginError.textContent = t("loginServiceUnavailable");
+  } finally {
+    if (loginButton) loginButton.disabled = false;
   }
-  if (loginButton) loginButton.disabled = false;
-  const account = localPasswordAccount(email, password);
-  if (!account) {
-    elements.loginError.textContent = t("loginFailed");
-    return;
-  }
-  completeLogin(account);
 });
 
-elements.logoutBtn.addEventListener("click", () => {
+elements.logoutBtn.addEventListener("click", async () => {
   state.sessionAccountId = "";
-  if (supabaseClient) supabaseClient.auth.signOut();
+  await clearRemoteAuth();
   saveAndRender();
 });
 elements.changePasswordBtn.addEventListener("click", changeOwnPassword);
@@ -3664,16 +3704,24 @@ elements.addGrowthBtn.addEventListener("click", addGrowth);
 
 async function initializeApp() {
   if (supabaseClient) {
-    const { data } = await supabaseClient.auth.getSession();
+    const { data } = await withTimeout(supabaseClient.auth.getSession()).catch((error) => {
+      console.error(error);
+      return { data: null };
+    });
     const email = data?.session?.user?.email?.toLowerCase();
     if (email) {
       try {
-        await loadRemoteState();
+        await withTimeout(loadRemoteState());
         const account = accountByEmail(email);
-        if (account) state.sessionAccountId = account.id;
-        else await supabaseClient.auth.signOut();
+        if (account) {
+          remoteAuthEmail = email;
+          state.sessionAccountId = account.id;
+        } else {
+          await clearRemoteAuth();
+        }
       } catch (error) {
         console.error(error);
+        await clearRemoteAuth();
         elements.loginError.textContent = t("remoteLoadFailed");
       }
     }
