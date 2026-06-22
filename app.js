@@ -163,7 +163,7 @@ const translations = {
     orgEditor: "组织结构配置", unitType: "Business Unit 类型", unitName: "Business Unit 名称", addUnit: "新增 Business Unit",
     parentUnit: "所属 Business Unit", teamName: "Team 名称", addTeam: "新增 Team", orgEditHint: "低频高影响设置。新增、重命名或删除组织节点前请确认员工归属。",
     researchLab: "Research Lab", independentResearchTeam: "Independent Research Team", platformUnit: "Platform", businessUnits: "Business Units", createBusinessUnit: "创建 Business Unit", createTeamUnderUnit: "创建下级 Team", noTeamsUnderStandalone: "独立研究 Team 本身就是 Team，不需要再添加下级 Team。",
-    annualWorkGoals: "年度重点与目标", annualWorkHint: "记录各 Lab / Team 当年的主要工作和目标。", targetScope: "记录对象", goalYear: "年份", mainWork: "主要工作", mainGoals: "主要目标", saveGoal: "保存目标",
+    annualWorkGoals: "年度重点与目标", annualWorkHint: "记录各 Lab / Team 当年的现状、目标、差距和关键工作。", targetScope: "记录对象", goalYear: "年份", currentSituation: "Current Situation / 现状", goal: "Goal / 目标", gap: "Gap / 差距", majorWork: "Major Work / 主要工作", mainWork: "主要工作", mainGoals: "主要目标", saveGoal: "保存目标",
     cultureActivities: "氛围建设", cultureHint: "记录团队活动、峰会参与、分享会和跨团队协作。", activityType: "活动类型", activityDate: "日期", participants: "参与人数", activitySummary: "活动记录", addActivity: "添加活动",
     talentDashboard: "人才发展概览", talentDashboardHint: "借鉴常见 HCM 做法，关注关键人才、行动计划、继任准备和保留风险。",
     keyTalentCount: "关键/高潜人才", actionOpenCount: "进行中行动", retentionRiskCount: "保留风险", successorCount: "继任/备份人选",
@@ -249,7 +249,7 @@ const translations = {
     orgEditor: "Organization Structure", unitType: "Business Unit Type", unitName: "Business Unit Name", addUnit: "Add Business Unit",
     parentUnit: "Parent Business Unit", teamName: "Team Name", addTeam: "Add Team", orgEditHint: "Low-frequency, high-impact settings. Confirm employee placement before adding, renaming, or deleting nodes.",
     researchLab: "Research Lab", independentResearchTeam: "Independent Research Team", platformUnit: "Platform", businessUnits: "Business Units", createBusinessUnit: "Create Business Unit", createTeamUnderUnit: "Create Team", noTeamsUnderStandalone: "An independent research team is itself a team, so no child team is needed.",
-    annualWorkGoals: "Annual Work & Goals", annualWorkHint: "Record each Lab / Team's major work and goals for the year.", targetScope: "Scope", goalYear: "Year", mainWork: "Major Work", mainGoals: "Main Goals", saveGoal: "Save Goal",
+    annualWorkGoals: "Annual Work & Goals", annualWorkHint: "Record each Lab / Team's current situation, goal, gap, and major work.", targetScope: "Scope", goalYear: "Year", currentSituation: "Current Situation", goal: "Goal", gap: "Gap", majorWork: "Major Work", mainWork: "Major Work", mainGoals: "Main Goals", saveGoal: "Save Goal",
     cultureActivities: "Culture & Engagement", cultureHint: "Record team events, summits, talks, and cross-team collaboration.", activityType: "Activity Type", activityDate: "Date", participants: "Participants", activitySummary: "Activity Notes", addActivity: "Add Activity",
     talentDashboard: "Talent Development Overview", talentDashboardHint: "Inspired by common HCM practices: key talent, action plans, succession readiness, and retention risk.",
     keyTalentCount: "Key / high-potential people", actionOpenCount: "Open actions", retentionRiskCount: "Retention risks", successorCount: "Successor / backup candidates",
@@ -307,7 +307,7 @@ const elements = {
   newUnitType: $("#newUnitType"), newUnitName: $("#newUnitName"), unitNameLabel: $("#unitNameLabel"), addUnitBtn: $("#addUnitBtn"), newTeamUnit: $("#newTeamUnit"), newTeamName: $("#newTeamName"), addOrgTeamBtn: $("#addOrgTeamBtn"), orgEditList: $("#orgEditList"),
   moveSourceTeam: $("#moveSourceTeam"), moveTargetTeam: $("#moveTargetTeam"), moveSelectedPeopleBtn: $("#moveSelectedPeopleBtn"), moveAllPeopleBtn: $("#moveAllPeopleBtn"), movePeopleList: $("#movePeopleList"),
   bulkArchiveReason: $("#bulkArchiveReason"), bulkArchiveEmployeesBtn: $("#bulkArchiveEmployeesBtn"), bulkArchivePeopleList: $("#bulkArchivePeopleList"), formerEmployeeList: $("#formerEmployeeList"), downloadFormerEmployeesBtn: $("#downloadFormerEmployeesBtn"),
-  goalScopeSelect: $("#goalScopeSelect"), goalYear: $("#goalYear"), mainWorkInput: $("#mainWorkInput"), mainGoalsInput: $("#mainGoalsInput"), addGoalBtn: $("#addGoalBtn"), goalList: $("#goalList"),
+  goalScopeSelect: $("#goalScopeSelect"), goalYear: $("#goalYear"), currentSituationInput: $("#currentSituationInput"), goalInput: $("#goalInput"), gapInput: $("#gapInput"), majorWorkInput: $("#majorWorkInput"), addGoalBtn: $("#addGoalBtn"), goalList: $("#goalList"),
   activityScopeSelect: $("#activityScopeSelect"), activityType: $("#activityType"), activityDate: $("#activityDate"), activityParticipants: $("#activityParticipants"), activitySummary: $("#activitySummary"), addActivityBtn: $("#addActivityBtn"), activityList: $("#activityList"),
   talentDashboard: $("#talentDashboard"), talentUnitFilter: $("#talentUnitFilter"), talentTeamFilter: $("#talentTeamFilter"), talentActionPerson: $("#talentActionPerson"), talentActionType: $("#talentActionType"), talentActionPriority: $("#talentActionPriority"), talentActionStatus: $("#talentActionStatus"), talentActionDueDate: $("#talentActionDueDate"), talentActionNote: $("#talentActionNote"), addTalentActionBtn: $("#addTalentActionBtn"), talentActionList: $("#talentActionList"),
   developmentTree: $("#developmentTree"),
@@ -2113,7 +2113,7 @@ function renderTalentDevelopment() {
     : `<div class="empty-state">${t("noTalentActions")}</div>`;
   bindTalentActionButtons();
   elements.goalList.innerHTML = visibleGoals.length
-    ? visibleGoals.map((goal) => `<article class="record-item"><header><strong>${escapeHtml(scopeLabelByValue(goal.scope))}</strong><small>${escapeHtml(goal.year)}</small></header><p><b>${t("mainWork")}:</b> ${escapeHtml(goal.mainWork)}</p><p><b>${t("mainGoals")}:</b> ${escapeHtml(goal.mainGoals)}</p></article>`).join("")
+    ? visibleGoals.map((goal) => renderGoalCard(goal, scopeLabelByValue(goal.scope))).join("")
     : `<div class="empty-state">${t("noGoals")}</div>`;
   elements.activityList.innerHTML = visibleActivities.length
     ? visibleActivities.map((activity) => `<article class="record-item"><header><strong>${escapeHtml(activity.type)} · ${escapeHtml(scopeLabelByValue(activity.scope))}</strong><small>${escapeHtml(activity.date)} · ${Number(activity.participants || 0)} ${t("peopleUnit")}</small></header><p>${escapeHtml(activity.summary)}</p></article>`).join("")
@@ -2186,8 +2186,25 @@ function renderDevelopmentTree(visibleGoals, visibleActivities) {
 
 function renderGoalCards(goals) {
   return goals.length
-    ? goals.map((goal) => `<article class="record-item compact-record"><header><strong>${escapeHtml(goal.year)}</strong><small>${t("mainGoals")}</small></header><p><b>${t("mainWork")}:</b> ${escapeHtml(goal.mainWork)}</p><p><b>${t("mainGoals")}:</b> ${escapeHtml(goal.mainGoals)}</p></article>`).join("")
+    ? goals.map((goal) => renderGoalCard(goal, goal.year, "compact-record")).join("")
     : `<div class="empty-state small-empty">${t("noGoals")}</div>`;
+}
+
+function renderGoalCard(goal, title, extraClass = "") {
+  const currentSituation = goal.currentSituation || "";
+  const goalText = goal.goal || goal.mainGoals || "";
+  const gapText = goal.gap || "";
+  const majorWork = goal.majorWork || goal.mainWork || "";
+  const rows = [
+    [t("currentSituation"), currentSituation],
+    [t("goal"), goalText],
+    [t("gap"), gapText],
+    [t("majorWork"), majorWork],
+  ].filter(([, value]) => String(value || "").trim());
+  return `<article class="record-item ${extraClass}">
+    <header><strong>${escapeHtml(title)}</strong><small>${escapeHtml(goal.year)}</small></header>
+    ${rows.map(([label, value]) => `<p><b>${escapeHtml(label)}:</b> ${escapeHtml(value)}</p>`).join("")}
+  </article>`;
 }
 
 function renderActivityCards(activities) {
@@ -3422,16 +3439,20 @@ function addGoal() {
   if (!canEditTalentOrg()) return;
   const scope = elements.goalScopeSelect.value;
   const year = elements.goalYear.value || new Date().getFullYear();
-  const mainWork = elements.mainWorkInput.value.trim();
-  const mainGoals = elements.mainGoalsInput.value.trim();
-  if (!scope || !mainWork || !mainGoals) {
+  const currentSituation = elements.currentSituationInput.value.trim();
+  const goal = elements.goalInput.value.trim();
+  const gap = elements.gapInput.value.trim();
+  const majorWork = elements.majorWorkInput.value.trim();
+  if (!scope || !currentSituation || !goal || !gap || !majorWork) {
     showValidation("validationRequired");
     return;
   }
   if (!confirmAction(t("confirmGoal", { scope: scopeLabelByValue(scope) }))) return;
-  state.orgGoals.unshift({ id: `goal-${crypto.randomUUID()}`, scope, year, mainWork, mainGoals, authorId: state.sessionAccountId, createdAt: today() });
-  elements.mainWorkInput.value = "";
-  elements.mainGoalsInput.value = "";
+  state.orgGoals.unshift({ id: `goal-${crypto.randomUUID()}`, scope, year, currentSituation, goal, gap, majorWork, mainWork: majorWork, mainGoals: goal, authorId: state.sessionAccountId, createdAt: today() });
+  elements.currentSituationInput.value = "";
+  elements.goalInput.value = "";
+  elements.gapInput.value = "";
+  elements.majorWorkInput.value = "";
   saveAndRender();
 }
 

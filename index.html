@@ -257,14 +257,24 @@
                 <input id="goalYear" type="number" min="2020" max="2100" />
               </label>
             </div>
-            <label class="owner-hrbp-write">
-              <span data-i18n="mainWork">主要工作</span>
-              <textarea id="mainWorkInput" rows="3"></textarea>
-            </label>
-            <label class="owner-hrbp-write">
-              <span data-i18n="mainGoals">主要目标</span>
-              <textarea id="mainGoalsInput" rows="3"></textarea>
-            </label>
+            <div class="form-grid owner-hrbp-write">
+              <label>
+                <span data-i18n="currentSituation">Current Situation</span>
+                <textarea id="currentSituationInput" rows="3"></textarea>
+              </label>
+              <label>
+                <span data-i18n="goal">Goal</span>
+                <textarea id="goalInput" rows="3"></textarea>
+              </label>
+              <label>
+                <span data-i18n="gap">Gap</span>
+                <textarea id="gapInput" rows="3"></textarea>
+              </label>
+              <label>
+                <span data-i18n="majorWork">Major Work</span>
+                <textarea id="majorWorkInput" rows="3"></textarea>
+              </label>
+            </div>
             <button id="addGoalBtn" type="button" class="primary owner-hrbp-write" data-i18n="saveGoal">保存目标</button>
             <div id="goalList" class="record-list"></div>
           </details>
@@ -849,6 +859,6 @@
     <div id="toast" class="toast" aria-live="polite"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="./app.js?v=20260622-reset-redirect-url"></script>
+    <script src="./app.js?v=20260622-goal-gap-framework"></script>
   </body>
 </html>
