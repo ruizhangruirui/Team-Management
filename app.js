@@ -955,6 +955,8 @@ function saveState() {
 function sharedStatePayload() {
   return {
     ...state,
+    cloudInitializedAt: state.cloudInitializedAt || new Date().toISOString(),
+    cloudUpdatedAt: new Date().toISOString(),
     sessionAccountId: "",
     searchText: "",
     selectedUnitId: "all",
@@ -1077,14 +1079,15 @@ async function loadRemoteState() {
   if (error && error.code !== "PGRST116") throw error;
   const remoteData = data?.data && typeof data.data === "object" ? data.data : {};
   remoteStateWasEmpty = !Object.keys(remoteData).length;
+  const remoteInitialized = Boolean(remoteData.cloudInitializedAt);
   const localChanged = differsFromDefault(localSnapshot);
-  const remoteChanged = differsFromDefault(remoteData);
-  const shouldUseLocal =
-    remoteStateWasEmpty ||
-    (localChanged && !remoteChanged) ||
-    (localChanged && remoteChanged && configurationScore(localSnapshot) > configurationScore(remoteData));
+  const shouldUseLocal = !remoteInitialized && (remoteStateWasEmpty || localChanged);
+  const nextSource = shouldUseLocal ? {
+    ...localSnapshot,
+    cloudInitializedAt: localSnapshot.cloudInitializedAt || new Date().toISOString(),
+  } : remoteData;
   state = normalizeState({
-    ...(shouldUseLocal ? localSnapshot : remoteData),
+    ...nextSource,
     sessionAccountId,
     language,
   });
