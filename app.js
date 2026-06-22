@@ -3538,13 +3538,18 @@ elements.loginForm.addEventListener("submit", async (event) => {
   const loginButton = elements.loginForm.querySelector("button[type=\"submit\"]");
   if (loginButton) loginButton.disabled = true;
   try {
+    const localAccount = localPasswordAccount(email, password);
+    if (localAccount && defaultState.accounts.some((account) => account.email.toLowerCase() === email && account.password === password)) {
+      await clearRemoteAuth();
+      completeLogin(localAccount);
+      return;
+    }
     if (supabaseClient) {
       const { data: authData, error } = await withTimeout(supabaseClient.auth.signInWithPassword({ email, password }));
       if (error) {
-        const fallbackAccount = localPasswordAccount(email, password);
-        if (fallbackAccount) {
+        if (localAccount) {
           await clearRemoteAuth();
-          completeLogin(fallbackAccount);
+          completeLogin(localAccount);
           return;
         }
         elements.loginError.textContent = `${t("loginFailed")} ${error.message || ""}`.trim();
@@ -3554,10 +3559,9 @@ elements.loginForm.addEventListener("submit", async (event) => {
         await withTimeout(loadRemoteState());
       } catch (remoteError) {
         console.error(remoteError);
-        const fallbackAccount = localPasswordAccount(email, password);
-        if (fallbackAccount) {
+        if (localAccount) {
           await clearRemoteAuth();
-          completeLogin(fallbackAccount);
+          completeLogin(localAccount);
           showToast(t("remoteLoadFailed"));
           return;
         }
@@ -3575,13 +3579,12 @@ elements.loginForm.addEventListener("submit", async (event) => {
       await saveRemoteStateNow();
       return;
     }
-    const account = localPasswordAccount(email, password);
-    if (!account) {
+    if (!localAccount) {
       elements.loginError.textContent = t("loginFailed");
       return;
     }
     await clearRemoteAuth();
-    completeLogin(account);
+    completeLogin(localAccount);
   } catch (error) {
     console.error(error);
     elements.loginError.textContent = t("loginServiceUnavailable");
