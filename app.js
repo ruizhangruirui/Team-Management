@@ -970,15 +970,20 @@ async function loadRemoteState() {
   if (!supabaseClient) return false;
   const sessionAccountId = state.sessionAccountId;
   const language = state.language;
+  const localSnapshot = structuredClone(state);
   const { data, error } = await supabaseClient
     .from("app_state")
     .select("data")
     .eq("id", SUPABASE_STATE_ID)
     .single();
-  if (error) throw error;
+  if (error && error.code !== "PGRST116") throw error;
   const remoteData = data?.data && typeof data.data === "object" ? data.data : {};
   remoteStateWasEmpty = !Object.keys(remoteData).length;
-  state = normalizeState({ ...remoteData, sessionAccountId, language });
+  state = normalizeState({
+    ...(remoteStateWasEmpty ? localSnapshot : remoteData),
+    sessionAccountId,
+    language,
+  });
   remoteStateLoaded = true;
   suppressRemoteSave = true;
   saveState();
@@ -1067,6 +1072,11 @@ function accountByEmail(email) {
   return state.accounts.find((account) => account.email.toLowerCase() === normalized) || null;
 }
 
+function isDemoOnlyAccountState() {
+  const demoEmails = new Set(defaultState.accounts.map((account) => account.email.toLowerCase()));
+  return state.accounts.length > 0 && state.accounts.every((account) => demoEmails.has(account.email.toLowerCase()));
+}
+
 function remoteAuthMatchesCurrentAccount() {
   const account = currentAccount();
   return Boolean(remoteAuthEmail && account && account.email.toLowerCase() === remoteAuthEmail);
@@ -1080,7 +1090,7 @@ async function clearRemoteAuth() {
 
 function createInitialOwnerAccount(email, name = "") {
   const normalized = String(email || "").trim().toLowerCase();
-  if (!normalized || accountByEmail(normalized) || !remoteStateWasEmpty) return null;
+  if (!normalized || accountByEmail(normalized) || (!remoteStateWasEmpty && !isDemoOnlyAccountState())) return null;
   const account = {
     id: `owner-${crypto.randomUUID()}`,
     name: name || normalized.split("@")[0] || "System Owner",
