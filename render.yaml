@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: team-management
+    runtime: static
+    buildCommand: ""
+    staticPublishPath: .

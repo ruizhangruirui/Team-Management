@@ -1,0 +1,201 @@
+﻿employeeNo,name,businessUnit,team,role,level,contractType,startDate,notes
+00123456,Anna Müller,Von Neumann Lab,AI Team,HR Specialist,13,Employee,2017-01-01,EU-based profile
+00123457,Lukas Bianchi,Von Neumann Lab,Software Team,Clinical Data Research Engineer,14,Employee,2018-02-02,EU-based profile
+00123458,Sofia Bernard,Von Neumann Lab,CPU,Research Operations Specialist,15,Employee,2019-03-03,EU-based profile
+00123459,Marco López,Data Center Network,Data Center Network,Cloud Platform Engineer,16,Employee,2020-04-04,EU-based profile
+00123460,Emma Laurent,I3 Standard,I3 Standard,AI Researcher,17,Employee,2021-05-05,EU-based profile
+00123461,Louis Ricci,Digital Power,Digital Power,Clinical Data Research Engineer,18,Employee,2022-06-06,EU-based profile
+00123462,Clara de Vries,Von Neumann Lab,AI Team,Research Operations Specialist,19,Employee,2023-07-07,EU-based profile
+00123463,Hugo Novak,Von Neumann Lab,Software Team,Cloud Platform Engineer,20,Employee,2024-08-08,EU-based profile
+00123464,Elena Nowak,Von Neumann Lab,CPU,AI Researcher,21,Employee,2025-09-09,EU-based profile
+00123465,Javier Jensen,Data Center Network,Data Center Network,Clinical Data Research Engineer,22,Employee,2026-10-10,EU-based profile
+00123466,Lucia Andersson,I3 Standard,I3 Standard,Research Operations Specialist,13,Employee,2017-11-11,EU-based profile
+00123467,Mateo Korhonen,Digital Power,Digital Power,Cloud Platform Engineer,14,Employee,2018-12-12,EU-based profile
+00123468,Ines Wagner,Von Neumann Lab,AI Team,AI Researcher,15,Employee,2019-01-13,EU-based profile
+00123469,Nicolas Silva,Von Neumann Lab,Software Team,Clinical Data Research Engineer,16,Employee,2020-02-14,EU-based profile
+00123470,Giulia Popescu,Von Neumann Lab,CPU,Research Operations Specialist,17,Employee,2021-03-15,EU-based profile
+00123471,Matteo Nikolaou,Data Center Network,Data Center Network,Cloud Platform Engineer,18,Employee,2022-04-16,EU-based profile
+00123472,Laura Rinaldi,I3 Standard,I3 Standard,AI Researcher,19,Employee,2023-05-17,EU-based profile
+00123473,Pieter Garnier,Digital Power,Digital Power,Clinical Data Research Engineer,20,Employee,2024-06-18,EU-based profile
+00123474,Sanne Svobodova,Von Neumann Lab,AI Team,Research Operations Specialist,21,Employee,2025-07-19,EU-based profile
+00123475,Noah Holm,Von Neumann Lab,Software Team,Cloud Platform Engineer,22,Employee,2026-08-20,EU-based profile
+00123476,Lotte Ruiz,Von Neumann Lab,CPU,AI Researcher,13,Employee,2017-09-21,EU-based profile
+00123477,Klara Bauer,Data Center Network,Data Center Network,Clinical Data Research Engineer,14,Employee,2018-10-22,EU-based profile
+00123478,Jan Roux,I3 Standard,I3 Standard,Research Operations Specialist,15,Employee,2019-11-23,EU-based profile
+00123479,Agnieszka Gallo,Digital Power,Digital Power,HR Specialist,16,Employee,2020-12-01,EU-based profile
+00123480,Marek Oliveira,Von Neumann Lab,AI Team,AI Researcher,17,Employee,2021-01-02,EU-based profile
+00123481,Katarina Huber,Von Neumann Lab,Software Team,Clinical Data Research Engineer,18,Employee,2022-02-03,EU-based profile
+00123482,Luka Novotny,Von Neumann Lab,CPU,Research Operations Specialist,19,Employee,2023-03-04,EU-based profile
+00123483,Petra Wójcik,Data Center Network,Data Center Network,Cloud Platform Engineer,20,Employee,2024-04-05,EU-based profile
+00123484,Maja Varga,I3 Standard,I3 Standard,AI Researcher,21,Employee,2025-05-06,EU-based profile
+00123485,Frederik Georgiou,Digital Power,Digital Power,Senior Recruiting Partner,22,Employee,2026-06-07,EU-based profile
+00123486,Ida Smit,Von Neumann Lab,AI Team,Research Operations Specialist,13,Employee,2017-07-08,EU-based profile
+00123487,Oskar Ahlström,Von Neumann Lab,Software Team,Cloud Platform Engineer,14,Employee,2018-08-09,EU-based profile
+00123488,Elsa Fontaine,Von Neumann Lab,CPU,AI Researcher,15,Employee,2019-09-10,EU-based profile
+00123489,Nils Müller,Data Center Network,Data Center Network,Clinical Data Research Engineer,16,Employee,2020-10-11,EU-based profile
+00123490,Aino Bianchi,I3 Standard,I3 Standard,Research Operations Specialist,17,Employee,2021-11-12,EU-based profile
+00123491,Mikko Bernard,Digital Power,Digital Power,Cloud Platform Engineer,18,Employee,2022-12-13,EU-based profile
+00123492,Katrin López,Von Neumann Lab,AI Team,AI Researcher,19,Employee,2023-01-14,EU-based profile
+00123493,Felix Laurent,Von Neumann Lab,Software Team,Clinical Data Research Engineer,20,Employee,2024-02-15,EU-based profile
+00123494,Lea Ricci,Von Neumann Lab,CPU,Research Operations Specialist,21,Employee,2025-03-16,EU-based profile
+00123495,Tom de Vries,Data Center Network,Data Center Network,Cloud Platform Engineer,22,Employee,2026-04-17,EU-based profile
+00123496,Marta Novak,I3 Standard,I3 Standard,AI Researcher,13,Employee,2017-05-18,EU-based profile
+00123497,Joao Nowak,Digital Power,Digital Power,Clinical Data Research Engineer,14,Employee,2018-06-19,EU-based profile
+00123498,Beatriz Jensen,Von Neumann Lab,AI Team,Research Operations Specialist,15,Employee,2019-07-20,EU-based profile
+00123499,Andrei Andersson,Von Neumann Lab,Software Team,Cloud Platform Engineer,16,Employee,2020-08-21,EU-based profile
+00123500,Ioana Korhonen,Von Neumann Lab,CPU,AI Researcher,17,Employee,2021-09-22,EU-based profile
+00123501,Dimitris Wagner,Data Center Network,Data Center Network,Clinical Data Research Engineer,18,Employee,2022-10-23,EU-based profile
+00123502,Eleni Silva,I3 Standard,I3 Standard,HR Specialist,19,Employee,2023-11-01,EU-based profile
+00123503,Tomasz Popescu,Digital Power,Digital Power,Cloud Platform Engineer,20,Employee,2024-12-02,EU-based profile
+00123504,Zuzanna Nikolaou,Von Neumann Lab,AI Team,AI Researcher,21,Employee,2025-01-03,EU-based profile
+00123505,Greta Rinaldi,Von Neumann Lab,Software Team,Clinical Data Research Engineer,22,Employee,2026-02-04,EU-based profile
+00123506,Paolo Garnier,Von Neumann Lab,CPU,Research Operations Specialist,13,Employee,2017-03-05,EU-based profile
+00123507,Camille Svobodova,Data Center Network,Data Center Network,Cloud Platform Engineer,14,Employee,2018-04-06,EU-based profile
+00123508,Adrien Holm,I3 Standard,I3 Standard,AI Researcher,15,Employee,2019-05-07,EU-based profile
+00123509,Mila Ruiz,Digital Power,Digital Power,Clinical Data Research Engineer,16,Employee,2020-06-08,EU-based profile
+00123510,Jonas Bauer,Von Neumann Lab,AI Team,Research Operations Specialist,17,Employee,2021-07-09,EU-based profile
+00123511,Eva Roux,Von Neumann Lab,Software Team,Cloud Platform Engineer,18,Employee,2022-08-10,EU-based profile
+00123512,Tereza Gallo,Von Neumann Lab,CPU,AI Researcher,19,Employee,2023-09-11,EU-based profile
+00123513,Anouk Oliveira,Data Center Network,Data Center Network,Clinical Data Research Engineer,20,Employee,2024-10-12,EU-based profile
+00123514,Bram Huber,I3 Standard,I3 Standard,Senior Recruiting Partner,21,Employee,2025-11-13,EU-based profile
+00123515,Rasmus Novotny,Digital Power,Digital Power,Cloud Platform Engineer,22,Employee,2026-12-14,EU-based profile
+00123516,Freja Wójcik,Von Neumann Lab,AI Team,AI Researcher,13,Employee,2017-01-15,EU-based profile
+00123517,Sven Varga,Von Neumann Lab,Software Team,Clinical Data Research Engineer,14,Employee,2018-02-16,EU-based profile
+00123518,Carmen Georgiou,Von Neumann Lab,CPU,Research Operations Specialist,15,Employee,2019-03-17,EU-based profile
+00123519,Diego Smit,Data Center Network,Data Center Network,Cloud Platform Engineer,16,Employee,2020-04-18,EU-based profile
+00123520,Nora Ahlström,I3 Standard,I3 Standard,AI Researcher,17,Employee,2021-05-19,EU-based profile
+00123521,Leon Fontaine,Digital Power,Digital Power,Clinical Data Research Engineer,18,Employee,2022-06-20,EU-based profile
+00123522,Amelie Müller,Von Neumann Lab,AI Team,Research Operations Specialist,19,Employee,2023-07-21,EU-based profile
+00123523,Victor Bianchi,Von Neumann Lab,Software Team,Cloud Platform Engineer,20,Employee,2024-08-22,EU-based profile
+00123524,Helena Bernard,Von Neumann Lab,CPU,AI Researcher,21,Employee,2025-09-23,EU-based profile
+00123525,Simon López,Data Center Network,Data Center Network,HR Specialist,22,Employee,2026-10-01,EU-based profile
+00123526,Greta Laurent,I3 Standard,I3 Standard,Research Operations Specialist,13,Employee,2017-11-02,EU-based profile
+00123527,Lena Ricci,Digital Power,Digital Power,Cloud Platform Engineer,14,Employee,2018-12-03,EU-based profile
+00123528,Erik de Vries,Von Neumann Lab,AI Team,AI Researcher,15,Employee,2019-01-04,EU-based profile
+00123529,Maria Novak,Von Neumann Lab,Software Team,Clinical Data Research Engineer,16,Employee,2020-02-05,EU-based profile
+00123530,Pablo Nowak,Von Neumann Lab,CPU,Research Operations Specialist,17,Employee,2021-03-06,EU-based profile
+00123531,Sara Jensen,Data Center Network,Data Center Network,Cloud Platform Engineer,18,Employee,2022-04-07,EU-based profile
+00123532,Isabel Andersson,I3 Standard,I3 Standard,AI Researcher,19,Employee,2023-05-08,EU-based profile
+00123533,Thomas Korhonen,Digital Power,Digital Power,Clinical Data Research Engineer,20,Employee,2024-06-09,EU-based profile
+00123534,Marie Wagner,Von Neumann Lab,AI Team,Research Operations Specialist,21,Employee,2025-07-10,EU-based profile
+00123535,Julien Silva,Von Neumann Lab,Software Team,Cloud Platform Engineer,22,Employee,2026-08-11,EU-based profile
+00123536,Alessia Popescu,Von Neumann Lab,CPU,AI Researcher,13,Employee,2017-09-12,EU-based profile
+00123537,Fabio Nikolaou,Data Center Network,Data Center Network,Clinical Data Research Engineer,14,Employee,2018-10-13,EU-based profile
+00123538,Chiara Rinaldi,I3 Standard,I3 Standard,Research Operations Specialist,15,Employee,2019-11-14,EU-based profile
+00123539,Luca Garnier,Digital Power,Digital Power,Cloud Platform Engineer,16,Employee,2020-12-15,EU-based profile
+00123540,Sophie Svobodova,Von Neumann Lab,AI Team,AI Researcher,17,Employee,2021-01-16,EU-based profile
+00123541,Maximilian Holm,Von Neumann Lab,Software Team,Clinical Data Research Engineer,18,Employee,2022-02-17,EU-based profile
+00123542,Johanna Ruiz,Von Neumann Lab,CPU,Research Operations Specialist,19,Employee,2023-03-18,EU-based profile
+00123543,Florian Bauer,Data Center Network,Data Center Network,Senior Recruiting Partner,20,Employee,2024-04-19,EU-based profile
+00123544,Niklas Roux,I3 Standard,I3 Standard,AI Researcher,21,Employee,2025-05-20,EU-based profile
+00123545,Hanna Gallo,Digital Power,Digital Power,Clinical Data Research Engineer,22,Employee,2026-06-21,EU-based profile
+00123546,Emil Oliveira,Von Neumann Lab,AI Team,Research Operations Specialist,13,Employee,2017-07-22,EU-based profile
+00123547,Oscar Huber,Von Neumann Lab,Software Team,Cloud Platform Engineer,14,Employee,2018-08-23,EU-based profile
+00123548,Mette Novotny,Von Neumann Lab,CPU,HR Specialist,15,Employee,2019-09-01,EU-based profile
+00123549,Signe Wójcik,Data Center Network,Data Center Network,Clinical Data Research Engineer,16,Employee,2020-10-02,EU-based profile
+00123550,Vilma Varga,I3 Standard,I3 Standard,Research Operations Specialist,17,Employee,2021-11-03,EU-based profile
+00123551,Eero Georgiou,Digital Power,Digital Power,Cloud Platform Engineer,18,Employee,2022-12-04,EU-based profile
+00123552,Iris Smit,Von Neumann Lab,AI Team,AI Researcher,19,Employee,2023-01-05,EU-based profile
+00123553,Ruben Ahlström,Von Neumann Lab,Software Team,Clinical Data Research Engineer,20,Employee,2024-02-06,EU-based profile
+00123554,Femke Fontaine,Von Neumann Lab,CPU,Research Operations Specialist,21,Employee,2025-03-07,EU-based profile
+00123555,Lars Müller,Data Center Network,Data Center Network,Cloud Platform Engineer,22,Employee,2026-04-08,EU-based profile
+00123556,Mia Bianchi,I3 Standard,I3 Standard,AI Researcher,13,Employee,2017-05-09,EU-based profile
+00123557,Antoine Bernard,Digital Power,Digital Power,Clinical Data Research Engineer,14,Employee,2018-06-10,EU-based profile
+00123558,Gabriel López,Von Neumann Lab,AI Team,Research Operations Specialist,15,Employee,2019-07-11,EU-based profile
+00123559,Carla Laurent,Von Neumann Lab,Software Team,Cloud Platform Engineer,16,Employee,2020-08-12,EU-based profile
+00123560,Rafael Ricci,Von Neumann Lab,CPU,AI Researcher,17,Employee,2021-09-13,EU-based profile
+00123561,Monika de Vries,Data Center Network,Data Center Network,Clinical Data Research Engineer,18,Employee,2022-10-14,EU-based profile
+00123562,Aleksandra Novak,I3 Standard,I3 Standard,Research Operations Specialist,19,Employee,2023-11-15,EU-based profile
+00123563,Karol Nowak,Digital Power,Digital Power,Cloud Platform Engineer,20,Employee,2024-12-16,EU-based profile
+00123564,Daria Jensen,Von Neumann Lab,AI Team,AI Researcher,21,Employee,2025-01-17,EU-based profile
+00123565,Viktor Andersson,Von Neumann Lab,Software Team,Clinical Data Research Engineer,22,Employee,2026-02-18,EU-based profile
+00123566,Natalia Korhonen,Von Neumann Lab,CPU,Research Operations Specialist,13,Employee,2017-03-19,EU-based profile
+00123567,Jakub Wagner,Data Center Network,Data Center Network,Cloud Platform Engineer,14,Employee,2018-04-20,EU-based profile
+00123568,Cristina Silva,I3 Standard,I3 Standard,AI Researcher,15,Employee,2019-05-21,EU-based profile
+00123569,Andreea Popescu,Digital Power,Digital Power,Clinical Data Research Engineer,16,Employee,2020-06-22,EU-based profile
+00123570,Stefan Nikolaou,Von Neumann Lab,AI Team,Research Operations Specialist,17,Employee,2021-07-23,EU-based profile
+00123571,Nikos Rinaldi,Von Neumann Lab,Software Team,HR Specialist,18,Employee,2022-08-01,EU-based profile
+00123572,Irene Garnier,Von Neumann Lab,CPU,Senior Recruiting Partner,19,Employee,2023-09-02,EU-based profile
+00123573,Daan Svobodova,Data Center Network,Data Center Network,Clinical Data Research Engineer,20,Employee,2024-10-03,EU-based profile
+00123574,Jelle Holm,I3 Standard,I3 Standard,Research Operations Specialist,21,Employee,2025-11-04,EU-based profile
+00123575,Line Ruiz,Digital Power,Digital Power,Cloud Platform Engineer,22,Employee,2026-12-05,EU-based profile
+00123576,Magnus Bauer,Von Neumann Lab,AI Team,AI Researcher,13,Employee,2017-01-06,EU-based profile
+00123577,Liv Roux,Von Neumann Lab,Software Team,Clinical Data Research Engineer,14,Employee,2018-02-07,EU-based profile
+00123578,Theo Gallo,Von Neumann Lab,CPU,Research Operations Specialist,15,Employee,2019-03-08,EU-based profile
+00123579,Louise Oliveira,Data Center Network,Data Center Network,Cloud Platform Engineer,16,Employee,2020-04-09,EU-based profile
+00123580,Noemie Huber,I3 Standard,I3 Standard,AI Researcher,17,Employee,2021-05-10,EU-based profile
+00123581,Enzo Novotny,Digital Power,Digital Power,Clinical Data Research Engineer,18,Employee,2022-06-11,EU-based profile
+00123582,Francesca Wójcik,Von Neumann Lab,AI Team,Research Operations Specialist,19,Employee,2023-07-12,EU-based profile
+00123583,Giorgio Varga,Von Neumann Lab,Software Team,Cloud Platform Engineer,20,Employee,2024-08-13,EU-based profile
+00123584,Elisa Georgiou,Von Neumann Lab,CPU,AI Researcher,21,Employee,2025-09-14,EU-based profile
+00123585,Manuel Smit,Data Center Network,Data Center Network,Clinical Data Research Engineer,22,Employee,2026-10-15,EU-based profile
+8412475,Teresa Ahlström,I3 Standard,I3 Standard,Research Operations Specialist,17,Leased Labour,2017-11-16,EU-based profile
+wx12476,Rita Fontaine,Digital Power,Digital Power,Cloud Platform Engineer,18,Leased Labour,2018-12-17,EU-based profile
+8412477,Miguel Müller,Von Neumann Lab,AI Team,AI Researcher,19,Leased Labour,2019-01-18,EU-based profile
+wx12478,Sofia Bianchi,Von Neumann Lab,Software Team,Clinical Data Research Engineer,13,Leased Labour,2020-02-19,EU-based profile
+8412479,Martin Bernard,Von Neumann Lab,CPU,Research Operations Specialist,14,Leased Labour,2021-03-20,EU-based profile
+wx12480,Celina López,Data Center Network,Data Center Network,Cloud Platform Engineer,15,Leased Labour,2022-04-21,EU-based profile
+8412481,Anna Laurent,I3 Standard,I3 Standard,AI Researcher,16,Leased Labour,2023-05-22,EU-based profile
+wx12482,Lukas Ricci,Digital Power,Digital Power,Clinical Data Research Engineer,17,Leased Labour,2024-06-23,EU-based profile
+8412483,Sofia de Vries,Von Neumann Lab,AI Team,HR Specialist,18,Leased Labour,2025-07-01,EU-based profile
+wx12484,Marco Novak,Von Neumann Lab,Software Team,Cloud Platform Engineer,19,Leased Labour,2026-08-02,EU-based profile
+8412485,Sarah Johnson,Von Neumann Lab,CPU,AI Researcher,13,Leased Labour,2017-09-03,Non-EU profile
+wx12486,Michael Nair,Data Center Network,Data Center Network,Clinical Data Research Engineer,14,Leased Labour,2018-10-04,Non-EU profile
+8412487,Priya Wilson,I3 Standard,I3 Standard,Research Operations Specialist,15,Leased Labour,2019-11-05,Non-EU profile
+wx12488,Arjun Khan,Digital Power,Digital Power,Cloud Platform Engineer,16,Leased Labour,2020-12-06,Non-EU profile
+8412489,Emily Cohen,Von Neumann Lab,AI Team,AI Researcher,17,Leased Labour,2021-01-07,Non-EU profile
+wx12490,David Smith,Von Neumann Lab,Software Team,Senior Recruiting Partner,18,Leased Labour,2022-02-08,Non-EU profile
+8412491,Aisha Rahman,Von Neumann Lab,CPU,Research Operations Specialist,19,Leased Labour,2023-03-09,Non-EU profile
+wx12492,Omar Taylor,Data Center Network,Data Center Network,Cloud Platform Engineer,13,Leased Labour,2024-04-10,Non-EU profile
+8412493,Maya Anderson,I3 Standard,I3 Standard,AI Researcher,14,Leased Labour,2025-05-11,Non-EU profile
+wx12494,Daniel Tanaka,Digital Power,Digital Power,Clinical Data Research Engineer,15,Leased Labour,2026-06-12,Non-EU profile
+8412495,Rachel Johnson,Von Neumann Lab,AI Team,Research Operations Specialist,16,Leased Labour,2017-07-13,Non-EU profile
+wx12496,James Nair,Von Neumann Lab,Software Team,Cloud Platform Engineer,17,Leased Labour,2018-08-14,Non-EU profile
+8412497,Nadia Wilson,Von Neumann Lab,CPU,AI Researcher,18,Leased Labour,2019-09-15,Non-EU profile
+wx12498,Farah Khan,Data Center Network,Data Center Network,Clinical Data Research Engineer,19,Leased Labour,2020-10-16,Non-EU profile
+8412499,Noah Cohen,I3 Standard,I3 Standard,Research Operations Specialist,13,Leased Labour,2021-11-17,Non-EU profile
+wx12500,Olivia Smith,Digital Power,Digital Power,Cloud Platform Engineer,14,Leased Labour,2022-12-18,Non-EU profile
+8412501,Ethan Rahman,Von Neumann Lab,AI Team,AI Researcher,15,Leased Labour,2023-01-19,Non-EU profile
+wx12502,Grace Taylor,Von Neumann Lab,Software Team,Clinical Data Research Engineer,16,Leased Labour,2024-02-20,Non-EU profile
+8412503,Kenji Anderson,Von Neumann Lab,CPU,Research Operations Specialist,17,Leased Labour,2025-03-21,Non-EU profile
+wx12504,Yuki Tanaka,Data Center Network,Data Center Network,Cloud Platform Engineer,18,Leased Labour,2026-04-22,Non-EU profile
+8412505,Zhang Wei,I3 Standard,I3 Standard,AI Researcher,19,Leased Labour,2017-05-23,China profile
+wx12506,Li Na,Digital Power,Digital Power,HR Specialist,13,Leased Labour,2018-06-01,China profile
+8412507,Wang Fang,Von Neumann Lab,AI Team,Research Operations Specialist,14,Leased Labour,2019-07-02,China profile
+wx12508,Liu Yang,Von Neumann Lab,Software Team,Cloud Platform Engineer,15,Leased Labour,2020-08-03,China profile
+8412509,Chen Jie,Von Neumann Lab,CPU,AI Researcher,16,Leased Labour,2021-09-04,China profile
+wx12510,Zhao Min,Data Center Network,Data Center Network,Clinical Data Research Engineer,17,Leased Labour,2022-10-05,China profile
+8412511,Huang Ming,I3 Standard,I3 Standard,Research Operations Specialist,18,Leased Labour,2023-11-06,China profile
+wx12512,Zhou Yu,Digital Power,Digital Power,Cloud Platform Engineer,19,Leased Labour,2024-12-07,China profile
+8412513,Wu Lei,Von Neumann Lab,AI Team,AI Researcher,13,Leased Labour,2025-01-08,China profile
+wx12514,Xu Jing,Von Neumann Lab,Software Team,Clinical Data Research Engineer,14,Leased Labour,2026-02-09,China profile
+50012515,Sun Ming,Von Neumann Lab,CPU,Research Operations Specialist,15,Intern,2017-03-10,China profile
+50012516,Ma Rui,Data Center Network,Data Center Network,Cloud Platform Engineer,13,Intern,2018-04-11,China profile
+50012517,Zhu Jie,I3 Standard,I3 Standard,AI Researcher,14,Intern,2019-05-12,China profile
+50012518,He Qiang,Digital Power,Digital Power,Clinical Data Research Engineer,15,Intern,2020-06-13,China profile
+50012519,Gao Lin,Von Neumann Lab,AI Team,Senior Recruiting Partner,13,Intern,2021-07-14,China profile
+50012520,Guo Yan,Von Neumann Lab,Software Team,Cloud Platform Engineer,14,Intern,2022-08-15,China profile
+50012521,Luo Hao,Von Neumann Lab,CPU,AI Researcher,15,Intern,2023-09-16,China profile
+50012522,Tang Xin,Data Center Network,Data Center Network,Clinical Data Research Engineer,13,Intern,2024-10-17,China profile
+50012523,Deng Kai,I3 Standard,I3 Standard,Research Operations Specialist,14,Intern,2025-11-18,China profile
+50012524,Yao Chen,Digital Power,Digital Power,Cloud Platform Engineer,15,Intern,2026-12-19,China profile
+50012525,Lin Yue,Von Neumann Lab,AI Team,AI Researcher,13,Intern,2017-01-20,China profile
+50012526,Cao Ning,Von Neumann Lab,Software Team,Clinical Data Research Engineer,14,Intern,2018-02-21,China profile
+50012527,Qian Lei,Von Neumann Lab,CPU,Research Operations Specialist,15,Intern,2019-03-22,China profile
+50012528,Feng Xin,Data Center Network,Data Center Network,Cloud Platform Engineer,13,Intern,2020-04-23,China profile
+50012529,Pan Rui,I3 Standard,I3 Standard,HR Specialist,14,Intern,2021-05-01,China profile
+50012530,Jiang Tao,Digital Power,Digital Power,Clinical Data Research Engineer,15,Intern,2022-06-02,China profile
+50012531,Han Mei,Von Neumann Lab,AI Team,Research Operations Specialist,13,Intern,2023-07-03,China profile
+50012532,Xie Chen,Von Neumann Lab,Software Team,Cloud Platform Engineer,14,Intern,2024-08-04,China profile
+50012533,Song Yu,Von Neumann Lab,CPU,AI Researcher,15,Intern,2025-09-05,China profile
+50012534,Yu Hao,Data Center Network,Data Center Network,Clinical Data Research Engineer,13,Intern,2026-10-06,China profile
+50012535,Shi Lin,I3 Standard,I3 Standard,Research Operations Specialist,14,Intern,2017-11-07,China profile
+50012536,Dai Qing,Digital Power,Digital Power,Cloud Platform Engineer,15,Intern,2018-12-08,China profile
+50012537,Ren Yi,Von Neumann Lab,AI Team,AI Researcher,13,Intern,2019-01-09,China profile
+50012538,Bai Xue,Von Neumann Lab,Software Team,Clinical Data Research Engineer,14,Intern,2020-02-10,China profile
+50012539,Mao Jun,Von Neumann Lab,CPU,Research Operations Specialist,15,Intern,2021-03-11,China profile
+50012540,Long Wei,Data Center Network,Data Center Network,Cloud Platform Engineer,13,Intern,2022-04-12,China profile
+50012541,Tian Xin,I3 Standard,I3 Standard,AI Researcher,14,Intern,2023-05-13,China profile
+50012542,Kong Liang,Digital Power,Digital Power,Clinical Data Research Engineer,15,Intern,2024-06-14,China profile
+50012543,Meng Fan,Von Neumann Lab,AI Team,Research Operations Specialist,13,Intern,2025-07-15,China profile
+50012544,Shen Yi,Von Neumann Lab,Software Team,Cloud Platform Engineer,14,Intern,2026-08-16,China profile
