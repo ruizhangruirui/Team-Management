@@ -108,7 +108,7 @@ const defaultState = {
 const translations = {
   zh: {
     loginTitle: "登录", email: "邮箱", password: "密码", login: "登录", logout: "退出登录",
-    changePassword: "修改密码", currentPassword: "当前密码", newPassword: "新密码", confirmNewPassword: "确认新密码", savePassword: "保存密码", temporaryPassword: "Supabase 临时密码记录",
+    changePassword: "修改密码", currentPassword: "当前密码", newPassword: "新密码", confirmNewPassword: "确认新密码", savePassword: "保存密码", temporaryPassword: "密码备注", passwordRecordHint: "仅用于 Team Management 内部记录，不会自动创建或修改 Supabase Auth 密码。真实登录密码请在 Supabase 用户或用户本人修改密码时设置。", passwordManagedInSupabase: "由 Supabase 管理",
     language: "语言 / Language", accountsAndPermissions: "领导关系与 HRBP 覆盖",
     accountName: "账号姓名", permissionRole: "授权角色", scope: "授权范围", addAccount: "添加账号",
     ownerCanAssign: "Owner 可添加账号、设置领导关系与访问范围。Research Center Director 与 Owner 可看所有人。",
@@ -172,7 +172,7 @@ const translations = {
     noTalentActions: "暂无人才行动计划。", openTalentActions: "进行中人才行动", confirmTalentAction: "为 {name} 添加人才行动", confirmTalentActions: "为 {count} 名员工添加人才行动",
     talentSettings: "人才标签设置", newTalentTag: "新增优秀标签", newAwardName: "新增奖项名称", addTag: "添加标签", addAwardName: "添加奖项",
     developmentSettings: "人才发展设置", newActionType: "新增行动类型", newActivityType: "新增活动类型", addActionType: "添加行动类型", addActivityType: "添加活动类型",
-    roleSettings: "角色设置", roleSettingsHint: "可修改角色显示名称；权限逻辑仍由系统内置角色类型控制。", roleDisplayName: "角色显示名称", selectEmployeeForAccess: "选择员工授权", selectEmployeeHint: "今后新增 Leadership / HRBP 账号应先选择员工，再绑定 Supabase 邮箱与权限。",
+    roleSettings: "角色设置", roleSettingsHint: "可修改角色显示名称；权限逻辑仍由系统内置角色类型控制。", roleDisplayName: "角色显示名称", selectEmployeeForAccess: "选择员工授权", selectEmployeeHint: "今后新增 Leadership / HRBP 账号应先选择员工，再绑定 Supabase 邮箱与权限。", employeeSearchPlaceholder: "按工号、姓名、Business Unit、Team 或岗位检索",
     actionTypeSettings: "行动类型", activityTypeSettings: "活动类型", archive: "存档", archived: "已存档", edit: "编辑", updateTalentAction: "更新人才行动",
     talentHighlights: "优秀标签与获奖记录", talentTag: "优秀标签", awardName: "奖项名称", awardDate: "获奖日期", awardNote: "说明", addAward: "添加奖项",
     editTalentHighlights: "添加 / 编辑标签与奖项", editGrowthPath: "添加成长轨迹",
@@ -194,7 +194,7 @@ const translations = {
   },
   en: {
     loginTitle: "Sign In", email: "Email", password: "Password", login: "Sign In", logout: "Sign Out",
-    changePassword: "Change Password", currentPassword: "Current Password", newPassword: "New Password", confirmNewPassword: "Confirm New Password", savePassword: "Save Password", temporaryPassword: "Temporary Supabase Password Note",
+    changePassword: "Change Password", currentPassword: "Current Password", newPassword: "New Password", confirmNewPassword: "Confirm New Password", savePassword: "Save Password", temporaryPassword: "Password Note", passwordRecordHint: "Internal Team Management record only. It does not create or update the Supabase Auth password. Set the real login password in Supabase or through the user's own password change.", passwordManagedInSupabase: "Managed in Supabase",
     language: "Language / 语言", accountsAndPermissions: "Leadership & HRBP Coverage",
     accountName: "Account Name", permissionRole: "Permission Role", scope: "Scope", addAccount: "Add Account",
     ownerCanAssign: "Owners can add accounts, set leadership relationships, and authorize access scope. Research Center Directors and Owners can see everyone.",
@@ -258,7 +258,7 @@ const translations = {
     noTalentActions: "No talent action plans yet.", openTalentActions: "Open talent actions", confirmTalentAction: "Add talent action for {name}", confirmTalentActions: "Add talent action for {count} employees",
     talentSettings: "Talent Tag Settings", newTalentTag: "New Talent Tag", newAwardName: "New Award Name", addTag: "Add Tag", addAwardName: "Add Award Name",
     developmentSettings: "Talent Development Settings", newActionType: "New Action Type", newActivityType: "New Activity Type", addActionType: "Add Action Type", addActivityType: "Add Activity Type",
-    roleSettings: "Role Settings", roleSettingsHint: "Edit role display names. Permission behavior remains tied to the built-in role type.", roleDisplayName: "Role Display Name", selectEmployeeForAccess: "Select Employee for Access", selectEmployeeHint: "New Leadership / HRBP access should start from an employee, then bind the Supabase email and scope.",
+    roleSettings: "Role Settings", roleSettingsHint: "Edit role display names. Permission behavior remains tied to the built-in role type.", roleDisplayName: "Role Display Name", selectEmployeeForAccess: "Select Employee for Access", selectEmployeeHint: "New Leadership / HRBP access should start from an employee, then bind the Supabase email and scope.", employeeSearchPlaceholder: "Search by ID, name, Business Unit, Team, or job title",
     actionTypeSettings: "Action Types", activityTypeSettings: "Activity Types", archive: "Archive", archived: "Archived", edit: "Edit", updateTalentAction: "Update Talent Action",
     talentHighlights: "Talent Tags & Awards", talentTag: "Talent Tag", awardName: "Award Name", awardDate: "Award Date", awardNote: "Note", addAward: "Add Award",
     editTalentHighlights: "Add / Edit Tags & Awards", editGrowthPath: "Add Growth Path",
@@ -1620,10 +1620,10 @@ function renderNewAccountForm(kind) {
   return `<details class="account-group account-create">
     <summary><span>${escapeHtml(title)}</span></summary>
     <div class="account-form account-form-wide" data-new-account-form="${kind}">
-      <label><span>${t("selectEmployeeForAccess")}</span><select data-new-account-person="${kind}">${employeeAccessOptions()}</select><small class="hint">${t("selectEmployeeHint")}</small></label>
+      <label><span>${t("selectEmployeeForAccess")}</span><input data-new-account-person-search="${kind}" type="search" placeholder="${escapeHtml(t("employeeSearchPlaceholder"))}" /><select data-new-account-person="${kind}">${employeeAccessOptions()}</select><small class="hint">${t("selectEmployeeHint")}</small></label>
       <label><span>${t("accountName")}</span><input data-new-account-name="${kind}" type="text" /></label>
       <label><span>${t("email")}</span><input data-new-account-email="${kind}" type="email" /></label>
-      <label><span>${t("temporaryPassword")}</span><input data-new-account-password="${kind}" type="text" /></label>
+      <label><span>${t("temporaryPassword")}</span><input data-new-account-password="${kind}" type="text" /><small class="hint">${t("passwordRecordHint")}</small></label>
       ${roleSelect}
       <label><span>${t("scope")}</span><select data-new-account-scope="${kind}" ${isHrbpForm ? "multiple size=\"8\"" : ""}>${newAccountScopeOptions(isHrbpForm ? "hrbp" : "researchDirector")}</select>${isHrbpForm ? `<small class="hint">${state.language === "en" ? "Select one or more Teams, then confirm." : "可选择一个或多个 Team，然后确认创建。"}</small>` : ""}</label>
       <button type="button" class="primary" data-add-account-kind="${kind}">${t("addAccount")}</button>
@@ -1638,12 +1638,35 @@ function businessRoleOptions(selectedRole = "researchDirector") {
     .join("");
 }
 
-function employeeAccessOptions(selectedPersonId = "") {
+function employeeMatchesAccessQuery(person, query) {
+  if (!query) return true;
+  const text = [
+    person.employeeNo,
+    person.name,
+    person.role,
+    person.level,
+    person.contractType,
+    personOrgPath(person),
+  ].join(" ").toLowerCase();
+  return text.includes(query.toLowerCase().trim());
+}
+
+function employeeAccessOptions(selectedPersonId = "", query = "") {
   return [`<option value="">${escapeHtml(t("selectEmployeeForAccess"))}</option>`, ...state.people
     .slice()
+    .filter((person) => person.id === selectedPersonId || employeeMatchesAccessQuery(person, query))
     .sort((a, b) => String(a.employeeNo).localeCompare(String(b.employeeNo)))
     .map((person) => `<option value="${person.id}" ${person.id === selectedPersonId ? "selected" : ""}>${escapeHtml(person.employeeNo)} · ${escapeHtml(person.name)} · ${escapeHtml(personOrgPath(person) || t("notFilled"))}</option>`)]
     .join("");
+}
+
+function bindEmployeeAccessSearch(input, select, selectedPersonId = "") {
+  if (!input || !select) return;
+  input.addEventListener("input", () => {
+    const currentValue = select.value || selectedPersonId;
+    select.innerHTML = employeeAccessOptions(currentValue, input.value);
+    if (currentValue && [...select.options].some((option) => option.value === currentValue)) select.value = currentValue;
+  });
 }
 
 function newAccountScopeOptions(role, selectedScope = "") {
@@ -1684,8 +1707,9 @@ function bindNewAccountForms() {
       button.addEventListener("click", () => addAccountFromPanel(button.dataset.addAccountKind, root));
     });
     root.querySelectorAll("[data-new-account-person]").forEach((select) => {
+      const kind = select.dataset.newAccountPerson;
+      bindEmployeeAccessSearch(root.querySelector(`[data-new-account-person-search="${kind}"]`), select);
       select.addEventListener("change", () => {
-        const kind = select.dataset.newAccountPerson;
         const person = state.people.find((item) => item.id === select.value);
         const nameInput = root.querySelector(`[data-new-account-name="${kind}"]`);
         if (person && nameInput && !nameInput.value.trim()) nameInput.value = person.name;
@@ -1708,9 +1732,14 @@ function bindAccountEditors(root) {
     });
   });
   root.querySelectorAll("[data-account-row] input, [data-account-row] select").forEach((control) => {
+    if (control.matches("[data-account-person-search]")) return;
     const row = control.closest("[data-account-row]");
     control.addEventListener("input", () => markAccountDirty(row));
     control.addEventListener("change", () => markAccountDirty(row));
+  });
+  root.querySelectorAll("[data-account-person]").forEach((select) => {
+    const accountId = select.dataset.accountPerson;
+    bindEmployeeAccessSearch(root.querySelector(`[data-account-person-search="${accountId}"]`), select, select.value);
   });
   root.querySelectorAll("[data-save-account]").forEach((button) => {
     button.addEventListener("click", () => saveAccountEdit(button.dataset.saveAccount, button.closest("[data-account-row]")));
@@ -1753,8 +1782,8 @@ function renderAccountRow(account) {
       </summary>
       <label><span>${t("accountName")}</span><input data-account-name="${account.id}" value="${escapeHtml(account.name)}" /></label>
       <label><span>${t("email")}</span><input data-account-email="${account.id}" type="email" value="${escapeHtml(account.email)}" /></label>
-      <label><span>${t("password")}</span><input class="readonly-field" type="text" value="${escapeHtml(account.password)}" readonly /></label>
-      <label><span>${t("selectEmployeeForAccess")}</span><select data-account-person="${account.id}">${employeeAccessOptions(account.personId || state.people.find((person) => person.accountId === account.id)?.id || "")}</select></label>
+      <label><span>${t("password")}</span><input class="readonly-field" type="text" value="${escapeHtml(account.password)}" readonly /><small class="hint">${t("passwordRecordHint")}</small></label>
+      <label><span>${t("selectEmployeeForAccess")}</span><input data-account-person-search="${account.id}" type="search" placeholder="${escapeHtml(t("employeeSearchPlaceholder"))}" /><select data-account-person="${account.id}">${employeeAccessOptions(account.personId || state.people.find((person) => person.accountId === account.id)?.id || "")}</select></label>
       <label><span>${t("permissionRole")}</span><select data-account-role="${account.id}">${roleOptions(account.role)}</select></label>
       <label><span>${t("scope")}</span><select data-account-scope="${account.id}" ${multi ? `multiple size="${Math.min(5, state.org.units.length)}"` : ""}>${scopeOptionsForRole(account.role, multi ? accountScopeIds(account) : account.scopeId)}</select>${scopeHelp}</label>
       <div class="account-actions">
@@ -3567,8 +3596,8 @@ function addAccount() {
   const scopeType = role === "researchDirector" ? "center" : ["teamManager", "hrbp"].includes(role) ? "team" : "unit";
   const name = elements.newAccountName.value.trim();
   const email = elements.newAccountEmail.value.trim().toLowerCase();
-  const password = elements.newAccountPassword.value;
-  if (!name || !email || !password || !scopeId) {
+  const password = elements.newAccountPassword.value || t("passwordManagedInSupabase");
+  if (!name || !email || !scopeId) {
     showValidation("validationRequired");
     return;
   }
@@ -3611,8 +3640,8 @@ function addAccountFromPanel(kind, root) {
   const passwordInput = root.querySelector(`[data-new-account-password="${kind}"]`);
   const name = nameInput?.value.trim() || selectedPerson?.name || "";
   const email = emailInput?.value.trim().toLowerCase();
-  const password = passwordInput?.value;
-  if (!personId || !name || !email || !password || !role || !scopeId || (role === "hrbp" && !selectedScopeIds.length)) {
+  const password = passwordInput?.value || t("passwordManagedInSupabase");
+  if (!personId || !name || !email || !role || !scopeId || (role === "hrbp" && !selectedScopeIds.length)) {
     showValidation("validationRequired");
     return;
   }
