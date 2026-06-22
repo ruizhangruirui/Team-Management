@@ -39,6 +39,9 @@ body {
 
 .login-view {
   display: grid;
+  grid-template-rows: auto auto;
+  align-content: center;
+  gap: 18px;
   min-height: 100vh;
   place-items: center;
   padding: 24px;
@@ -57,6 +60,37 @@ body {
 
 .login-card h1 {
   font-size: 28px;
+}
+
+.product-signature {
+  position: relative;
+  margin: 0;
+  color: #7c8aa0;
+  font-family:
+    "Inter", "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  line-height: 1.5;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.product-signature::before {
+  content: "";
+  display: block;
+  width: 64px;
+  height: 1px;
+  margin: 0 auto 10px;
+  background: linear-gradient(90deg, transparent, rgba(29, 79, 145, 0.45), transparent);
+}
+
+.product-signature span {
+  color: var(--primary-dark);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: none;
 }
 
 .error-text {
@@ -762,6 +796,11 @@ textarea:focus {
   min-width: 0;
   max-width: 1480px;
   padding: 28px 32px 40px;
+}
+
+.app-signature {
+  margin-top: 34px;
+  padding-bottom: 8px;
 }
 
 .topbar {
