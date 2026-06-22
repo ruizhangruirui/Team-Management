@@ -3,6 +3,7 @@ const LEGACY_KEY = "people-management-v1";
 const SUPABASE_URL = "https://irhybluwgziiegbcrfjc.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlyaHlibHV3Z3ppaWVnYmNyZmpjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxMDgxMTMsImV4cCI6MjA5NzY4NDExM30.GKNO2VcXNI00S5UZbEN6r7In5abwtwjsSmsRVXy-7Ng";
 const SUPABASE_STATE_ID = "main";
+const APP_URL = "https://team-management-fb3g.onrender.com/";
 const CONTRACT_TYPES = ["Employee", "Leased Labour", "Intern"];
 
 const defaultState = {
@@ -3795,7 +3796,10 @@ async function changeOwnPassword() {
 }
 
 function resetRedirectUrl() {
-  return `${window.location.origin}${window.location.pathname}`;
+  if (window.location.protocol === "http:" || window.location.protocol === "https:") {
+    return `${window.location.origin}${window.location.pathname}`;
+  }
+  return APP_URL;
 }
 
 async function sendPasswordResetEmail() {
