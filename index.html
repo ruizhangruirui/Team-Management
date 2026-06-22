@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>人才管理系统 / Talent Management</title>
-    <link rel="stylesheet" href="./styles.css?v=20260622-settings-dialog-width" />
+    <link rel="stylesheet" href="./styles.css?v=20260622-talent-action-layout" />
   </head>
   <body>
     <section id="loginView" class="login-view">
@@ -193,7 +193,7 @@
               <small data-i18n="talentActionHint">记录 IDP、继任、关键岗位备份、保留风险和学习发展动作。</small>
             </summary>
             <div id="talentDashboard" class="talent-dashboard compact-dashboard"></div>
-            <div class="form-grid">
+            <div class="talent-filter-grid">
               <label>
                 <span data-i18n="labFilter">Lab / Platform 筛选</span>
                 <select id="talentUnitFilter"></select>
@@ -203,36 +203,38 @@
                 <select id="talentTeamFilter"></select>
               </label>
             </div>
-            <div class="form-grid owner-hrbp-write">
-              <label>
+            <div class="talent-action-editor owner-hrbp-write">
+              <label class="talent-person-picker">
                 <span data-i18n="actionPerson">对象员工</span>
                 <select id="talentActionPerson" multiple size="8"></select>
                 <small class="hint" data-i18n="multiSelectPeopleHint">可按 Ctrl/Cmd 或 Shift 多选员工。</small>
               </label>
-              <label>
-                <span data-i18n="actionType">行动类型</span>
-                <select id="talentActionType"></select>
-              </label>
-              <label>
-                <span data-i18n="actionPriority">优先级</span>
-                <select id="talentActionPriority">
-                  <option value="High" data-i18n="priorityHigh">高</option>
-                  <option value="Medium" data-i18n="priorityMedium">中</option>
-                  <option value="Low" data-i18n="priorityLow">低</option>
-                </select>
-              </label>
-              <label>
-                <span data-i18n="actionStatus">状态</span>
-                <select id="talentActionStatus">
-                  <option value="Open" data-i18n="statusOpen">进行中</option>
-                  <option value="Watch" data-i18n="statusWatch">观察中</option>
-                  <option value="Done" data-i18n="statusDone">已完成</option>
-                </select>
-              </label>
-              <label>
-                <span data-i18n="actionDueDate">目标日期</span>
-                <input id="talentActionDueDate" type="date" />
-              </label>
+              <div class="talent-action-fields">
+                <label>
+                  <span data-i18n="actionType">行动类型</span>
+                  <select id="talentActionType"></select>
+                </label>
+                <label>
+                  <span data-i18n="actionPriority">优先级</span>
+                  <select id="talentActionPriority">
+                    <option value="High" data-i18n="priorityHigh">高</option>
+                    <option value="Medium" data-i18n="priorityMedium">中</option>
+                    <option value="Low" data-i18n="priorityLow">低</option>
+                  </select>
+                </label>
+                <label>
+                  <span data-i18n="actionStatus">状态</span>
+                  <select id="talentActionStatus">
+                    <option value="Open" data-i18n="statusOpen">进行中</option>
+                    <option value="Watch" data-i18n="statusWatch">观察中</option>
+                    <option value="Done" data-i18n="statusDone">已完成</option>
+                  </select>
+                </label>
+                <label>
+                  <span data-i18n="actionDueDate">目标日期</span>
+                  <input id="talentActionDueDate" type="date" />
+                </label>
+              </div>
             </div>
             <label class="owner-hrbp-write">
               <span data-i18n="actionNote">行动说明</span>
