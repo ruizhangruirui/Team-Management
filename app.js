@@ -171,7 +171,7 @@ const translations = {
     actionPerson: "对象员工", actionType: "行动类型", actionPriority: "优先级", actionStatus: "状态", actionDueDate: "目标日期", actionNote: "行动说明", addTalentAction: "添加人才行动", multiSelectPeopleHint: "可按 Ctrl/Cmd 或 Shift 多选员工。",
     priorityHigh: "高", priorityMedium: "中", priorityLow: "低", statusOpen: "进行中", statusDone: "已完成", statusWatch: "观察中",
     noTalentActions: "暂无人才行动计划。", openTalentActions: "进行中人才行动", confirmTalentAction: "为 {name} 添加人才行动", confirmTalentActions: "为 {count} 名员工添加人才行动",
-    talentReviewPack: "人才评审包", talentReviewPackHint: "选择员工，自动生成一页式人才盘点材料，用于评审会或主管沟通。", reviewPackPerson: "评审对象", reviewPackDescription: "演示版会从员工卡片、主管记录、HRBP 人才洞察、成长轨迹、标签奖项和行动计划里提取信息，生成结构化 memo。", generateReviewPack: "生成评审包", copyReviewPack: "复制", downloadReviewPack: "下载", reviewPackEmpty: "请选择员工并生成评审包。", reviewPackCopied: "评审包已复制。",
+    talentReviewPack: "人才评审包", talentReviewPackHint: "选择员工，自动生成一页式人才盘点材料，用于评审会或主管沟通。", reviewPackPerson: "评审对象", reviewPackDescription: "演示版会从员工卡片、主管记录、HRBP 人才洞察、成长轨迹、标签奖项和行动计划里提取信息，生成结构化 memo。", generateReviewPack: "生成评审包", copyReviewPack: "复制", downloadReviewPack: "下载", reviewPackEmpty: "请选择员工并生成评审包。", reviewPackCopied: "评审包已复制。", reviewPackSelected: "浏览器限制了自动复制，内容已选中，可按 Ctrl/Cmd+C 复制。",
     talentSettings: "人才标签设置", newTalentTag: "新增优秀标签", newAwardName: "新增奖项名称", addTag: "添加标签", addAwardName: "添加奖项",
     developmentSettings: "人才发展设置", newActionType: "新增行动类型", newActivityType: "新增活动类型", addActionType: "添加行动类型", addActivityType: "添加活动类型",
     roleSettings: "角色设置", roleSettingsHint: "可修改角色显示名称；权限逻辑仍由系统内置角色类型控制。", roleDisplayName: "角色显示名称", selectEmployeeForAccess: "绑定员工身份", selectEmployeeHint: "这里是把登录账号绑定到系统里的员工本人；可见范围由授权范围或 HRBP 覆盖 Team 决定。", employeeSearchPlaceholder: "按工号、姓名、Business Unit、Team 或岗位检索",
@@ -258,7 +258,7 @@ const translations = {
     actionPerson: "Employees", actionType: "Action Type", actionPriority: "Priority", actionStatus: "Status", actionDueDate: "Due Date", actionNote: "Action Note", addTalentAction: "Add Talent Action", multiSelectPeopleHint: "Hold Ctrl/Cmd or Shift to select multiple employees.",
     priorityHigh: "High", priorityMedium: "Medium", priorityLow: "Low", statusOpen: "Open", statusDone: "Done", statusWatch: "Watch",
     noTalentActions: "No talent action plans yet.", openTalentActions: "Open talent actions", confirmTalentAction: "Add talent action for {name}", confirmTalentActions: "Add talent action for {count} employees",
-    talentReviewPack: "Talent Review Pack", talentReviewPackHint: "Select one employee and generate a one-page review memo for talent calibration or manager discussion.", reviewPackPerson: "Review Person", reviewPackDescription: "The demo pulls from the employee card, manager records, HRBP insights, growth path, tags, awards, and action plans to create a structured memo.", generateReviewPack: "Generate Review Pack", copyReviewPack: "Copy", downloadReviewPack: "Download", reviewPackEmpty: "Select an employee and generate a review pack.", reviewPackCopied: "Review pack copied.",
+    talentReviewPack: "Talent Review Pack", talentReviewPackHint: "Select one employee and generate a one-page review memo for talent calibration or manager discussion.", reviewPackPerson: "Review Person", reviewPackDescription: "The demo pulls from the employee card, manager records, HRBP insights, growth path, tags, awards, and action plans to create a structured memo.", generateReviewPack: "Generate Review Pack", copyReviewPack: "Copy", downloadReviewPack: "Download", reviewPackEmpty: "Select an employee and generate a review pack.", reviewPackCopied: "Review pack copied.", reviewPackSelected: "Browser copy permission was blocked. The text is selected; press Ctrl/Cmd+C to copy.",
     talentSettings: "Talent Tag Settings", newTalentTag: "New Talent Tag", newAwardName: "New Award Name", addTag: "Add Tag", addAwardName: "Add Award Name",
     developmentSettings: "Talent Development Settings", newActionType: "New Action Type", newActivityType: "New Activity Type", addActionType: "Add Action Type", addActivityType: "Add Activity Type",
     roleSettings: "Role Settings", roleSettingsHint: "Edit role display names. Permission behavior remains tied to the built-in role type.", roleDisplayName: "Role Display Name", selectEmployeeForAccess: "Link Employee Identity", selectEmployeeHint: "This links the login account to one employee profile. Visibility is controlled by Scope or HRBP covered Teams.", employeeSearchPlaceholder: "Search by ID, name, Business Unit, Team, or job title",
@@ -1449,7 +1449,10 @@ function filteredPeople() {
 function applyI18n() {
   document.documentElement.lang = state.language === "en" ? "en" : "zh-CN";
   document.title = state.language === "en" ? "Talent Management System" : "人才管理系统";
-  document.querySelectorAll("[data-i18n]").forEach((node) => (node.textContent = t(node.dataset.i18n)));
+  document.querySelectorAll("[data-i18n]").forEach((node) => {
+    if (node.tagName === "TEXTAREA" && node.readOnly) node.value = t(node.dataset.i18n);
+    else node.textContent = t(node.dataset.i18n);
+  });
   document.querySelectorAll("[data-placeholder-i18n]").forEach((node) => (node.placeholder = t(node.dataset.placeholderI18n)));
   elements.demoLoginHint.innerHTML = loginHintHtml();
 }
@@ -2172,7 +2175,7 @@ function recordsByTypes(person, types) {
 function generateTalentReviewPack() {
   const person = state.people.find((item) => item.id === elements.reviewPackPerson.value);
   if (!person) {
-    elements.reviewPackOutput.textContent = t("reviewPackEmpty");
+    elements.reviewPackOutput.value = t("reviewPackEmpty");
     return;
   }
   const team = findTeam(person.teamId);
@@ -2204,7 +2207,7 @@ function generateTalentReviewPack() {
     "- Align next 90-day action with team current situation, goal, and gap.",
   ].join("\n");
 
-  elements.reviewPackOutput.textContent = [
+  elements.reviewPackOutput.value = [
     `TALENT REVIEW PACK`,
     `${person.name} / ${person.employeeNo}`,
     "",
@@ -2241,14 +2244,27 @@ function generateTalentReviewPack() {
 }
 
 async function copyTalentReviewPack() {
-  const text = elements.reviewPackOutput.textContent.trim();
+  if (!elements.reviewPackOutput.value.trim() || elements.reviewPackOutput.value.trim() === t("reviewPackEmpty")) {
+    generateTalentReviewPack();
+  }
+  const text = elements.reviewPackOutput.value.trim();
   if (!text || text === t("reviewPackEmpty")) return;
-  await navigator.clipboard.writeText(text);
-  showToast(t("reviewPackCopied"));
+  try {
+    await navigator.clipboard.writeText(text);
+    showToast(t("reviewPackCopied"));
+  } catch (error) {
+    elements.reviewPackOutput.focus();
+    elements.reviewPackOutput.select();
+    document.execCommand("copy");
+    showToast(t("reviewPackSelected"));
+  }
 }
 
 function downloadTalentReviewPack() {
-  const text = elements.reviewPackOutput.textContent.trim();
+  if (!elements.reviewPackOutput.value.trim() || elements.reviewPackOutput.value.trim() === t("reviewPackEmpty")) {
+    generateTalentReviewPack();
+  }
+  const text = elements.reviewPackOutput.value.trim();
   if (!text || text === t("reviewPackEmpty")) return;
   const person = state.people.find((item) => item.id === elements.reviewPackPerson.value);
   const filename = `talent-review-pack-${(person?.employeeNo || "employee").replace(/[^a-z0-9_-]/gi, "")}.txt`;
