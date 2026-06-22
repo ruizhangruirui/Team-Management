@@ -171,7 +171,7 @@ const translations = {
     actionPerson: "对象员工", actionType: "行动类型", actionPriority: "优先级", actionStatus: "状态", actionDueDate: "目标日期", actionNote: "行动说明", addTalentAction: "添加人才行动", multiSelectPeopleHint: "可按 Ctrl/Cmd 或 Shift 多选员工。",
     priorityHigh: "高", priorityMedium: "中", priorityLow: "低", statusOpen: "进行中", statusDone: "已完成", statusWatch: "观察中",
     noTalentActions: "暂无人才行动计划。", openTalentActions: "进行中人才行动", confirmTalentAction: "为 {name} 添加人才行动", confirmTalentActions: "为 {count} 名员工添加人才行动",
-    talentReviewPack: "人才评审包", talentReviewPackHint: "选择员工，自动生成一页式人才盘点材料，用于评审会或主管沟通。", reviewPackPerson: "评审对象", reviewPackDescription: "演示版会从员工卡片、主管记录、HRBP 人才洞察、成长轨迹、标签奖项和行动计划里提取信息，生成结构化 memo。", generateReviewPack: "生成评审包", copyReviewPack: "复制", downloadReviewPack: "下载", reviewPackEmpty: "请选择员工并生成评审包。", reviewPackCopied: "评审包已复制。", reviewPackSelected: "浏览器限制了自动复制，内容已选中，可按 Ctrl/Cmd+C 复制。",
+    talentReviewPack: "AI 人才评审助手", talentReviewPackHint: "从主管记录、HRBP 洞察、成长轨迹和行动计划中提炼证据、风险与发展建议。", reviewPackPerson: "评审对象", reviewPackDescription: "演示版不调用付费 AI API，而是用本地规则模拟人才盘点分析：提炼关键证据、优势画像、风险信号、发展建议和记录质量问题。", generateReviewPack: "生成 AI 洞察", copyReviewPack: "复制", downloadReviewPack: "下载", reviewPackEmpty: "请选择员工并生成 AI 人才洞察。", reviewPackCopied: "评审包已复制。", reviewPackSelected: "浏览器限制了自动复制，内容已选中，可按 Ctrl/Cmd+C 复制。",
     talentSettings: "人才标签设置", newTalentTag: "新增优秀标签", newAwardName: "新增奖项名称", addTag: "添加标签", addAwardName: "添加奖项",
     developmentSettings: "人才发展设置", newActionType: "新增行动类型", newActivityType: "新增活动类型", addActionType: "添加行动类型", addActivityType: "添加活动类型",
     roleSettings: "角色设置", roleSettingsHint: "可修改角色显示名称；权限逻辑仍由系统内置角色类型控制。", roleDisplayName: "角色显示名称", selectEmployeeForAccess: "绑定员工身份", selectEmployeeHint: "这里是把登录账号绑定到系统里的员工本人；可见范围由授权范围或 HRBP 覆盖 Team 决定。", employeeSearchPlaceholder: "按工号、姓名、Business Unit、Team 或岗位检索",
@@ -258,7 +258,7 @@ const translations = {
     actionPerson: "Employees", actionType: "Action Type", actionPriority: "Priority", actionStatus: "Status", actionDueDate: "Due Date", actionNote: "Action Note", addTalentAction: "Add Talent Action", multiSelectPeopleHint: "Hold Ctrl/Cmd or Shift to select multiple employees.",
     priorityHigh: "High", priorityMedium: "Medium", priorityLow: "Low", statusOpen: "Open", statusDone: "Done", statusWatch: "Watch",
     noTalentActions: "No talent action plans yet.", openTalentActions: "Open talent actions", confirmTalentAction: "Add talent action for {name}", confirmTalentActions: "Add talent action for {count} employees",
-    talentReviewPack: "Talent Review Pack", talentReviewPackHint: "Select one employee and generate a one-page review memo for talent calibration or manager discussion.", reviewPackPerson: "Review Person", reviewPackDescription: "The demo pulls from the employee card, manager records, HRBP insights, growth path, tags, awards, and action plans to create a structured memo.", generateReviewPack: "Generate Review Pack", copyReviewPack: "Copy", downloadReviewPack: "Download", reviewPackEmpty: "Select an employee and generate a review pack.", reviewPackCopied: "Review pack copied.", reviewPackSelected: "Browser copy permission was blocked. The text is selected; press Ctrl/Cmd+C to copy.",
+    talentReviewPack: "AI Talent Review Assistant", talentReviewPackHint: "Extract evidence, risks, and development suggestions from manager records, HRBP insights, growth path, and action plans.", reviewPackPerson: "Review Person", reviewPackDescription: "The demo does not call a paid AI API. It uses local rules to simulate talent calibration analysis: evidence extraction, strength profile, risk signals, development suggestions, and record-quality checks.", generateReviewPack: "Generate AI Insight", copyReviewPack: "Copy", downloadReviewPack: "Download", reviewPackEmpty: "Select an employee and generate AI talent insights.", reviewPackCopied: "Review pack copied.", reviewPackSelected: "Browser copy permission was blocked. The text is selected; press Ctrl/Cmd+C to copy.",
     talentSettings: "Talent Tag Settings", newTalentTag: "New Talent Tag", newAwardName: "New Award Name", addTag: "Add Tag", addAwardName: "Add Award Name",
     developmentSettings: "Talent Development Settings", newActionType: "New Action Type", newActivityType: "New Activity Type", addActionType: "Add Action Type", addActivityType: "Add Activity Type",
     roleSettings: "Role Settings", roleSettingsHint: "Edit role display names. Permission behavior remains tied to the built-in role type.", roleDisplayName: "Role Display Name", selectEmployeeForAccess: "Link Employee Identity", selectEmployeeHint: "This links the login account to one employee profile. Visibility is controlled by Scope or HRBP covered Teams.", employeeSearchPlaceholder: "Search by ID, name, Business Unit, Team, or job title",
@@ -2184,6 +2184,96 @@ function recordsByTypes(person, types) {
     .slice(0, 5);
 }
 
+function recordCorpus(person, actions = []) {
+  return [
+    ...(person.records || []).map((record) => `${record.type} ${record.date || ""}: ${record.content || ""}`),
+    ...(person.growth || []).map((item) => `${item.type} ${item.date || ""}: ${item.note || ""}`),
+    ...(person.awards || []).map((award) => `Award ${award.date || ""}: ${award.name || ""} ${award.note || ""}`),
+    ...(actions || []).map((action) => `${action.type} ${action.status || ""}: ${action.note || ""}`),
+    ...(person.talentTags || []).map((tag) => `Tag: ${tag}`),
+  ].join("\n");
+}
+
+function keywordHits(text, keywords) {
+  const lower = text.toLowerCase();
+  return keywords.reduce((count, keyword) => count + (lower.includes(keyword.toLowerCase()) ? 1 : 0), 0);
+}
+
+function evidenceSnippets(person, actions, keywords, fallbackTypes = []) {
+  const acceptedTypes = new Set(fallbackTypes);
+  const rows = [
+    ...(person.records || []).map((record) => ({ date: record.date || "", label: record.type, text: record.content || "" })),
+    ...(person.growth || []).map((item) => ({ date: item.date || "", label: item.type, text: item.note || "" })),
+    ...(actions || []).map((action) => ({ date: action.dueDate || "", label: action.type, text: action.note || "" })),
+  ];
+  return rows
+    .filter((row) => keywordHits(`${row.label} ${row.text}`, keywords) || acceptedTypes.has(row.label))
+    .sort((a, b) => String(b.date).localeCompare(String(a.date)))
+    .slice(0, 3)
+    .map((row) => `- ${row.date ? `${row.date} ` : ""}${row.label}: ${row.text || "No detail"}`);
+}
+
+function buildTalentAnalysis(person, actions) {
+  const text = recordCorpus(person, actions);
+  const totalRecords = (person.records || []).length;
+  const managerRecordCount = recordsByTypes(person, ["优秀事迹", "平时表现"]).length;
+  const talentInsightCount = recordsByTypes(person, ["Talent Insight", "人才风险", "培养建议", "HRBP记录"]).length;
+  const openActions = actions.filter((action) => action.status !== "Done");
+  const tags = person.talentTags || [];
+  const awards = person.awards || [];
+  const highPotential = tags.some((tag) => /高潜|关键|领军|优秀|AI|key|high/i.test(tag)) || awards.length > 0;
+  const contributionScore = keywordHits(text, ["deliver", "delivery", "交付", "完成", "launch", "上线", "milestone", "突破", "解决", "impact", "贡献"]);
+  const leadershipScore = keywordHits(text, ["lead", "owner", "mentor", "coaching", "跨团队", "stakeholder", "influence", "带领", "推动", "协同", "影响力"]);
+  const innovationScore = keywordHits(text, ["innovation", "innovative", "patent", "paper", "AI", "algorithm", "research", "创新", "专利", "论文", "算法", "探索"]);
+  const riskScore = keywordHits(text, ["risk", "retention", "leave", "attrition", "motivation", "burnout", "conflict", "blocked", "unclear", "风险", "离职", "保留", "动力", "倦怠", "冲突", "不清晰"]);
+  const gapScore = keywordHits(text, ["gap", "improve", "needs", "缺少", "不足", "提升", "待加强", "瓶颈", "沟通", "scope", "visibility"]);
+
+  const profile = [
+    contributionScore ? "交付和问题解决记录较明显" : "",
+    innovationScore ? "有创新/研究/技术探索信号" : "",
+    leadershipScore ? "出现跨团队影响力或 owner 行为" : "",
+    highPotential ? "已有关键人才、奖项或高潜标签支撑" : "",
+  ].filter(Boolean);
+
+  const riskLevel = riskScore >= 2 || openActions.some((action) => action.type === "Retention Risk") ? "Medium / High" : gapScore >= 2 ? "Medium" : "Low";
+  const readiness = leadershipScore >= 2 && contributionScore >= 2 && highPotential
+    ? "Ready for expanded scope discussion"
+    : contributionScore >= 2 || highPotential
+      ? "Grow in role with targeted stretch assignment"
+      : "Need more evidence before talent decision";
+
+  const evidence = [
+    ...evidenceSnippets(person, actions, ["deliver", "交付", "突破", "解决", "impact", "贡献"], ["优秀事迹"]),
+    ...evidenceSnippets(person, actions, ["lead", "owner", "跨团队", "推动", "协同", "mentor", "影响力"]),
+    ...evidenceSnippets(person, actions, ["risk", "保留", "离职", "动力", "gap", "不足", "提升"], ["人才风险", "培养建议"]),
+  ].slice(0, 6);
+
+  const suggestions = [
+    leadershipScore < 2 && highPotential ? "- 安排一个 3-6 个月的跨团队 stretch assignment，用真实 owner 场景验证影响力。" : "",
+    gapScore || riskScore ? "- 由 Team Lead 和 HRBP 共同定义 90 天跟进动作，明确 sponsor、里程碑和复盘日期。" : "",
+    innovationScore && contributionScore ? "- 将技术成果沉淀为可复用资产、专利/论文/内部分享，扩大组织影响力。" : "",
+    totalRecords < 3 ? "- 补充更多具体事件记录，尤其是挑战、行动、结果和他人反馈，避免人才判断缺少证据。" : "",
+    openActions.length ? "- 盘点现有人才行动是否有 owner 和 due date，避免行动计划只记录不闭环。" : "",
+  ].filter(Boolean);
+
+  const qualityChecks = [
+    totalRecords < 3 ? "- 记录数量偏少，当前洞察可信度有限。" : "",
+    managerRecordCount === 0 ? "- 缺少业务主管记录，建议补充真实项目事件和表现反馈。" : "",
+    talentInsightCount === 0 ? "- 缺少 HRBP 人才洞察，建议补充保留风险、发展意愿或职业路径判断。" : "",
+    tags.length && !evidence.length ? "- 已有人才标签，但缺少可追溯证据支撑。" : "",
+    openActions.some((action) => !action.note) ? "- 部分人才行动缺少说明，后续难以复盘。" : "",
+  ].filter(Boolean);
+
+  return {
+    profile: profile.length ? profile.map((item) => `- ${item}`) : ["- 暂无足够文字证据形成稳定画像。"],
+    evidence: evidence.length ? evidence : ["- 暂无可自动提取的关键证据，请补充更具体的主管/HRBP记录。"],
+    riskLevel,
+    readiness,
+    suggestions: suggestions.length ? suggestions : ["- 当前未发现强风险信号。建议继续观察下一阶段项目 owner、协作影响力和学习速度。"],
+    qualityChecks: qualityChecks.length ? qualityChecks : ["- 记录结构较完整，可用于初步人才盘点讨论。"],
+  };
+}
+
 function generateTalentReviewPack() {
   try {
     const person = state.people.find((item) => item.id === elements.reviewPackPerson.value);
@@ -2195,66 +2285,83 @@ function generateTalentReviewPack() {
     const team = personTeam(person);
     const unit = personUnit(person);
     const actions = state.talentActions.filter((action) => action.personId === person.id && !action.archived);
-    const managerRecords = recordsByTypes(person, ["优秀事迹", "平时表现"]);
-    const talentInsights = recordsByTypes(person, ["Talent Insight", "人才风险", "培养建议", "HRBP记录"]);
     const tags = person.talentTags?.length ? person.talentTags.join(", ") : "None";
     const awards = person.awards?.length
       ? person.awards.map((award) => `${award.name}${award.date ? ` (${award.date})` : ""}`).join("; ")
       : "None";
-    const growth = person.growth?.length
-      ? person.growth.slice(-5).map((item) => `- ${item.date || ""} ${item.type}: ${item.note || ""}`).join("\n")
-      : "- No growth records yet";
     const goals = goalSummaryForPerson(person);
-    const actionLines = actions.length
-      ? actions.map((action) => `- ${action.type}: ${action.status} / ${action.priority}, due ${action.dueDate || "TBD"}; ${action.note || "No note"}`).join("\n")
-      : "- No open talent actions";
-    const managerLines = managerRecords.length
-      ? managerRecords.map((record) => `- ${record.date}: ${record.type} - ${record.content}`).join("\n")
-      : "- No manager records yet";
-    const insightLines = talentInsights.length
-      ? talentInsights.map((record) => `- ${record.date}: ${record.type} - ${record.content}`).join("\n")
-      : "- No HRBP talent insights yet";
     const goalLines = goals.length ? goals.map((goal) => `- ${goal}`).join("\n") : "- No linked annual goal yet";
-    const discussionPoints = [
-      actions.some((action) => action.type === "Retention Risk") ? "- Review retention risk, manager intervention, and owner." : "- Confirm next development move and accountable owner.",
-      person.talentTags?.length ? "- Validate whether current tags still match evidence from recent work." : "- Decide whether the employee should enter a named talent pool.",
-      "- Align next 90-day action with team current situation, goal, and gap.",
-    ].join("\n");
+    const analysis = buildTalentAnalysis(person, actions);
+    const actionLines = actions.length
+      ? actions.slice(0, 5).map((action) => `- ${action.type}: ${action.status} / ${action.priority}, due ${action.dueDate || "TBD"}; ${action.note || "No note"}`).join("\n")
+      : "- No open talent actions";
+    const zh = state.language !== "en";
 
-    setReviewPackText([
-      `TALENT REVIEW PACK`,
-      `${person.name} / ${person.employeeNo}`,
+    const output = zh ? [
+      `AI 人才评审助手`,
+      `AI 生成的讨论草稿。最终人才判断需要 Owner / 业务主管 / HRBP 共同确认。`,
       "",
-      `Basic Profile`,
-      `- Job Title: ${person.role || "Not filled"}`,
-      `- Level: ${person.level || "Not filled"}`,
-      `- Contract: ${person.contractType || "Not filled"}`,
-      `- Business Unit: ${unitDisplayName(unit) || "Not filled"}`,
-      `- Team: ${team?.name || "None"}`,
-      `- Tenure: ${tenureLabel(person.startDate)}`,
+      `评审对象`,
+      `- ${person.name} / ${person.employeeNo}`,
+      `- ${person.role || "Not filled"} · Level ${person.level || "Not filled"} · ${unitDisplayName(unit) || "Not filled"}${team?.name ? ` / ${team.name}` : ""}`,
+      `- 在职时长: ${tenureLabel(person.startDate)} · 标签: ${tags} · 奖项: ${awards}`,
       "",
-      `Talent Signals`,
-      `- Tags: ${tags}`,
-      `- Awards: ${awards}`,
+      `1. AI 人才画像`,
+      analysis.profile.join("\n"),
       "",
-      `Manager Records`,
-      managerLines,
+      `2. 从记录中提取的关键证据`,
+      analysis.evidence.join("\n"),
       "",
-      `Talent Insights / HRBP Notes`,
-      insightLines,
+      `3. 人才盘点初步判断`,
+      `- 成熟度 / 准备度: ${analysis.readiness}`,
+      `- 保留 / 发展风险: ${analysis.riskLevel}`,
+      `- 建议分类: ${analysis.readiness.includes("expanded") ? "关键人才 / 可讨论扩大职责" : analysis.readiness.includes("Grow") ? "核心贡献者 / 定向发展" : "需要继续积累证据"}`,
       "",
-      `Growth Path`,
-      growth,
+      `4. 建议的发展动作`,
+      analysis.suggestions.join("\n"),
       "",
-      `Talent Action Plan`,
+      `5. 现有人才行动`,
       actionLines,
       "",
-      `Org Context`,
+      `6. 关联组织目标`,
       goalLines,
       "",
-      `Suggested Discussion Points`,
-      discussionPoints,
-    ].join("\n"));
+      `7. 记录质量检查`,
+      analysis.qualityChecks.join("\n"),
+    ] : [
+      `AI TALENT REVIEW ASSISTANT`,
+      `AI-generated draft for review discussion. Final talent decisions require Owner / Manager / HRBP confirmation.`,
+      "",
+      `Review Object`,
+      `- ${person.name} / ${person.employeeNo}`,
+      `- ${person.role || "Not filled"} · Level ${person.level || "Not filled"} · ${unitDisplayName(unit) || "Not filled"}${team?.name ? ` / ${team.name}` : ""}`,
+      `- Tenure: ${tenureLabel(person.startDate)} · Tags: ${tags} · Awards: ${awards}`,
+      "",
+      `1. AI-style Talent Profile`,
+      analysis.profile.join("\n"),
+      "",
+      `2. Key Evidence Extracted From Records`,
+      analysis.evidence.join("\n"),
+      "",
+      `3. Calibration Judgement`,
+      `- Readiness: ${analysis.readiness}`,
+      `- Retention / Development Risk: ${analysis.riskLevel}`,
+      `- Suggested calibration bucket: ${analysis.readiness.includes("expanded") ? "Key talent / expanded scope candidate" : analysis.readiness.includes("Grow") ? "Core contributor / targeted development" : "Evidence building required"}`,
+      "",
+      `4. Recommended Development Actions`,
+      analysis.suggestions.join("\n"),
+      "",
+      `5. Existing Talent Actions`,
+      actionLines,
+      "",
+      `6. Linked Org Context`,
+      goalLines,
+      "",
+      `7. Record Quality Check`,
+      analysis.qualityChecks.join("\n"),
+    ];
+
+    setReviewPackText(output.join("\n"));
   } catch (error) {
     console.error(error);
     setReviewPackText(`Could not generate review pack.\n\n${error.message || error}`);
