@@ -99,7 +99,7 @@ const defaultState = {
 const translations = {
   zh: {
     loginTitle: "登录", email: "邮箱", password: "密码", login: "登录", logout: "退出登录",
-    changePassword: "修改密码", currentPassword: "当前密码", newPassword: "新密码", confirmNewPassword: "确认新密码", savePassword: "保存密码", temporaryPassword: "临时密码",
+    changePassword: "修改密码", currentPassword: "当前密码", newPassword: "新密码", confirmNewPassword: "确认新密码", savePassword: "保存密码", temporaryPassword: "Supabase 临时密码记录",
     language: "语言 / Language", accountsAndPermissions: "领导关系与 HRBP 覆盖",
     accountName: "账号姓名", permissionRole: "授权角色", scope: "授权范围", addAccount: "添加账号",
     ownerCanAssign: "Owner 可添加账号、设置领导关系与访问范围。Research Center Director 与 Owner 可看所有人。",
@@ -184,7 +184,7 @@ const translations = {
   },
   en: {
     loginTitle: "Sign In", email: "Email", password: "Password", login: "Sign In", logout: "Sign Out",
-    changePassword: "Change Password", currentPassword: "Current Password", newPassword: "New Password", confirmNewPassword: "Confirm New Password", savePassword: "Save Password", temporaryPassword: "Temporary Password",
+    changePassword: "Change Password", currentPassword: "Current Password", newPassword: "New Password", confirmNewPassword: "Confirm New Password", savePassword: "Save Password", temporaryPassword: "Temporary Supabase Password Note",
     language: "Language / 语言", accountsAndPermissions: "Leadership & HRBP Coverage",
     accountName: "Account Name", permissionRole: "Permission Role", scope: "Scope", addAccount: "Add Account",
     ownerCanAssign: "Owners can add accounts, set leadership relationships, and authorize access scope. Research Center Directors and Owners can see everyone.",
@@ -1213,9 +1213,11 @@ function createInitialOwnerAccount(email, name = "") {
 
 function localPasswordAccount(email, password) {
   const normalized = String(email || "").trim().toLowerCase();
-  const existing = state.accounts.find((item) => item.email.toLowerCase() === normalized && item.password === password);
-  if (existing) return existing;
-  const demoAccount = defaultState.accounts.find((item) => item.email.toLowerCase() === normalized && item.password === password);
+  const demoAccount = defaultState.accounts.find((item) =>
+    item.id === "owner-1" &&
+    item.email.toLowerCase() === normalized &&
+    item.password === password
+  );
   if (!demoAccount) return null;
   const restoredAccount = structuredClone(demoAccount);
   state.accounts = [
