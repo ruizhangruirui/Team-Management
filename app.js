@@ -2192,8 +2192,8 @@ function generateTalentReviewPack() {
       showToast(t("validationRequired"));
       return;
     }
-    const team = findTeam(person.teamId);
-    const unit = findUnit(person.businessUnitId);
+    const team = personTeam(person);
+    const unit = personUnit(person);
     const actions = state.talentActions.filter((action) => action.personId === person.id && !action.archived);
     const managerRecords = recordsByTypes(person, ["优秀事迹", "平时表现"]);
     const talentInsights = recordsByTypes(person, ["Talent Insight", "人才风险", "培养建议", "HRBP记录"]);
