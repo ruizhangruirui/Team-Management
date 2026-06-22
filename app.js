@@ -1,6 +1,6 @@
 const STORAGE_KEY = "people-management-v4";
 const LEGACY_KEY = "people-management-v1";
-const SUPABASE_URL = "https://irhybluwgzziegbcrfjc.supabase.co";
+const SUPABASE_URL = "https://irhybluwgziiegbcrfjc.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlyaHlibHV3Z3ppaWVnYmNyZmpjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxMDgxMTMsImV4cCI6MjA5NzY4NDExM30.GKNO2VcXNI00S5UZbEN6r7In5abwtwjsSmsRVXy-7Ng";
 const SUPABASE_STATE_ID = "main";
 const CONTRACT_TYPES = ["Employee", "Leased Labour", "Intern"];
