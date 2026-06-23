@@ -2688,11 +2688,22 @@ function renderPeople() {
     const openActions = openTalentActionsForPerson(person.id);
     const actionTags = openActions.slice(0, 2).map((action) => `<span class="pill action-pill">${escapeHtml(action.type)}</span>`).join("");
     const highlightTags = `${tags}${awardTags}${actionTags}`;
-    card.innerHTML = `<header><div><h3>${escapeHtml(person.employeeNo)} · ${escapeHtml(person.name)}</h3><p>${escapeHtml(personOrgPath(person))}</p></div><div class="card-badges"><span class="badge level-badge">${t("level")} ${escapeHtml(person.level || t("notFilled"))}</span><span class="badge">${escapeHtml(person.contractType)}</span></div></header>
-      <div class="metric-grid"><div class="metric"><strong>${tenureLabel(person.startDate)}</strong><small>${t("tenure")}</small></div><div class="metric"><strong>${person.awards?.length || 0}</strong><small>${t("awardName")}</small></div><div class="metric"><strong>${openActions.length}</strong><small>${t("openTalentActions")}</small></div></div>
-      ${highlightTags ? `<div class="tag-cloud">${highlightTags}</div>` : ""}
-      <p>${escapeHtml(person.role)}</p>
-      <p>${escapeHtml(person.notes || t("noNotes"))}</p>`;
+    const initials = person.name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0])
+      .join("")
+      .toUpperCase() || "P";
+    card.innerHTML = `<span class="person-avatar">${escapeHtml(initials)}</span>
+      <span class="person-main"><strong>${escapeHtml(person.employeeNo)} · ${escapeHtml(person.name)}</strong><small>${escapeHtml(person.role || t("notFilled"))}</small></span>
+      <span class="person-org">${escapeHtml(unitDisplayName(unit) || t("notFilled"))}${team?.name ? `<small>${escapeHtml(team.name)}</small>` : ""}</span>
+      <span class="person-tenure">${escapeHtml(tenureLabel(person.startDate))}</span>
+      <span class="person-status"><i></i>Active</span>
+      <span class="card-badges"><span class="badge level-badge">${t("level")} ${escapeHtml(person.level || t("notFilled"))}</span><span class="badge">${escapeHtml(person.contractType)}</span></span>
+      <span class="metric-grid"><span class="metric"><strong>${person.awards?.length || 0}</strong><small>${t("awardName")}</small></span><span class="metric"><strong>${openActions.length}</strong><small>${t("openTalentActions")}</small></span></span>
+      ${highlightTags ? `<span class="tag-cloud">${highlightTags}</span>` : ""}
+      <span class="person-notes">${escapeHtml(person.notes || t("noNotes"))}</span>`;
     card.addEventListener("click", () => openProfile(person.id));
     const actions = document.createElement("div");
     actions.className = "card-actions";
