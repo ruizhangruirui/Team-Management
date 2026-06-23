@@ -4615,3 +4615,74 @@ h1,
     grid-template-columns: 1fr;
   }
 }
+
+/* Product polish: reduce demo-like helper copy and add breathing room */
+#talentDevelopmentPage .page-heading p,
+#talentDevelopmentPage .talent-collapse > summary small,
+.org-section > .section-title small {
+  display: none;
+}
+
+#talentDevelopmentPage > .page-heading {
+  display: none;
+}
+
+#talentDevelopmentPage .page-heading {
+  min-height: 128px;
+  align-items: center;
+}
+
+#talentDevelopmentPage .page-heading h2 {
+  margin-bottom: 0;
+}
+
+#talentDevelopmentPage .talent-collapse > summary {
+  grid-template-columns: 58px minmax(240px, 1fr) auto;
+  min-height: 104px;
+}
+
+.org-section {
+  border: 1px solid rgba(224, 229, 238, 0.95);
+  border-radius: 30px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.035), 0 22px 56px rgba(15, 23, 42, 0.055);
+  padding: 30px;
+}
+
+.org-section > .section-title {
+  margin: 0 0 24px;
+}
+
+.org-chart {
+  gap: 22px;
+}
+
+.org-root {
+  margin: 0;
+  padding: 30px 34px;
+}
+
+.org-units {
+  gap: 22px;
+}
+
+.org-unit summary {
+  min-height: 132px;
+  padding: 30px 32px;
+}
+
+.org-unit summary span {
+  gap: 10px;
+}
+
+.org-unit-body {
+  padding: 24px;
+}
+
+.org-team {
+  padding: 18px;
+}
+
+.org-team-head {
+  padding: 4px 0 14px;
+}
