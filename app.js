@@ -146,7 +146,7 @@ const translations = {
     directorPermission: "Research Center Director 可查看所有 Lab、Platform、Team 与全部人员详情。",
     labPermission: "Lab Director / PLR 可查看其 Lab 下所有 Team 和人员详情。",
     teamPermission: "Team Lead 只能查看自己 Team 的人员，并添加主管记录。",
-    overviewPage: "组织 Overview",
+    overviewPage: "组织总览",
     peoplePage: "人员目录",
     adminPage: "领导关系与权限",
     talentDevelopmentPage: "人才与团队发展",
@@ -233,7 +233,7 @@ const translations = {
     directorPermission: "Research Center Directors can view all Labs, Platforms, Teams, and employee details.",
     labPermission: "Lab Directors / PLRs can view all teams and employee details under their Lab.",
     teamPermission: "Team Leads can only view their own team's employees and add manager records.",
-    overviewPage: "Org Overview",
+    overviewPage: "Organization Overview",
     peoplePage: "People Directory",
     adminPage: "Leadership & Access",
     talentDevelopmentPage: "Talent & Team Development",
@@ -1270,6 +1270,7 @@ function completeLogin(account) {
   elements.loginForm.reset();
   elements.loginError.textContent = "";
   saveAndRender();
+  window.scrollTo({ top: 0, left: 0, behavior: "auto" });
 }
 
 function isOwner() {
@@ -1496,10 +1497,29 @@ function render() {
   if (elements.signedInAvatar) elements.signedInAvatar.textContent = initialsForName(account.name || account.email);
   elements.signedInName.textContent = account.name;
   elements.signedInMeta.innerHTML = `<span>${escapeHtml(roleLabel(account.role))} · ${escapeHtml(accountScopeSummary(account))}</span><span>${escapeHtml(account.email)}</span>`;
-  elements.pageTitle.textContent = state.org.center.name;
-  elements.pageSubtitle.textContent = state.language === "en"
-    ? `${visiblePeople().length} people in scope · Secure talent workspace`
-    : `当前权限范围 ${visiblePeople().length} 人 · 安全人才工作台`;
+  const pageCopy = {
+    overviewPage: {
+      title: state.language === "en" ? "Talent Overview" : "人才总览",
+      subtitle: state.language === "en"
+        ? "Monitor organization structure, people distribution, and talent signals in one place."
+        : "集中查看组织结构、人员分布与人才信号。"
+    },
+    peoplePage: {
+      title: t("peoplePage"),
+      subtitle: state.language === "en"
+        ? `${visiblePeople().length} people in scope · Search, filter, and open employee profiles.`
+        : `当前权限范围 ${visiblePeople().length} 人 · 支持检索、筛选与查看员工卡片。`
+    },
+    talentDevelopmentPage: {
+      title: t("talentDevelopmentPage"),
+      subtitle: state.language === "en"
+        ? "Plan talent actions, review teams, and capture leadership insight."
+        : "管理人才行动、团队目标与主管/HRBP 人才洞察。"
+    }
+  };
+  const activeCopy = pageCopy[state.activePage] || pageCopy.overviewPage;
+  elements.pageTitle.textContent = activeCopy.title;
+  elements.pageSubtitle.textContent = activeCopy.subtitle;
   elements.searchInput.value = state.searchText;
 
   applyVisibilityRules();
