@@ -163,15 +163,15 @@ const translations = {
     orgEditor: "组织结构配置", unitType: "Business Unit 类型", unitName: "Business Unit 名称", addUnit: "新增 Business Unit",
     parentUnit: "所属 Business Unit", teamName: "Team 名称", addTeam: "新增 Team", orgEditHint: "低频高影响设置。新增、重命名或删除组织节点前请确认员工归属。",
     researchLab: "Research Lab", independentResearchTeam: "Independent Research Team", platformUnit: "Platform", businessUnits: "Business Units", createBusinessUnit: "创建 Business Unit", createTeamUnderUnit: "创建下级 Team", noTeamsUnderStandalone: "独立研究 Team 本身就是 Team，不需要再添加下级 Team。",
-    annualWorkGoals: "年度重点与目标", annualWorkHint: "记录各 Lab / Team 当年的现状、目标、差距和关键工作。", targetScope: "记录对象", goalYear: "年份", currentSituation: "Current Situation / 现状", goal: "Goal / 目标", gap: "Gap / 差距", majorWork: "Major Work / 主要工作", mainWork: "主要工作", mainGoals: "主要目标", saveGoal: "保存目标",
-    cultureActivities: "氛围建设", cultureHint: "记录团队活动、峰会参与、分享会和跨团队协作。", activityType: "活动类型", activityDate: "日期", participants: "参与人数", activitySummary: "活动记录", addActivity: "添加活动",
+    annualWorkGoals: "年度成长计划", annualWorkHint: "定义团队现状、目标状态、发展差距与关键行动。", targetScope: "记录对象", goalYear: "年份", currentSituation: "Current Situation / 现状", goal: "Goal / 目标", gap: "Gap / 差距", majorWork: "Major Work / 主要工作", mainWork: "主要工作", mainGoals: "主要目标", saveGoal: "保存目标",
+    cultureActivities: "团队活动", cultureHint: "记录团队活动、峰会参与、分享会和跨团队协作。", activityType: "活动类型", activityDate: "日期", participants: "参与人数", activitySummary: "活动记录", addActivity: "添加活动",
     talentDashboard: "人才发展概览", talentDashboardHint: "借鉴常见 HCM 做法，关注关键人才、行动计划、继任准备和保留风险。",
     keyTalentCount: "关键/高潜人才", actionOpenCount: "进行中行动", retentionRiskCount: "保留风险", successorCount: "继任/备份人选",
     talentActionPlan: "人才行动计划", talentActionHint: "记录 IDP、继任、关键岗位备份、保留风险和学习发展动作。",
     actionPerson: "对象员工", actionType: "行动类型", actionPriority: "优先级", actionStatus: "状态", actionDueDate: "目标日期", actionNote: "行动说明", addTalentAction: "添加人才行动", multiSelectPeopleHint: "可按 Ctrl/Cmd 或 Shift 多选员工。",
     priorityHigh: "高", priorityMedium: "中", priorityLow: "低", statusOpen: "进行中", statusDone: "已完成", statusWatch: "观察中",
     noTalentActions: "暂无人才行动计划。", openTalentActions: "进行中人才行动", confirmTalentAction: "为 {name} 添加人才行动", confirmTalentActions: "为 {count} 名员工添加人才行动",
-    talentReviewPack: "AI 人才评审助手", talentReviewPackHint: "从主管记录、HRBP 洞察、成长轨迹和行动计划中提炼证据、风险与发展建议。", reviewPackPerson: "评审对象", reviewPackDescription: "演示版不调用付费 AI API，而是用本地规则模拟人才盘点分析：提炼关键证据、优势画像、风险信号、发展建议和记录质量问题。", generateReviewPack: "生成 AI 洞察", copyReviewPack: "复制", downloadReviewPack: "下载", reviewPackEmpty: "请选择员工并生成 AI 人才洞察。", reviewPackCopied: "评审包已复制。", reviewPackSelected: "浏览器限制了自动复制，内容已选中，可按 Ctrl/Cmd+C 复制。",
+    talentReviewPack: "AI 人才评审助手", talentReviewPackHint: "生成可用于管理层讨论的人才评审 memo。", reviewPackPerson: "评审对象", reviewPackDescription: "演示版不调用付费 AI API，而是用本地规则模拟人才盘点分析：提炼关键证据、优势画像、风险信号、发展建议和记录质量问题。", generateReviewPack: "生成 AI 洞察", copyReviewPack: "复制", downloadReviewPack: "导出", reviewPackEmpty: "请选择员工并生成 AI 人才洞察。", reviewPackCopied: "评审包已复制。", reviewPackSelected: "浏览器限制了自动复制，内容已选中，可按 Ctrl/Cmd+C 复制。",
     talentSettings: "人才标签设置", newTalentTag: "新增优秀标签", newAwardName: "新增奖项名称", addTag: "添加标签", addAwardName: "添加奖项",
     developmentSettings: "人才发展设置", newActionType: "新增行动类型", newActivityType: "新增活动类型", addActionType: "添加行动类型", addActivityType: "添加活动类型",
     roleSettings: "角色设置", roleSettingsHint: "可修改角色显示名称；权限逻辑仍由系统内置角色类型控制。", roleDisplayName: "角色显示名称", selectEmployeeForAccess: "绑定员工身份", selectEmployeeHint: "这里是把登录账号绑定到系统里的员工本人；可见范围由授权范围或 HRBP 覆盖 Team 决定。", employeeSearchPlaceholder: "按工号、姓名、Business Unit、Team 或岗位检索",
@@ -250,15 +250,15 @@ const translations = {
     orgEditor: "Organization Structure", unitType: "Business Unit Type", unitName: "Business Unit Name", addUnit: "Add Business Unit",
     parentUnit: "Parent Business Unit", teamName: "Team Name", addTeam: "Add Team", orgEditHint: "Low-frequency, high-impact settings. Confirm employee placement before adding, renaming, or deleting nodes.",
     researchLab: "Research Lab", independentResearchTeam: "Independent Research Team", platformUnit: "Platform", businessUnits: "Business Units", createBusinessUnit: "Create Business Unit", createTeamUnderUnit: "Create Team", noTeamsUnderStandalone: "An independent research team is itself a team, so no child team is needed.",
-    annualWorkGoals: "Annual Work & Goals", annualWorkHint: "Record each Lab / Team's current situation, goal, gap, and major work.", targetScope: "Scope", goalYear: "Year", currentSituation: "Current Situation", goal: "Goal", gap: "Gap", majorWork: "Major Work", mainWork: "Major Work", mainGoals: "Main Goals", saveGoal: "Save Goal",
-    cultureActivities: "Culture & Engagement", cultureHint: "Record team events, summits, talks, and cross-team collaboration.", activityType: "Activity Type", activityDate: "Date", participants: "Participants", activitySummary: "Activity Notes", addActivity: "Add Activity",
+    annualWorkGoals: "Annual Growth Plan", annualWorkHint: "Define current state, target state, development gap, and key actions.", targetScope: "Scope", goalYear: "Year", currentSituation: "Current Situation", goal: "Target State", gap: "Development Gap", majorWork: "Key Actions", mainWork: "Major Work", mainGoals: "Main Goals", saveGoal: "Save Plan",
+    cultureActivities: "Team Activities", cultureHint: "Track engagement, development activities, summits, talks, and cross-team collaboration.", activityType: "Activity Type", activityDate: "Date", participants: "Participants", activitySummary: "Activity Notes", addActivity: "Add Activity",
     talentDashboard: "Talent Development Overview", talentDashboardHint: "Inspired by common HCM practices: key talent, action plans, succession readiness, and retention risk.",
     keyTalentCount: "Key / high-potential people", actionOpenCount: "Open actions", retentionRiskCount: "Retention risks", successorCount: "Successor / backup candidates",
     talentActionPlan: "Talent Action Plan", talentActionHint: "Track IDP, succession, key-role backup, retention risk, and learning actions.",
     actionPerson: "Employees", actionType: "Action Type", actionPriority: "Priority", actionStatus: "Status", actionDueDate: "Due Date", actionNote: "Action Note", addTalentAction: "Add Talent Action", multiSelectPeopleHint: "Hold Ctrl/Cmd or Shift to select multiple employees.",
     priorityHigh: "High", priorityMedium: "Medium", priorityLow: "Low", statusOpen: "Open", statusDone: "Done", statusWatch: "Watch",
     noTalentActions: "No talent action plans yet.", openTalentActions: "Open talent actions", confirmTalentAction: "Add talent action for {name}", confirmTalentActions: "Add talent action for {count} employees",
-    talentReviewPack: "AI Talent Review Assistant", talentReviewPackHint: "Extract evidence, risks, and development suggestions from manager records, HRBP insights, growth path, and action plans.", reviewPackPerson: "Review Person", reviewPackDescription: "The demo does not call a paid AI API. It uses local rules to simulate talent calibration analysis: evidence extraction, strength profile, risk signals, development suggestions, and record-quality checks.", generateReviewPack: "Generate AI Insight", copyReviewPack: "Copy", downloadReviewPack: "Download", reviewPackEmpty: "Select an employee and generate AI talent insights.", reviewPackCopied: "Review pack copied.", reviewPackSelected: "Browser copy permission was blocked. The text is selected; press Ctrl/Cmd+C to copy.",
+    talentReviewPack: "AI Talent Review Assistant", talentReviewPackHint: "Generate structured executive-ready talent review memos.", reviewPackPerson: "Review Person", reviewPackDescription: "The demo does not call a paid AI API. It uses local rules to simulate talent calibration analysis: evidence extraction, strength profile, risk signals, development suggestions, and record-quality checks.", generateReviewPack: "Generate AI Insight", copyReviewPack: "Copy", downloadReviewPack: "Export", reviewPackEmpty: "Select an employee and generate AI talent insights.", reviewPackCopied: "Review pack copied.", reviewPackSelected: "Browser copy permission was blocked. The text is selected; press Ctrl/Cmd+C to copy.",
     talentSettings: "Talent Tag Settings", newTalentTag: "New Talent Tag", newAwardName: "New Award Name", addTag: "Add Tag", addAwardName: "Add Award Name",
     developmentSettings: "Talent Development Settings", newActionType: "New Action Type", newActivityType: "New Activity Type", addActionType: "Add Action Type", addActivityType: "Add Activity Type",
     roleSettings: "Role Settings", roleSettingsHint: "Edit role display names. Permission behavior remains tied to the built-in role type.", roleDisplayName: "Role Display Name", selectEmployeeForAccess: "Link Employee Identity", selectEmployeeHint: "This links the login account to one employee profile. Visibility is controlled by Scope or HRBP covered Teams.", employeeSearchPlaceholder: "Search by ID, name, Business Unit, Team, or job title",
@@ -2163,7 +2163,7 @@ function renderTalentDevelopment() {
     ? visibleGoals.map((goal) => renderGoalCard(goal, scopeLabelByValue(goal.scope))).join("")
     : `<div class="empty-state">${t("noGoals")}</div>`;
   elements.activityList.innerHTML = visibleActivities.length
-    ? visibleActivities.map((activity) => `<article class="record-item"><header><strong>${escapeHtml(activity.type)} · ${escapeHtml(scopeLabelByValue(activity.scope))}</strong><small>${escapeHtml(activity.date)} · ${Number(activity.participants || 0)} ${t("peopleUnit")}</small></header><p>${escapeHtml(activity.summary)}</p></article>`).join("")
+    ? visibleActivities.map((activity) => `<article class="record-item activity-card"><header><strong>${escapeHtml(activity.type)} · ${escapeHtml(scopeLabelByValue(activity.scope))}</strong><small>${escapeHtml(activity.date)} · ${Number(activity.participants || 0)} ${t("peopleUnit")}</small></header><p>${escapeHtml(activity.summary)}</p></article>`).join("")
     : `<div class="empty-state">${t("noActivities")}</div>`;
 }
 
@@ -2435,7 +2435,7 @@ function downloadTalentReviewPack() {
 
 function renderTalentActionCard(action) {
   const person = state.people.find((item) => item.id === action.personId);
-  return `<article class="record-item compact-record">
+  return `<article class="record-item compact-record talent-action-card">
     <header><strong>${escapeHtml(action.type)} · ${escapeHtml(person ? `${person.employeeNo} ${person.name}` : t("notFilled"))}</strong><small>${escapeHtml(action.priority)} · ${escapeHtml(action.status)} · ${escapeHtml(action.dueDate || "")}</small></header>
     <p>${escapeHtml(person ? personOrgPath(person) : "")}</p>
     <p>${escapeHtml(action.note || t("noNotes"))}</p>
@@ -2500,7 +2500,7 @@ function renderGoalCard(goal, title, extraClass = "") {
     [t("gap"), gapText],
     [t("majorWork"), majorWork],
   ].filter(([, value]) => String(value || "").trim());
-  return `<article class="record-item ${extraClass}">
+  return `<article class="record-item goal-card ${extraClass}">
     <header><strong>${escapeHtml(title)}</strong><small>${escapeHtml(goal.year)}</small></header>
     ${rows.map(([label, value]) => `<p><b>${escapeHtml(label)}:</b> ${escapeHtml(value)}</p>`).join("")}
   </article>`;
@@ -2508,7 +2508,7 @@ function renderGoalCard(goal, title, extraClass = "") {
 
 function renderActivityCards(activities) {
   return activities.length
-    ? activities.map((activity) => `<article class="record-item compact-record"><header><strong>${escapeHtml(activity.type)}</strong><small>${escapeHtml(activity.date)} · ${Number(activity.participants || 0)} ${t("peopleUnit")}</small></header><p>${escapeHtml(activity.summary)}</p></article>`).join("")
+    ? activities.map((activity) => `<article class="record-item compact-record activity-card"><header><strong>${escapeHtml(activity.type)}</strong><small>${escapeHtml(activity.date)} · ${Number(activity.participants || 0)} ${t("peopleUnit")}</small></header><p>${escapeHtml(activity.summary)}</p></article>`).join("")
     : `<div class="empty-state small-empty">${t("noActivities")}</div>`;
 }
 
