@@ -2211,13 +2211,15 @@ function renderTalentDevelopment() {
   elements.talentActionPerson.innerHTML = talentPeople
     .map((person) => `<option value="${person.id}">${escapeHtml(person.employeeNo)} · ${escapeHtml(person.name)} · ${escapeHtml(personOrgPath(person))}</option>`)
     .join("");
-  elements.reviewPackPerson.innerHTML = talentPeople
-    .map((person) => `<option value="${person.id}">${escapeHtml(person.employeeNo)} · ${escapeHtml(person.name)} · ${escapeHtml(personOrgPath(person))}</option>`)
-    .join("");
-  if (!talentPeople.some((person) => person.id === elements.reviewPackPerson.value)) {
-    elements.reviewPackPerson.value = talentPeople[0]?.id || "";
+  if (elements.reviewPackPerson) {
+    elements.reviewPackPerson.innerHTML = talentPeople
+      .map((person) => `<option value="${person.id}">${escapeHtml(person.employeeNo)} · ${escapeHtml(person.name)} · ${escapeHtml(personOrgPath(person))}</option>`)
+      .join("");
+    if (!talentPeople.some((person) => person.id === elements.reviewPackPerson.value)) {
+      elements.reviewPackPerson.value = talentPeople[0]?.id || "";
+    }
   }
-  if (!reviewPackText() || reviewPackText() === translations.zh.reviewPackEmpty || reviewPackText() === translations.en.reviewPackEmpty) {
+  if (elements.reviewPackOutput && (!reviewPackText() || reviewPackText() === translations.zh.reviewPackEmpty || reviewPackText() === translations.en.reviewPackEmpty)) {
     setReviewPackText(t("reviewPackEmpty"));
   }
   elements.talentActionDueDate.value = elements.talentActionDueDate.value || today();
@@ -4443,15 +4445,15 @@ elements.addActivityTypeBtn.addEventListener("click", () => addConfigType("activ
 elements.addGoalBtn.addEventListener("click", addGoal);
 elements.addActivityBtn.addEventListener("click", addActivity);
 elements.addTalentActionBtn.addEventListener("click", addTalentAction);
-elements.generateReviewPackBtn.addEventListener("click", (event) => {
+elements.generateReviewPackBtn?.addEventListener("click", (event) => {
   event.preventDefault();
   generateTalentReviewPack();
 });
-elements.copyReviewPackBtn.addEventListener("click", (event) => {
+elements.copyReviewPackBtn?.addEventListener("click", (event) => {
   event.preventDefault();
   copyTalentReviewPack();
 });
-elements.downloadReviewPackBtn.addEventListener("click", (event) => {
+elements.downloadReviewPackBtn?.addEventListener("click", (event) => {
   event.preventDefault();
   downloadTalentReviewPack();
 });

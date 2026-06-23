@@ -4909,3 +4909,24 @@ body.show-module-descriptions #talentDevelopmentPage .talent-collapse > summary 
     grid-template-columns: 1fr;
   }
 }
+
+/* Stable Talent module icons after removing AI Review Assistant */
+#talentDevelopmentPage .talent-action-module > summary::before {
+  --talent-icon: var(--icon-target);
+  --talent-icon-bg: #edf3ff;
+}
+
+#talentDevelopmentPage .annual-goal-module > summary::before {
+  --talent-icon: var(--icon-flag);
+  --talent-icon-bg: #eafaf4;
+}
+
+#talentDevelopmentPage .development-tree-module > summary::before {
+  --talent-icon: var(--icon-branch);
+  --talent-icon-bg: #fff6e8;
+}
+
+#talentDevelopmentPage .activity-module > summary::before {
+  --talent-icon: var(--icon-users);
+  --talent-icon-bg: #fff0f8;
+}

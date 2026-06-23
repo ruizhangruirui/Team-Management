@@ -226,7 +226,7 @@
               <p data-i18n="talentDashboardHint">借鉴常见 HCM 做法，关注关键人才、行动计划、继任准备和保留风险。</p>
             </div>
           </div>
-          <details class="admin-placeholder talent-collapse">
+          <details class="admin-placeholder talent-collapse talent-action-module">
             <summary class="section-title">
               <span data-i18n="talentActionPlan">人才行动计划</span>
               <small data-i18n="talentActionHint">记录 IDP、继任、关键岗位备份、保留风险和学习发展动作。</small>
@@ -283,33 +283,7 @@
             <div id="talentActionList" class="record-list"></div>
           </details>
 
-          <details class="admin-placeholder talent-collapse">
-            <summary class="section-title">
-              <span data-i18n="talentReviewPack">人才评审包</span>
-              <small data-i18n="talentReviewPackHint">选择员工，自动生成一页式人才盘点材料，用于评审会或主管沟通。</small>
-            </summary>
-            <div class="review-pack-layout">
-              <div class="review-pack-control">
-                <label>
-                  <span data-i18n="reviewPackPerson">评审对象</span>
-                  <select id="reviewPackPerson"></select>
-                </label>
-                <p data-i18n="reviewPackDescription">演示版会从员工卡片、主管记录、HRBP 人才洞察、成长轨迹、标签奖项和行动计划里提取信息，生成结构化 memo。</p>
-                <div class="button-row">
-                  <button id="generateReviewPackBtn" type="button" class="primary" data-i18n="generateReviewPack">生成评审包</button>
-                  <button id="copyReviewPackBtn" type="button" data-i18n="copyReviewPack">复制</button>
-                  <button id="downloadReviewPackBtn" type="button" data-i18n="downloadReviewPack">下载</button>
-                </div>
-              </div>
-              <div class="review-pack-preview">
-                <div class="review-pack-paper">
-                  <textarea id="reviewPackOutput" readonly>请选择员工并生成 AI 人才洞察。</textarea>
-                </div>
-              </div>
-            </div>
-          </details>
-
-          <details class="admin-placeholder talent-collapse">
+          <details class="admin-placeholder talent-collapse annual-goal-module">
             <summary class="section-title">
               <span data-i18n="annualWorkGoals">年度重点与目标</span>
               <small data-i18n="annualWorkHint">记录各 Lab / Team 当年的主要工作和目标。</small>
@@ -346,7 +320,7 @@
             <div id="goalList" class="record-list"></div>
           </details>
 
-          <details class="admin-placeholder talent-collapse">
+          <details class="admin-placeholder talent-collapse development-tree-module">
             <summary class="section-title">
               <span data-i18n="developmentTree">人才发展树</span>
               <small data-i18n="developmentTreeHint">按 Lab / Platform 展开查看组织和 Team 的重点工作、目标与活动。</small>
@@ -354,7 +328,7 @@
             <div id="developmentTree" class="development-tree"></div>
           </details>
 
-          <details class="admin-placeholder talent-collapse">
+          <details class="admin-placeholder talent-collapse activity-module">
             <summary class="section-title">
               <span data-i18n="cultureActivities">氛围建设</span>
               <small data-i18n="cultureHint">记录团队活动、峰会参与、分享会和跨团队协作。</small>
