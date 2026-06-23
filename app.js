@@ -319,7 +319,7 @@ const elements = {
   instituteName: $("#instituteName"), labList: $("#labList"), teamList: $("#teamList"), pageTitle: $("#pageTitle"), pageSubtitle: $("#pageSubtitle"), totalPeople: $("#totalPeople"), regularPeople: $("#regularPeople"), avgTenure: $("#avgTenure"),
   searchInput: $("#searchInput"), showAddPersonBtn: $("#showAddPersonBtn"), showDeletePersonBtn: $("#showDeletePersonBtn"), orgChart: $("#orgChart"),
   employeeImportFile: $("#employeeImportFile"), employeeImportMode: $("#employeeImportMode"), employeeImportText: $("#employeeImportText"), importEmployeesBtn: $("#importEmployeesBtn"), clearImportBtn: $("#clearImportBtn"), downloadImportTemplateBtn: $("#downloadImportTemplateBtn"), employeeImportResult: $("#employeeImportResult"),
-  pageTabs: document.querySelectorAll(".page-tab"), pagePanels: document.querySelectorAll(".page-panel"), overviewTeamTitle: $("#overviewTeamTitle"), overviewTeamCount: $("#overviewTeamCount"), overviewTeamRoster: $("#overviewTeamRoster"),
+  pageTabs: document.querySelectorAll(".page-tab"), pagePanels: document.querySelectorAll(".page-panel"), overviewTeamTitle: $("#overviewTeamTitle"), overviewTeamCount: $("#overviewTeamCount"), overviewTeamRoster: $("#overviewTeamRoster"), peopleFoundText: $("#peopleFoundText"),
   selectedTeamTitle: $("#selectedTeamTitle"), selectedTeamCount: $("#selectedTeamCount"), peopleGrid: $("#peopleGrid"), permissionHint: $("#permissionHint"), contractBreakdown: $("#contractBreakdown"), levelBreakdown: $("#levelBreakdown"), orgBreakdown: $("#orgBreakdown"), talentStats: $("#talentStats"),
   personDialog: $("#personDialog"), personForm: $("#personForm"), closeDialogBtn: $("#closeDialogBtn"), cancelPersonBtn: $("#cancelPersonBtn"),
   deleteEmployeeDialog: $("#deleteEmployeeDialog"), deleteEmployeeForm: $("#deleteEmployeeForm"), closeDeleteEmployeeBtn: $("#closeDeleteEmployeeBtn"), cancelDeleteEmployeeBtn: $("#cancelDeleteEmployeeBtn"),
@@ -2667,6 +2667,9 @@ function renderSummary() {
 function renderPeople() {
   const people = filteredPeople();
   const visibleSlice = people.slice(0, state.peopleDisplayLimit);
+  if (elements.peopleFoundText) {
+    elements.peopleFoundText.textContent = state.language === "en" ? `${people.length} people found` : `找到 ${people.length} 人`;
+  }
   elements.selectedTeamTitle.textContent = state.selectedTeamId === "all" ? t("allTeams") : teamById(state.selectedTeamId)?.name || t("allTeams");
   elements.selectedTeamCount.textContent = t("showingPeople", { shown: Math.min(visibleSlice.length, people.length), total: people.length });
   if (!people.length) {

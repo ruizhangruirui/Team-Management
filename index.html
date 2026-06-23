@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>人才管理系统 / Talent Management</title>
-    <link rel="stylesheet" href="./styles.css?v=20260622-ai-talent-review" />
+    <link rel="stylesheet" href="./styles.css?v=20260623-talent-os-shell" />
   </head>
   <body>
     <section id="loginView" class="login-view">
@@ -57,6 +57,17 @@
 
     <div class="app-shell">
       <aside class="sidebar">
+        <div class="brand-mark">
+          <span class="brand-icon">▦</span>
+          <strong>TALENT OS</strong>
+        </div>
+
+        <nav class="sidebar-nav" aria-label="Main">
+          <button type="button" class="page-tab active" data-page-target="overviewPage" data-i18n="overviewPage">组织 Overview</button>
+          <button type="button" class="page-tab" data-page-target="peoplePage" data-i18n="peoplePage">人员目录</button>
+          <button type="button" class="page-tab" data-page-target="talentDevelopmentPage" data-i18n="talentDevelopmentPage">人才发展</button>
+        </nav>
+
         <div class="brand-block">
           <label for="languageSwitcher" data-i18n="language">语言 / Language</label>
           <select id="languageSwitcher">
@@ -121,6 +132,12 @@
         </section>
 
         <section id="peoplePage" class="page-panel">
+          <div class="page-heading">
+            <div>
+              <h2 data-i18n="peoplePage">人员目录</h2>
+              <p id="peopleFoundText"></p>
+            </div>
+          </div>
           <section class="toolbar">
             <div class="search-group">
               <label for="searchInput" data-i18n="searchPeople">搜索人员</label>
@@ -188,6 +205,12 @@
         </section>
 
         <section id="talentDevelopmentPage" class="page-panel">
+          <div class="page-heading">
+            <div>
+              <h2 data-i18n="talentDevelopmentPage">人才发展</h2>
+              <p data-i18n="talentDashboardHint">借鉴常见 HCM 做法，关注关键人才、行动计划、继任准备和保留风险。</p>
+            </div>
+          </div>
           <details class="admin-placeholder talent-collapse">
             <summary class="section-title">
               <span data-i18n="talentActionPlan">人才行动计划</span>
