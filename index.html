@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>人才管理系统 / Talent Management</title>
-    <link rel="stylesheet" href="./styles.css?v=20260623-premium-os" />
+    <link rel="stylesheet" href="./styles.css?v=20260623-appearance-editor" />
   </head>
   <body>
     <section id="loginView" class="login-view">
@@ -414,6 +414,57 @@
             </label>
           </div>
           <button id="changePasswordBtn" type="button" data-i18n="savePassword">保存密码</button>
+        </details>
+        <details class="profile-section settings-section owner-only">
+          <summary class="section-title">
+            <span data-i18n="appearanceSettings">外观设置</span>
+            <small data-i18n="appearanceHint">Owner 可调整全站主题、界面密度和说明文字显示方式。</small>
+          </summary>
+          <div class="appearance-editor">
+            <label>
+              <span data-i18n="themePreset">主题预设</span>
+              <select id="appearanceTheme">
+                <option value="executive" data-i18n="themeExecutive">Executive Calm</option>
+                <option value="linear" data-i18n="themeLinear">Linear Clean</option>
+                <option value="ashby" data-i18n="themeAshby">Ashby HR</option>
+                <option value="soft" data-i18n="themeSoft">Soft Premium</option>
+                <option value="slate" data-i18n="themeSlate">Slate Enterprise</option>
+              </select>
+            </label>
+            <label>
+              <span data-i18n="interfaceDensity">界面密度</span>
+              <select id="appearanceDensity">
+                <option value="spacious" data-i18n="densitySpacious">Spacious</option>
+                <option value="comfortable" data-i18n="densityComfortable">Comfortable</option>
+                <option value="compact" data-i18n="densityCompact">Compact</option>
+              </select>
+            </label>
+            <label>
+              <span data-i18n="cornerStyle">圆角风格</span>
+              <select id="appearanceRadius">
+                <option value="standard" data-i18n="radiusStandard">Standard</option>
+                <option value="soft" data-i18n="radiusSoft">Soft</option>
+                <option value="round" data-i18n="radiusRound">Round</option>
+              </select>
+            </label>
+            <label>
+              <span data-i18n="shadowStyle">阴影风格</span>
+              <select id="appearanceShadow">
+                <option value="none" data-i18n="shadowNone">None</option>
+                <option value="subtle" data-i18n="shadowSubtle">Subtle</option>
+                <option value="premium" data-i18n="shadowPremium">Premium</option>
+              </select>
+            </label>
+            <label class="inline-toggle">
+              <input id="appearanceShowPageDescriptions" type="checkbox" />
+              <span data-i18n="showPageDescriptions">显示页面说明</span>
+            </label>
+            <label class="inline-toggle">
+              <input id="appearanceShowModuleDescriptions" type="checkbox" />
+              <span data-i18n="showModuleDescriptions">显示模块说明</span>
+            </label>
+          </div>
+          <button id="saveAppearanceBtn" type="button" class="primary" data-i18n="saveAppearance">保存外观设置</button>
         </details>
         <details class="profile-section settings-section owner-only">
           <summary class="section-title">

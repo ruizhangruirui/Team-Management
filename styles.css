@@ -4686,3 +4686,226 @@ h1,
 .org-team-head {
   padding: 4px 0 14px;
 }
+
+/* Owner-configurable appearance system */
+.appearance-editor {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.inline-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 46px;
+  border: 1px solid #e6ebf3;
+  border-radius: 16px;
+  background: #fbfcff;
+  padding: 10px 13px;
+}
+
+.inline-toggle input {
+  width: 18px;
+  min-height: 18px;
+  accent-color: var(--primary);
+}
+
+.inline-toggle span {
+  margin: 0;
+}
+
+body.theme-executive {
+  --primary: #3f6ff5;
+  --primary-dark: #274fd0;
+  --primary-soft: #e9efff;
+  --bg: #f6f7fb;
+}
+
+body.theme-linear {
+  --primary: #111827;
+  --primary-dark: #030712;
+  --primary-soft: #eef0f3;
+  --bg: #f8fafc;
+}
+
+body.theme-ashby {
+  --primary: #2563eb;
+  --primary-dark: #1d4ed8;
+  --primary-soft: #eaf2ff;
+  --bg: #f7f9fc;
+}
+
+body.theme-soft {
+  --primary: #7c3aed;
+  --primary-dark: #5b21b6;
+  --primary-soft: #f2edff;
+  --bg: #faf8ff;
+}
+
+body.theme-slate {
+  --primary: #334155;
+  --primary-dark: #0f172a;
+  --primary-soft: #eef2f6;
+  --bg: #f4f6f8;
+}
+
+body.theme-linear .title-emblem,
+body.theme-linear .brand-icon,
+body.theme-slate .title-emblem,
+body.theme-slate .brand-icon {
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
+}
+
+body.density-spacious {
+  --density-pad: 1.12;
+}
+
+body.density-comfortable {
+  --density-pad: 1;
+}
+
+body.density-compact {
+  --density-pad: 0.82;
+}
+
+body.radius-standard {
+  --app-radius: 16px;
+  --app-radius-lg: 22px;
+}
+
+body.radius-soft {
+  --app-radius: 22px;
+  --app-radius-lg: 30px;
+}
+
+body.radius-round {
+  --app-radius: 28px;
+  --app-radius-lg: 38px;
+}
+
+body.radius-standard button,
+body.radius-standard input,
+body.radius-standard select,
+body.radius-standard textarea,
+body.radius-standard .person-card,
+body.radius-standard .team-button,
+body.radius-standard .record-item,
+body.radius-standard .talent-collapse,
+body.radius-standard .org-unit,
+body.radius-standard .org-section,
+body.radius-standard .detail-panel,
+body.radius-standard .people-column,
+body.radius-standard .team-filter-panel {
+  border-radius: var(--app-radius);
+}
+
+body.radius-soft .person-card,
+body.radius-soft .talent-collapse,
+body.radius-soft .org-unit,
+body.radius-soft .org-section,
+body.radius-soft .detail-panel,
+body.radius-soft .people-column,
+body.radius-soft .team-filter-panel {
+  border-radius: var(--app-radius-lg);
+}
+
+body.radius-round button,
+body.radius-round input,
+body.radius-round select,
+body.radius-round textarea,
+body.radius-round .person-card,
+body.radius-round .team-button,
+body.radius-round .record-item,
+body.radius-round .talent-collapse,
+body.radius-round .org-unit,
+body.radius-round .org-section,
+body.radius-round .detail-panel,
+body.radius-round .people-column,
+body.radius-round .team-filter-panel {
+  border-radius: var(--app-radius);
+}
+
+body.shadow-none {
+  --shadow: none;
+  --shadow-soft: none;
+}
+
+body.shadow-none .org-section,
+body.shadow-none .people-column,
+body.shadow-none .detail-panel,
+body.shadow-none .team-filter-panel,
+body.shadow-none .talent-collapse,
+body.shadow-none .person-card,
+body.shadow-none .record-item,
+body.shadow-none .summary-strip,
+body.shadow-none .login-card {
+  box-shadow: none;
+}
+
+body.shadow-subtle .org-section,
+body.shadow-subtle .people-column,
+body.shadow-subtle .detail-panel,
+body.shadow-subtle .team-filter-panel,
+body.shadow-subtle .talent-collapse,
+body.shadow-subtle .person-card,
+body.shadow-subtle .record-item {
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.035);
+}
+
+body.shadow-premium .org-section,
+body.shadow-premium .people-column,
+body.shadow-premium .detail-panel,
+body.shadow-premium .team-filter-panel,
+body.shadow-premium .talent-collapse {
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.035), 0 22px 56px rgba(15, 23, 42, 0.055);
+}
+
+body.density-spacious .page-panel {
+  padding-top: 48px;
+}
+
+body.density-compact .page-panel {
+  padding-top: 28px;
+}
+
+body.density-spacious .person-card,
+body.density-spacious .org-unit summary,
+body.density-spacious #talentDevelopmentPage .talent-collapse > summary {
+  padding: 28px 32px;
+}
+
+body.density-compact .person-card {
+  min-height: 74px;
+  padding: 12px 16px;
+}
+
+body.density-compact .org-unit summary,
+body.density-compact #talentDevelopmentPage .talent-collapse > summary {
+  min-height: 82px;
+  padding: 18px 22px;
+}
+
+body.show-page-descriptions #talentDevelopmentPage > .page-heading {
+  display: flex;
+}
+
+body.show-page-descriptions #talentDevelopmentPage .page-heading p,
+body.show-page-descriptions .org-section > .section-title small {
+  display: block;
+}
+
+body.show-module-descriptions #talentDevelopmentPage .talent-collapse > summary {
+  grid-template-columns: 58px minmax(240px, 0.72fr) minmax(260px, 1fr) auto;
+}
+
+body.show-module-descriptions #talentDevelopmentPage .talent-collapse > summary small {
+  display: block;
+}
+
+@media (max-width: 760px) {
+  .appearance-editor {
+    grid-template-columns: 1fr;
+  }
+}

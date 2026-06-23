@@ -19,6 +19,14 @@ const defaultState = {
   peopleDisplayLimit: 24,
   peopleDisplayLimitMigrated: false,
   searchText: "",
+  appearance: {
+    theme: "executive",
+    density: "comfortable",
+    radius: "soft",
+    shadow: "premium",
+    showPageDescriptions: false,
+    showModuleDescriptions: false,
+  },
   ownerViewScope: { type: "center", id: "center-1" },
   customOrgCleanupDone: false,
   talentTags: ["AI", "领军人物", "优秀人才", "关键岗位", "高潜人才"],
@@ -111,6 +119,7 @@ const translations = {
     loginTitle: "登录", email: "邮箱", password: "密码", login: "登录", logout: "退出登录",
     changePassword: "修改密码", currentPassword: "当前密码", newPassword: "新密码", confirmNewPassword: "确认新密码", savePassword: "保存密码", forgotPassword: "忘记密码？", setNewPassword: "设置新密码", setNewPasswordHint: "请输入新密码。保存后即可用新密码登录。", resetPasswordSent: "如果该邮箱存在于 Supabase，重置密码邮件将会发送。", resetPasswordUnavailable: "当前未连接 Supabase，无法发送重置密码邮件。", passwordResetSaved: "新密码已保存。",
     language: "语言 / Language", accountsAndPermissions: "领导关系与 HRBP 覆盖",
+    appearanceSettings: "外观设置", appearanceHint: "Owner 可调整全站主题、界面密度和说明文字显示方式。", themePreset: "主题预设", interfaceDensity: "界面密度", cornerStyle: "圆角风格", shadowStyle: "阴影风格", showPageDescriptions: "显示页面说明", showModuleDescriptions: "显示模块说明", saveAppearance: "保存外观设置", themeExecutive: "Executive Calm", themeLinear: "Linear Clean", themeAshby: "Ashby HR", themeSoft: "Soft Premium", themeSlate: "Slate Enterprise", densitySpacious: "Spacious", densityComfortable: "Comfortable", densityCompact: "Compact", radiusStandard: "Standard", radiusSoft: "Soft", radiusRound: "Round", shadowNone: "None", shadowSubtle: "Subtle", shadowPremium: "Premium", appearanceSaved: "外观设置已保存。",
     accountName: "账号姓名", permissionRole: "授权角色", scope: "授权范围", addAccount: "添加账号",
     ownerCanAssign: "Owner 可添加账号、设置领导关系与访问范围。Research Center Director 与 Owner 可看所有人。",
     governanceWarningTitle: "高影响设置", governanceWarningText: "账号、领导关系与访问范围会影响人员信息可见性。保存前系统会要求再次确认。",
@@ -198,6 +207,7 @@ const translations = {
     loginTitle: "Sign In", email: "Email", password: "Password", login: "Sign In", logout: "Sign Out",
     changePassword: "Change Password", currentPassword: "Current Password", newPassword: "New Password", confirmNewPassword: "Confirm New Password", savePassword: "Save Password", forgotPassword: "Forgot password?", setNewPassword: "Set New Password", setNewPasswordHint: "Enter a new password. After saving, use it to sign in.", resetPasswordSent: "If this email exists in Supabase, a password reset email will be sent.", resetPasswordUnavailable: "Supabase is not connected, so password reset email cannot be sent.", passwordResetSaved: "New password saved.",
     language: "Language / 语言", accountsAndPermissions: "Leadership & HRBP Coverage",
+    appearanceSettings: "Appearance", appearanceHint: "Owners can tune theme, density, and description visibility across the workspace.", themePreset: "Theme Preset", interfaceDensity: "Interface Density", cornerStyle: "Corner Style", shadowStyle: "Shadow Style", showPageDescriptions: "Show Page Descriptions", showModuleDescriptions: "Show Module Descriptions", saveAppearance: "Save Appearance", themeExecutive: "Executive Calm", themeLinear: "Linear Clean", themeAshby: "Ashby HR", themeSoft: "Soft Premium", themeSlate: "Slate Enterprise", densitySpacious: "Spacious", densityComfortable: "Comfortable", densityCompact: "Compact", radiusStandard: "Standard", radiusSoft: "Soft", radiusRound: "Round", shadowNone: "None", shadowSubtle: "Subtle", shadowPremium: "Premium", appearanceSaved: "Appearance saved.",
     accountName: "Account Name", permissionRole: "Permission Role", scope: "Scope", addAccount: "Add Account",
     ownerCanAssign: "Owners can add accounts, set leadership relationships, and authorize access scope. Research Center Directors and Owners can see everyone.",
     governanceWarningTitle: "High-impact settings", governanceWarningText: "Accounts, leadership relationships, and access scope affect employee data visibility. The system will ask for confirmation before saving.",
@@ -305,6 +315,7 @@ const elements = {
   languageSwitcher: $("#languageSwitcher"), signedInAvatar: $("#signedInAvatar"), signedInName: $("#signedInName"), signedInMeta: $("#signedInMeta"), logoutBtn: $("#logoutBtn"), settingsBtn: $("#settingsBtn"),
   currentPasswordInput: $("#currentPasswordInput"), newPasswordInput: $("#newPasswordInput"), confirmPasswordInput: $("#confirmPasswordInput"), changePasswordBtn: $("#changePasswordBtn"),
   settingsDialog: $("#settingsDialog"), settingsForm: $("#settingsForm"), closeSettingsBtn: $("#closeSettingsBtn"),
+  appearanceTheme: $("#appearanceTheme"), appearanceDensity: $("#appearanceDensity"), appearanceRadius: $("#appearanceRadius"), appearanceShadow: $("#appearanceShadow"), appearanceShowPageDescriptions: $("#appearanceShowPageDescriptions"), appearanceShowModuleDescriptions: $("#appearanceShowModuleDescriptions"), saveAppearanceBtn: $("#saveAppearanceBtn"),
   accountList: $("#accountList"), hrbpAssignmentList: $("#hrbpAssignmentList"), businessAccountForm: $("#businessAccountForm"), hrbpAccountForm: $("#hrbpAccountForm"), newAccountName: $("#newAccountName"), newAccountEmail: $("#newAccountEmail"), newAccountPassword: $("#newAccountPassword"), newAccountRole: $("#newAccountRole"), newAccountScope: $("#newAccountScope"), addManagerBtn: $("#addManagerBtn"),
   newUnitType: $("#newUnitType"), newUnitName: $("#newUnitName"), unitNameLabel: $("#unitNameLabel"), addUnitBtn: $("#addUnitBtn"), newTeamUnit: $("#newTeamUnit"), newTeamName: $("#newTeamName"), addOrgTeamBtn: $("#addOrgTeamBtn"), orgEditList: $("#orgEditList"),
   moveSourceTeam: $("#moveSourceTeam"), moveTargetTeam: $("#moveTargetTeam"), moveSelectedPeopleBtn: $("#moveSelectedPeopleBtn"), moveAllPeopleBtn: $("#moveAllPeopleBtn"), movePeopleList: $("#movePeopleList"),
@@ -374,6 +385,16 @@ function normalizeState(raw) {
     scopeIds: Array.isArray(account.scopeIds) ? account.scopeIds : account.role === "hrbp" && account.scopeId ? [account.scopeId] : undefined,
   }));
   next.people = Array.isArray(raw.people) ? raw.people : structuredClone(defaultState.people);
+  next.appearance = {
+    ...structuredClone(defaultState.appearance),
+    ...(raw.appearance || {}),
+  };
+  if (!["executive", "linear", "ashby", "soft", "slate"].includes(next.appearance.theme)) next.appearance.theme = defaultState.appearance.theme;
+  if (!["spacious", "comfortable", "compact"].includes(next.appearance.density)) next.appearance.density = defaultState.appearance.density;
+  if (!["standard", "soft", "round"].includes(next.appearance.radius)) next.appearance.radius = defaultState.appearance.radius;
+  if (!["none", "subtle", "premium"].includes(next.appearance.shadow)) next.appearance.shadow = defaultState.appearance.shadow;
+  next.appearance.showPageDescriptions = Boolean(next.appearance.showPageDescriptions);
+  next.appearance.showModuleDescriptions = Boolean(next.appearance.showModuleDescriptions);
   next.talentTags = Array.isArray(raw.talentTags) ? raw.talentTags : structuredClone(defaultState.talentTags);
   next.awardNames = Array.isArray(raw.awardNames) ? raw.awardNames : structuredClone(defaultState.awardNames);
   next.talentActionTypes = Array.isArray(raw.talentActionTypes) ? raw.talentActionTypes : structuredClone(defaultState.talentActionTypes);
@@ -1458,6 +1479,50 @@ function applyI18n() {
   elements.demoLoginHint.innerHTML = loginHintHtml();
 }
 
+function applyAppearance() {
+  const appearance = state.appearance || defaultState.appearance;
+  const classes = [
+    "theme-executive", "theme-linear", "theme-ashby", "theme-soft", "theme-slate",
+    "density-spacious", "density-comfortable", "density-compact",
+    "radius-standard", "radius-soft", "radius-round",
+    "shadow-none", "shadow-subtle", "shadow-premium",
+    "show-page-descriptions", "hide-page-descriptions",
+    "show-module-descriptions", "hide-module-descriptions",
+  ];
+  document.body.classList.remove(...classes);
+  document.body.classList.add(`theme-${appearance.theme}`);
+  document.body.classList.add(`density-${appearance.density}`);
+  document.body.classList.add(`radius-${appearance.radius}`);
+  document.body.classList.add(`shadow-${appearance.shadow}`);
+  document.body.classList.add(appearance.showPageDescriptions ? "show-page-descriptions" : "hide-page-descriptions");
+  document.body.classList.add(appearance.showModuleDescriptions ? "show-module-descriptions" : "hide-module-descriptions");
+}
+
+function renderAppearanceSettings() {
+  if (!elements.appearanceTheme) return;
+  const appearance = state.appearance || defaultState.appearance;
+  elements.appearanceTheme.value = appearance.theme;
+  elements.appearanceDensity.value = appearance.density;
+  elements.appearanceRadius.value = appearance.radius;
+  elements.appearanceShadow.value = appearance.shadow;
+  elements.appearanceShowPageDescriptions.checked = Boolean(appearance.showPageDescriptions);
+  elements.appearanceShowModuleDescriptions.checked = Boolean(appearance.showModuleDescriptions);
+}
+
+function saveAppearanceSettings() {
+  if (!isOwner()) return;
+  state.appearance = {
+    theme: elements.appearanceTheme.value,
+    density: elements.appearanceDensity.value,
+    radius: elements.appearanceRadius.value,
+    shadow: elements.appearanceShadow.value,
+    showPageDescriptions: elements.appearanceShowPageDescriptions.checked,
+    showModuleDescriptions: elements.appearanceShowModuleDescriptions.checked,
+  };
+  showToast(t("appearanceSaved"));
+  saveAndRender();
+}
+
 function loginHintHtml() {
   if (supabaseClient) return escapeHtml(t("demoHint"));
   const roleOrder = ["owner", "researchDirector", "labDirector", "teamManager", "hrbp"];
@@ -1482,6 +1547,7 @@ function initialsForName(name = "") {
 
 function render() {
   applyI18n();
+  applyAppearance();
   const account = currentAccount();
   const loggedIn = Boolean(account);
   elements.loginView.classList.toggle("is-hidden", loggedIn);
@@ -1528,6 +1594,7 @@ function render() {
   elements.permissionHint.textContent = permissionText(account.role);
 
   renderAccountAdmin();
+  renderAppearanceSettings();
   renderOrgAdmin();
   renderRoleSettings();
   renderTalentSettings();
@@ -4288,6 +4355,7 @@ elements.logoutBtn.addEventListener("click", async () => {
   saveAndRender();
 });
 elements.changePasswordBtn.addEventListener("click", changeOwnPassword);
+elements.saveAppearanceBtn.addEventListener("click", saveAppearanceSettings);
 elements.languageSwitcher.addEventListener("change", (event) => { state.language = event.target.value; saveAndRender(); });
 elements.loginLanguageSwitcher.addEventListener("change", (event) => { state.language = event.target.value; saveAndRender(); });
 elements.settingsBtn.addEventListener("click", () => {
