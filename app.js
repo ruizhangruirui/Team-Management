@@ -117,7 +117,7 @@ const translations = {
     hrbpSetupHint: "HRBP 设置：新增或编辑账号时选择 HRBP 角色，然后在右侧 HRBP 面板里分配其覆盖 Team。",
     businessLeadership: "业务主管", hrbpManagement: "HRBP Team 覆盖范围", assignedPeople: "负责员工", assignedTeams: "覆盖 Team", saveHrbpPeople: "保存 HRBP Team",
     organizationSettings: "组织设置", mainInstitute: "主研究所", newSubInstitute: "新增下属研究所",
-    teamManagement: "团队筛选", newTeam: "新增团队", appName: "人才管理系统", totalPeople: "总人数",
+    teamManagement: "团队筛选", newTeam: "新增团队", appName: "Talent OS", totalPeople: "总人数",
     regularEmployees: "Employee", avgTenureYears: "平均在职年", searchPeople: "搜索人员",
     searchPlaceholder: "工号、姓名、岗位、团队、合同类型、优秀标签",
     addEmployee: "添加人员", orgChart: "组织架构图", permissionNotes: "权限说明", peopleInsights: "人员统计洞察", peopleInsightsHint: "统计会跟随当前 Business Unit / Team / 搜索筛选变化。", currentAccess: "当前权限范围",
@@ -149,7 +149,7 @@ const translations = {
     overviewPage: "组织 Overview",
     peoplePage: "人员目录",
     adminPage: "领导关系与权限",
-    talentDevelopmentPage: "人才发展",
+    talentDevelopmentPage: "人才与团队发展",
     developmentTree: "人才发展树", developmentTreeHint: "按 Lab / Platform 展开查看组织和 Team 的重点工作、目标与活动。",
     settings: "设置",
     orgOverviewHint: "每个 Team 展示人数与成员预览，点击查看完整名单。",
@@ -204,7 +204,7 @@ const translations = {
     hrbpSetupHint: "HRBP setup: create or edit an account with the HRBP role, then assign covered teams in the HRBP panel on the right.",
     businessLeadership: "Business Leadership", hrbpManagement: "HRBP Team Coverage", assignedPeople: "Assigned People", assignedTeams: "Covered Teams", saveHrbpPeople: "Save HRBP Teams",
     organizationSettings: "Organization Settings", mainInstitute: "Main Institute", newSubInstitute: "New Sub-Institute",
-    teamManagement: "Team Filter", newTeam: "New Team", appName: "Talent Management System", totalPeople: "Total People",
+    teamManagement: "Team Filter", newTeam: "New Team", appName: "Talent OS", totalPeople: "Total People",
     regularEmployees: "Regular Employees", avgTenureYears: "Avg Tenure Years", searchPeople: "Search People",
     searchPlaceholder: "Employee ID, name, role, team, contract type, talent tag",
     addEmployee: "Add Employee", orgChart: "Org Chart", permissionNotes: "Permission Notes", peopleInsights: "People Insights", peopleInsightsHint: "Stats follow the current Business Unit / Team / search filters.", currentAccess: "Current Access Scope",
@@ -236,7 +236,7 @@ const translations = {
     overviewPage: "Org Overview",
     peoplePage: "People Directory",
     adminPage: "Leadership & Access",
-    talentDevelopmentPage: "Talent Development",
+    talentDevelopmentPage: "Talent & Team Development",
     developmentTree: "Talent Development Tree", developmentTreeHint: "Expand each Lab / Platform to view org and team work, goals, and activities.",
     settings: "Settings",
     orgOverviewHint: "Each team shows headcount and a member preview. Click a team to view the full roster.",
@@ -302,7 +302,7 @@ const $ = (selector) => document.querySelector(selector);
 const elements = {
   loginView: $("#loginView"), loginForm: $("#loginForm"), loginError: $("#loginError"), demoLoginHint: $("#demoLoginHint"), loginLanguageSwitcher: $("#loginLanguageSwitcher"),
   forgotPasswordBtn: $("#forgotPasswordBtn"), resetPasswordDialog: $("#resetPasswordDialog"), resetPasswordForm: $("#resetPasswordForm"), resetPasswordInput: $("#resetPasswordInput"), resetPasswordConfirmInput: $("#resetPasswordConfirmInput"), resetPasswordError: $("#resetPasswordError"),
-  languageSwitcher: $("#languageSwitcher"), signedInName: $("#signedInName"), signedInMeta: $("#signedInMeta"), logoutBtn: $("#logoutBtn"), settingsBtn: $("#settingsBtn"),
+  languageSwitcher: $("#languageSwitcher"), signedInAvatar: $("#signedInAvatar"), signedInName: $("#signedInName"), signedInMeta: $("#signedInMeta"), logoutBtn: $("#logoutBtn"), settingsBtn: $("#settingsBtn"),
   currentPasswordInput: $("#currentPasswordInput"), newPasswordInput: $("#newPasswordInput"), confirmPasswordInput: $("#confirmPasswordInput"), changePasswordBtn: $("#changePasswordBtn"),
   settingsDialog: $("#settingsDialog"), settingsForm: $("#settingsForm"), closeSettingsBtn: $("#closeSettingsBtn"),
   accountList: $("#accountList"), hrbpAssignmentList: $("#hrbpAssignmentList"), businessAccountForm: $("#businessAccountForm"), hrbpAccountForm: $("#hrbpAccountForm"), newAccountName: $("#newAccountName"), newAccountEmail: $("#newAccountEmail"), newAccountPassword: $("#newAccountPassword"), newAccountRole: $("#newAccountRole"), newAccountScope: $("#newAccountScope"), addManagerBtn: $("#addManagerBtn"),
@@ -1470,6 +1470,15 @@ function loginHintHtml() {
   return `<span>${escapeHtml(prefix)}</span><span class="login-hint-list">${samples.map((account) => `<code>${escapeHtml(account.email)} / ${escapeHtml(account.password)}</code>`).join("")}</span>`;
 }
 
+function initialsForName(name = "") {
+  const parts = String(name || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (!parts.length) return "TM";
+  return parts.slice(0, 2).map((part) => part[0]).join("").toUpperCase();
+}
+
 function render() {
   applyI18n();
   const account = currentAccount();
@@ -1484,10 +1493,13 @@ function render() {
 
   elements.instituteName.value = state.org.center.name;
   elements.instituteName.disabled = !isOwner();
+  if (elements.signedInAvatar) elements.signedInAvatar.textContent = initialsForName(account.name || account.email);
   elements.signedInName.textContent = account.name;
   elements.signedInMeta.innerHTML = `<span>${escapeHtml(roleLabel(account.role))} · ${escapeHtml(accountScopeSummary(account))}</span><span>${escapeHtml(account.email)}</span>`;
   elements.pageTitle.textContent = state.org.center.name;
-  elements.pageSubtitle.textContent = `${accountScopeSummary(account)} · ${visiblePeople().length} ${t("peopleUnit")}`;
+  elements.pageSubtitle.textContent = state.language === "en"
+    ? `${visiblePeople().length} people in scope · Secure talent workspace`
+    : `当前权限范围 ${visiblePeople().length} 人 · 安全人才工作台`;
   elements.searchInput.value = state.searchText;
 
   applyVisibilityRules();

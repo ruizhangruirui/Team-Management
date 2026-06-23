@@ -2400,17 +2400,20 @@ textarea {
   padding: 14px;
 }
 
-.session-box::before {
-  content: "RZ";
+.session-avatar {
   display: inline-grid;
   place-items: center;
   grid-row: 1 / span 2;
-  width: 42px;
-  height: 42px;
+  width: 40px;
+  height: 40px;
   border-radius: 999px;
-  background: linear-gradient(135deg, #356dff, #7a8cff);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.2), transparent),
+    #3f73ff;
   color: #fff;
-  font-weight: 900;
+  font-size: 13px;
+  font-weight: 820;
+  letter-spacing: 0.02em;
 }
 
 .session-box strong {
@@ -2583,8 +2586,8 @@ h1 {
 .page-heading h2 {
   margin: 0 0 4px;
   color: var(--ink);
-  font-size: 24px;
-  font-weight: 820;
+  font-size: 28px;
+  font-weight: 850;
   letter-spacing: -0.03em;
 }
 
@@ -2621,8 +2624,8 @@ h1 {
 }
 
 .section-title {
-  font-size: 17px;
-  font-weight: 820;
+  font-size: 19px;
+  font-weight: 850;
 }
 
 .section-title small {
@@ -2892,7 +2895,7 @@ h1 {
 
 .talent-collapse > summary {
   display: grid;
-  grid-template-columns: 54px minmax(210px, 0.72fr) minmax(280px, 1fr) auto;
+  grid-template-columns: 58px minmax(250px, 0.72fr) minmax(280px, 1fr) auto;
   align-items: center;
   gap: 18px;
   min-height: 94px;
@@ -2901,8 +2904,8 @@ h1 {
 }
 
 .talent-collapse > summary span {
-  font-size: 18px;
-  font-weight: 800;
+  font-size: 20px;
+  font-weight: 850;
   line-height: 1.25;
 }
 
@@ -2914,43 +2917,51 @@ h1 {
 }
 
 .talent-collapse > summary::before {
-  content: "";
+  content: var(--module-code);
   display: inline-grid;
   place-items: center;
   flex: 0 0 auto;
-  width: 48px;
-  height: 48px;
-  border-radius: 18px;
+  width: 52px;
+  height: 38px;
+  border: 1px solid rgba(63, 115, 255, 0.13);
+  border-radius: 14px;
   background: #edf2ff;
-  background-image: var(--talent-icon);
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: 25px 25px;
   color: var(--primary);
+  font-size: 11px;
+  font-weight: 860;
+  letter-spacing: 0.08em;
 }
 
 #talentDevelopmentPage .talent-collapse:nth-of-type(1) > summary::before {
-  --talent-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%233f73ff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='8'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3Cpath d='M12 2v3M12 19v3M2 12h3M19 12h3'/%3E%3C/svg%3E");
+  --module-code: "ACT";
 }
 
 #talentDevelopmentPage .talent-collapse:nth-of-type(2) > summary::before {
-  --talent-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%238b5cf6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7z'/%3E%3Cpath d='M14 2v5h5'/%3E%3Cpath d='M9 13h6M9 17h4'/%3E%3Cpath d='m9 9 1.2 1.2L13 7.5'/%3E%3C/svg%3E");
-  background-color: #f1edff;
+  --module-code: "AI";
+  border-color: rgba(139, 92, 246, 0.16);
+  background-color: #f3efff;
+  color: #7c3aed;
 }
 
 #talentDevelopmentPage .talent-collapse:nth-of-type(3) > summary::before {
-  --talent-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%2310b981' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 20V10'/%3E%3Cpath d='M10 20V4'/%3E%3Cpath d='M16 20v-7'/%3E%3Cpath d='M22 20H2'/%3E%3Cpath d='m16 9 2-2 2 2'/%3E%3C/svg%3E");
+  --module-code: "OKR";
+  border-color: rgba(16, 185, 129, 0.16);
   background-color: #eafaf4;
+  color: #059669;
 }
 
 #talentDevelopmentPage .talent-collapse:nth-of-type(4) > summary::before {
-  --talent-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23f59e0b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='5' r='2'/%3E%3Ccircle cx='5' cy='19' r='2'/%3E%3Ccircle cx='19' cy='19' r='2'/%3E%3Cpath d='M12 7v5M12 12 5 17M12 12l7 5'/%3E%3C/svg%3E");
-  background-color: #fff5e5;
+  --module-code: "MAP";
+  border-color: rgba(245, 158, 11, 0.18);
+  background-color: #fff6e8;
+  color: #d97706;
 }
 
 #talentDevelopmentPage .talent-collapse:nth-of-type(5) > summary::before {
-  --talent-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23ec4899' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z'/%3E%3C/svg%3E");
+  --module-code: "ENG";
+  border-color: rgba(236, 72, 153, 0.16);
   background-color: #fff0f8;
+  color: #db2777;
 }
 
 .talent-collapse > summary::after {
