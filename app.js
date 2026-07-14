@@ -1221,7 +1221,7 @@ function extractTechnicalPhrases(input) {
 
 function extractCriteriaSentences(input) {
   const sentences = input
-    .split(/[\n.;•-]+/)
+    .split(/[\n.;•]+/)
     .map((sentence) => sentence.replace(/\s+/g, " ").trim())
     .filter((sentence) => sentence.length > 8 && sentence.length < 180);
   return {
