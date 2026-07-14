@@ -1618,8 +1618,10 @@ function buildAgentDiscoveryQueries(criteria, mode) {
   const topic = terms.slice(0, 3).join(" ") || "AI systems";
   const company = criteria.target_companies[0] || "";
   const conferenceSites = inferConferenceSites(criteria).slice(0, 5);
+  const universityQueries = buildUniversityLabQueries(criteria);
   const companyQuery = company ? `${topic} ${company}` : topic;
   const queries = [
+    ...universityQueries,
     `GitHub contributors: ${topic}`,
     `Google Patents inventors: ${companyQuery}`,
     `Company engineering pages: ${companyQuery} engineer profile team`,
@@ -1634,6 +1636,47 @@ function buildAgentDiscoveryQueries(criteria, mode) {
     queries.unshift(`Forum experts: ${topic} developer forum discourse`);
   }
   return unique(queries).slice(0, 10);
+}
+
+function buildUniversityLabQueries(criteria) {
+  const topic = unique([
+    ...criteria.business_expert_keywords,
+    ...criteria.core_technical_skills,
+    ...criteria.research_topics,
+    ...criteria.related_terminology,
+  ]).slice(0, 4).join(" ") || "machine learning";
+  const universitySites = inferUniversitySites(criteria);
+  const queries = universitySites.flatMap((site) => [
+    `University official site ${site}: ${topic} researcher`,
+    `Laboratory members ${site}: ${topic} PhD postdoc research engineer`,
+    `Research group pages ${site}: ${topic}`,
+  ]);
+  if (criteria.location.some((location) => /switzerland|zurich|lausanne/i.test(location)) || criteria.universities.some((uni) => /eth|epfl|zurich|lausanne/i.test(uni))) {
+    queries.push(`Swiss university labs: ${topic} PhD postdoc`);
+    queries.push(`ETH EPFL lab members: ${topic}`);
+  }
+  return unique(queries).slice(0, 8);
+}
+
+function inferUniversitySites(criteria) {
+  const universities = unique(criteria.universities || []);
+  const sites = universities.flatMap((uni) => {
+    const normalized = uni.toLowerCase();
+    if (/eth|zurich/.test(normalized)) return ["ethz.ch"];
+    if (/epfl|lausanne/.test(normalized)) return ["epfl.ch"];
+    if (/stanford/.test(normalized)) return ["stanford.edu"];
+    if (/mit|massachusetts institute/.test(normalized)) return ["mit.edu"];
+    if (/cambridge/.test(normalized)) return ["cam.ac.uk"];
+    if (/oxford/.test(normalized)) return ["ox.ac.uk"];
+    if (/carnegie mellon|cmu/.test(normalized)) return ["cmu.edu"];
+    if (/berkeley/.test(normalized)) return ["berkeley.edu"];
+    if (/tu munich|tum/.test(normalized)) return ["tum.de"];
+    return [];
+  });
+  if (criteria.location.some((location) => /switzerland|zurich|lausanne/i.test(location))) {
+    sites.push("ethz.ch", "epfl.ch", "uzh.ch", "unibas.ch", "unige.ch", "usi.ch");
+  }
+  return unique(sites.length ? sites : ["ethz.ch", "epfl.ch", "stanford.edu", "mit.edu"]).slice(0, 8);
 }
 
 function inferConferenceSites(criteria) {
@@ -1784,7 +1827,11 @@ function buildCandidateProfileHypothesis(criteria) {
 
 function buildRecommendedEvidenceChannels(criteria) {
   const text = unique([...criteria.core_technical_skills, ...criteria.research_topics, ...criteria.related_terminology]).join(" ").toLowerCase();
-  const channels = ["High priority: GitHub repositories and contributors", "High priority: OpenAlex publications", "High priority: University laboratories or research group pages"];
+  const channels = [
+    "High priority: University official sites, laboratory pages, and research group member pages",
+    "High priority: GitHub repositories and contributors",
+    "High priority: OpenAlex publications",
+  ];
   if (/compiler|systems|hpc|robot|vision|language|learning|security|wireless/.test(text)) channels.push("High priority: Conference programmes, workshops, speakers, and accepted papers");
   channels.push("Medium priority: Patents, technical blogs, personal websites, and company research pages");
   channels.push("Manual verification: LinkedIn, company profiles, CVs, and restricted professional platforms");
@@ -2098,9 +2145,13 @@ function buildVerificationSearches(candidate, criteria) {
   ]).slice(0, 4).join(" ");
   const person = `${candidate.fullName || ""} ${candidate.currentOrganisation || ""}`.trim();
   const technical = `${person} ${terms}`.trim();
+  const universitySite = inferUniversitySiteFromCandidate(candidate) || inferUniversitySites(criteria)[0];
+  const labQuery = `${terms || candidate.currentOrganisation || candidate.fullName} lab members research group`;
   return [
     { label: "LinkedIn", url: `https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(technical)}` },
     { label: "GitHub", url: candidate.githubUrl || `https://github.com/search?q=${encodeURIComponent(technical)}&type=users` },
+    { label: "University lab", url: `https://www.google.com/search?q=${encodeURIComponent(`site:${universitySite} ${labQuery}`)}` },
+    { label: "Lab members", url: `https://www.google.com/search?q=${encodeURIComponent(`site:${universitySite} ${terms} PhD postdoc research engineer`)}` },
     { label: "Patents", url: `https://patents.google.com/?q=${encodeURIComponent(technical)}` },
     { label: "Web", url: `https://www.google.com/search?q=${encodeURIComponent(technical)}` },
     { label: "Company pages", url: `https://www.google.com/search?q=${encodeURIComponent(`${technical} site:*.com profile OR team OR staff`)}` },
@@ -2108,6 +2159,20 @@ function buildVerificationSearches(candidate, criteria) {
     { label: "Forums", url: `https://www.google.com/search?q=${encodeURIComponent(`${technical} discourse OR forum OR issue OR pull request`)}` },
     { label: "Blogs", url: `https://www.google.com/search?q=${encodeURIComponent(`${technical} engineering blog OR technical blog`)}` },
   ];
+}
+
+function inferUniversitySiteFromCandidate(candidate) {
+  const text = `${candidate.currentOrganisation || ""} ${candidate.university || ""}`.toLowerCase();
+  if (/eth|zurich/.test(text)) return "ethz.ch";
+  if (/epfl|lausanne/.test(text)) return "epfl.ch";
+  if (/stanford/.test(text)) return "stanford.edu";
+  if (/mit|massachusetts institute/.test(text)) return "mit.edu";
+  if (/cambridge/.test(text)) return "cam.ac.uk";
+  if (/oxford/.test(text)) return "ox.ac.uk";
+  if (/carnegie mellon|cmu/.test(text)) return "cmu.edu";
+  if (/berkeley/.test(text)) return "berkeley.edu";
+  if (/tu munich|tum/.test(text)) return "tum.de";
+  return "";
 }
 
 function fact(label, value) {
