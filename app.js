@@ -20,6 +20,11 @@ const TECHNICAL_TERM_LIBRARY = [
   "kernel optimisation", "GPU kernels", "distributed training", "model serving",
   "benchmarking", "model evaluation", "foundation models", "transformers",
   "graph neural networks", "autonomous systems", "speech recognition", "edge AI",
+  "SLAM", "control theory", "optimization", "Bayesian optimization", "causal inference",
+  "time series", "recommendation systems", "information retrieval", "knowledge graphs",
+  "privacy preserving machine learning", "federated learning", "adversarial robustness",
+  "quantization", "model compression", "accelerator architecture", "high performance computing",
+  "parallel programming", "large language models", "agentic AI", "tool use", "alignment",
 ];
 
 const state = {
@@ -71,9 +76,10 @@ class MockLLMService {
       universities: unique([...extractKnownTerms(text, ["ETH Zurich", "EPFL", "Oxford", "Cambridge", "TU Munich", "Imperial College London", "Stanford", "MIT", "Carnegie Mellon", "Berkeley"]), ...jdTerms.universities]),
       academic_background: text.includes("phd") ? ["PhD", "doctoral research"] : [],
       location: unique([...extractKnownTerms(text, ["Europe", "Switzerland", "Zurich", "Germany", "UK", "London", "France", "Paris", "Netherlands", "United States", "China", "Singapore", "Canada"]), ...jdTerms.locations]),
-      required_criteria: [],
-      preferred_criteria: [],
-      exclusion_criteria: [],
+      jd_keywords: jdTerms.phrases,
+      required_criteria: jdTerms.required,
+      preferred_criteria: jdTerms.preferred,
+      exclusion_criteria: jdTerms.exclusions,
     };
     criteria.related_terminology = expandTerms([...criteria.core_technical_skills, ...criteria.research_topics]);
     criteria.publication_keywords = unique([...criteria.research_topics, ...criteria.core_technical_skills, ...criteria.related_terminology, ...jdTerms.phrases]).slice(0, 12);
@@ -297,7 +303,6 @@ class SearchLinkProvider extends sourceArchitecture.CandidateSource {
 }
 
 const llmService = new MockLLMService();
-const mockSource = new MockCandidateSource();
 const openAlexSource = new OpenAlexCandidateSource();
 const linkProvider = new SearchLinkProvider();
 
@@ -1187,14 +1192,15 @@ function extractJdTerms(input) {
   const skills = extractKnownTerms(text, TECHNICAL_TERM_LIBRARY);
   const topics = extractResearchTopics(text);
   const phrases = extractTechnicalPhrases(input);
+  const criteriaSentences = extractCriteriaSentences(input);
   const organisations = extractCapitalizedPhrases(input, /(lab|labs|research|ai|systems|technologies|university|institute|inc|corp|corporation|group)/i).slice(0, 8);
   const universities = organisations.filter((item) => /(university|institute|eth|epfl|mit|stanford|cambridge|oxford)/i.test(item));
   const locations = extractKnownTerms(text, ["Europe", "Switzerland", "Zurich", "Germany", "UK", "London", "France", "Paris", "Netherlands", "United States", "China", "Singapore", "Canada"]);
-  return { skills, topics, phrases, organisations, universities, locations };
+  return { skills, topics, phrases, organisations, universities, locations, ...criteriaSentences };
 }
 
 function extractTechnicalPhrases(input) {
-  const stop = new Set(["with", "from", "that", "this", "have", "will", "role", "team", "work", "working", "experience", "candidate", "engineer", "researcher", "scientist"]);
+  const stop = new Set(["with", "from", "that", "this", "have", "will", "role", "team", "work", "working", "experience", "candidate", "engineer", "researcher", "scientist", "looking", "strong", "excellent", "ability"]);
   const normalized = input.replace(/[^a-zA-Z0-9+.#-]+/g, " ");
   const words = normalized.split(/\s+/).filter((word) => word.length > 2 && !stop.has(word.toLowerCase()));
   const phrases = [];
@@ -1203,8 +1209,32 @@ function extractTechnicalPhrases(input) {
     if (/(model|learning|vision|language|compiler|robot|planning|kernel|evaluation|multimodal|cuda|llm|graph|distributed|inference|training|retrieval|benchmark)/i.test(pair)) {
       phrases.push(pair);
     }
+    if (index < words.length - 2) {
+      const triple = `${words[index]} ${words[index + 1]} ${words[index + 2]}`;
+      if (/(vision|language|large|foundation|robotic|distributed|retrieval|compiler|kernel|model|learning|evaluation|benchmark)/i.test(triple)) {
+        phrases.push(triple);
+      }
+    }
   }
-  return unique(phrases).slice(0, 8);
+  return unique(phrases).slice(0, 14);
+}
+
+function extractCriteriaSentences(input) {
+  const sentences = input
+    .split(/[\n.;•-]+/)
+    .map((sentence) => sentence.replace(/\s+/g, " ").trim())
+    .filter((sentence) => sentence.length > 8 && sentence.length < 180);
+  return {
+    required: unique(sentences.filter((sentence) => /\b(required|must|need|needs|minimum|essential|responsible for|should have)\b/i.test(sentence)).map(cleanCriterionSentence)).slice(0, 8),
+    preferred: unique(sentences.filter((sentence) => /\b(preferred|nice to have|bonus|plus|ideally|familiarity|advantage)\b/i.test(sentence)).map(cleanCriterionSentence)).slice(0, 8),
+    exclusions: unique(sentences.filter((sentence) => /\b(exclude|not looking|not relevant|avoid|without|no need)\b/i.test(sentence)).map(cleanCriterionSentence)).slice(0, 6),
+  };
+}
+
+function cleanCriterionSentence(sentence) {
+  return sentence
+    .replace(/^(requirements?|responsibilities|preferred qualifications?|nice to have|must have|we need|we are looking for)\s*:?\s*/i, "")
+    .trim();
 }
 
 function extractCapitalizedPhrases(input, qualifier) {
@@ -1284,6 +1314,7 @@ function fillEmptyCriteria(criteria) {
     required_criteria: [],
     preferred_criteria: [],
     exclusion_criteria: [],
+    jd_keywords: [],
   };
   return { ...defaults, ...criteria };
 }
