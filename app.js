@@ -26,6 +26,11 @@ const TECHNICAL_TERM_LIBRARY = [
   "quantization", "model compression", "accelerator architecture", "high performance computing",
   "parallel programming", "large language models", "agentic AI", "tool use", "alignment",
 ];
+const KNOWN_COMPANY_NAMES = [
+  "DeepMind", "Meta", "NVIDIA", "Huawei", "Google", "Microsoft", "Amazon", "Apple",
+  "Intel", "ARM", "Qualcomm", "Anthropic", "OpenAI", "Adobe", "IBM", "Oracle",
+  "Samsung", "Sony", "Bosch", "Siemens", "ByteDance", "Tencent", "Alibaba",
+];
 
 const state = {
   projects: [],
@@ -71,7 +76,7 @@ class MockLLMService {
       research_topics: unique([...extractResearchTopics(text), ...jdTerms.topics]),
       related_terminology: [],
       publication_keywords: [],
-      target_companies: unique([...extractKnownTerms(text, ["DeepMind", "Meta", "NVIDIA", "Huawei", "Google", "Microsoft", "Amazon", "Apple", "Intel", "ARM", "Qualcomm", "Anthropic", "OpenAI"]), ...jdTerms.organisations]),
+      target_companies: unique([...extractKnownTerms(text, KNOWN_COMPANY_NAMES), ...jdTerms.companies]),
       relevant_industries: pickIndustries(text),
       universities: unique([...extractKnownTerms(text, ["ETH Zurich", "EPFL", "Oxford", "Cambridge", "TU Munich", "Imperial College London", "Stanford", "MIT", "Carnegie Mellon", "Berkeley"]), ...jdTerms.universities]),
       academic_background: text.includes("phd") ? ["PhD", "doctoral research"] : [],
@@ -642,7 +647,8 @@ async function analyseRequirement() {
     return;
   }
   setLoading($("#analyseBtn"), "Analysing...");
-  let project = activeProject();
+  const nextTitle = $("#projectTitleInput").value.trim() || deriveProjectTitle(originalRequest);
+  let project = activeProject() || findReusableProject(nextTitle, originalRequest);
   const isNewProject = !project;
   if (!project) {
     project = normalizeProject({
@@ -652,8 +658,10 @@ async function analyseRequirement() {
     });
     state.projects.unshift(project);
     state.activeProjectId = project.id;
+  } else {
+    state.activeProjectId = project.id;
   }
-  project.title = $("#projectTitleInput").value.trim() || deriveProjectTitle(originalRequest);
+  project.title = nextTitle;
   project.originalRequest = originalRequest;
   project.searchMode = $("#searchModeSelect").value;
   project.status = "criteria_review";
@@ -669,6 +677,15 @@ async function analyseRequirement() {
   $("#resultsSection").classList.add("is-hidden");
   clearLoading($("#analyseBtn"), "Analyse Requirement");
   toast(`Project ${isNewProject ? "created" : "updated"}: ${project.title}`);
+}
+
+function findReusableProject(title, originalRequest) {
+  const normalizedTitle = title.trim().toLowerCase();
+  const normalizedRequest = originalRequest.trim().toLowerCase();
+  return state.projects.find((project) =>
+    project.title.trim().toLowerCase() === normalizedTitle ||
+    project.originalRequest.trim().toLowerCase() === normalizedRequest
+  ) || null;
 }
 
 function renderCriteria() {
@@ -1224,10 +1241,26 @@ function extractJdTerms(input) {
   const topics = extractResearchTopics(text);
   const phrases = extractTechnicalPhrases(input);
   const criteriaSentences = extractCriteriaSentences(input);
-  const organisations = extractCapitalizedPhrases(input, /(lab|labs|research|ai|systems|technologies|university|institute|inc|corp|corporation|group)/i).slice(0, 8);
+  const organisations = extractCapitalizedPhrases(input, /(lab|labs|research|systems|technologies|university|institute|inc|corp|corporation|group|gmbh|ag|sa|llc|ltd)/i).slice(0, 8);
   const universities = organisations.filter((item) => /(university|institute|eth|epfl|mit|stanford|cambridge|oxford)/i.test(item));
+  const companies = unique([
+    ...extractKnownTerms(text, KNOWN_COMPANY_NAMES),
+    ...organisations.filter((item) => isCompanyLikeName(item)),
+  ]).filter((item) => !isUniversityLikeName(item) && !isGenericOrganisationToken(item));
   const locations = extractKnownTerms(text, ["Europe", "Switzerland", "Zurich", "Germany", "UK", "London", "France", "Paris", "Netherlands", "United States", "China", "Singapore", "Canada"]);
-  return { skills, topics, phrases, organisations, universities, locations, ...criteriaSentences };
+  return { skills, topics, phrases, organisations, universities, companies, locations, ...criteriaSentences };
+}
+
+function isCompanyLikeName(value) {
+  return /(inc|corp|corporation|llc|ltd|limited|gmbh|ag|sa|technologies|systems|labs|group)$/i.test(value.trim());
+}
+
+function isUniversityLikeName(value) {
+  return /(university|universität|universite|università|institute|institut|eth|epfl|mit|stanford|cambridge|oxford)/i.test(value);
+}
+
+function isGenericOrganisationToken(value) {
+  return /^(AI|ML|LLM|NLP|CV|Research|Systems|Technologies|Group|Lab|Labs)$/i.test(value.trim());
 }
 
 function extractTechnicalPhrases(input) {
