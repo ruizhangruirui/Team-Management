@@ -1,957 +1,158 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>人才管理系统 / Talent Management</title>
-    <link rel="stylesheet" href="./styles.css?v=20260623-sidebar-footer-align" />
+    <title>AI Talent Research Workspace</title>
+    <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <section id="loginView" class="login-view">
-      <div class="login-brand-panel">
-        <span class="login-logo-mark" aria-hidden="true"></span>
-        <p class="eyebrow">TALENT OS</p>
-        <h1>Premium talent workspace for research organizations.</h1>
-        <p>A modern talent management workspace for HRBPs, managers, and leadership teams.</p>
-        <div class="login-proof">
-          <span>Secure access</span>
-          <span>Shared cloud data</span>
-          <span>Bilingual workspace</span>
-        </div>
-      </div>
-      <form id="loginForm" class="login-card">
-        <p class="eyebrow">Talent OS</p>
-        <h1 data-i18n="loginTitle">登录</h1>
-        <label>
-          <span data-i18n="language">语言 / Language</span>
-          <select id="loginLanguageSwitcher">
-            <option value="zh">中文</option>
-            <option value="en">English</option>
-          </select>
-        </label>
-        <label>
-          <span data-i18n="email">邮箱</span>
-          <input name="email" type="email" required />
-        </label>
-        <label>
-          <span data-i18n="password">密码</span>
-          <input name="password" type="password" required />
-        </label>
-        <p id="loginError" class="error-text"></p>
-        <button type="submit" class="primary" data-i18n="login">登录</button>
-        <button id="forgotPasswordBtn" type="button" class="ghost-button" data-i18n="forgotPassword">忘记密码？</button>
-        <p class="hint" id="demoLoginHint"></p>
-      </form>
-      <p class="product-signature">product designed &amp; coded by <span>Rui Zhang</span></p>
-    </section>
-
-    <dialog id="resetPasswordDialog">
-      <form id="resetPasswordForm" method="dialog">
-        <div class="dialog-head">
-          <h2 data-i18n="setNewPassword">设置新密码</h2>
-        </div>
-        <p class="hint" data-i18n="setNewPasswordHint">请输入新密码。保存后即可用新密码登录。</p>
-        <label>
-          <span data-i18n="newPassword">新密码</span>
-          <input id="resetPasswordInput" type="password" autocomplete="new-password" />
-        </label>
-        <label>
-          <span data-i18n="confirmNewPassword">确认新密码</span>
-          <input id="resetPasswordConfirmInput" type="password" autocomplete="new-password" />
-        </label>
-        <p id="resetPasswordError" class="error-text"></p>
-        <div class="dialog-actions">
-          <button id="saveResetPasswordBtn" type="submit" class="primary" data-i18n="savePassword">保存密码</button>
-        </div>
-      </form>
-    </dialog>
-
     <div class="app-shell">
-      <aside class="sidebar">
-        <div class="brand-mark">
-          <span class="brand-icon">▦</span>
-          <strong>TALENT OS</strong>
-        </div>
-
-        <nav class="sidebar-nav" aria-label="Main">
-          <button type="button" class="page-tab active" data-page-target="overviewPage" data-i18n="overviewPage">组织 Overview</button>
-          <button type="button" class="page-tab" data-page-target="peoplePage" data-i18n="peoplePage">人员目录</button>
-          <button type="button" class="page-tab" data-page-target="talentDevelopmentPage" data-i18n="talentDevelopmentPage">人才发展</button>
-        </nav>
-
-        <div class="brand-block">
-          <label for="languageSwitcher" data-i18n="language">语言 / Language</label>
-          <select id="languageSwitcher">
-            <option value="zh">中文</option>
-            <option value="en">English</option>
-          </select>
-          <button id="settingsBtn" type="button" data-i18n="settings">设置</button>
-          <div class="session-box">
-            <span id="signedInAvatar" class="session-avatar"></span>
-            <strong id="signedInName"></strong>
-            <small id="signedInMeta"></small>
+      <aside class="sidebar" aria-label="Workspace navigation">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">AI</span>
+          <div>
+            <strong>Talent Research</strong>
+            <small>Internal sourcing prototype</small>
           </div>
-          <button id="logoutBtn" type="button" data-i18n="logout">退出登录</button>
         </div>
-
+        <nav class="nav">
+          <button class="nav-btn active" type="button" data-view="research">Research Projects</button>
+          <button class="nav-btn" type="button" data-view="shortlist">Shortlist</button>
+        </nav>
+        <button id="manualCandidateBtn" class="secondary full-width" type="button">Add Manual Candidate</button>
+        <p class="sidebar-note">Mock data only. LinkedIn and Google Scholar are manual verification links, never scraped.</p>
       </aside>
 
       <main class="workspace">
-        <header class="topbar">
-          <div class="title-lockup">
-            <span class="title-emblem" aria-hidden="true"></span>
+        <section id="researchView" class="view active">
+          <header class="hero">
             <div>
-              <p class="eyebrow" data-i18n="appName">人才管理系统</p>
-              <h1 id="pageTitle"></h1>
-              <p id="pageSubtitle" class="subtitle"></p>
+              <p class="eyebrow">Huawei recruiter workspace</p>
+              <h1>Start Talent Research</h1>
+              <p>Describe the type of people you are looking for.</p>
             </div>
-          </div>
-          <div class="summary-strip">
-            <div>
-              <span id="totalPeople">0</span>
-              <small data-i18n="totalPeople">总人数</small>
-            </div>
-            <div>
-              <span id="regularPeople">0</span>
-              <small data-i18n="regularEmployees">Employee</small>
-            </div>
-            <div>
-              <span id="avgTenure">0</span>
-              <small data-i18n="avgTenureYears">平均在职年</small>
-            </div>
-          </div>
-        </header>
+            <span class="phase-pill">Phase 1 mock prototype</span>
+          </header>
 
-        <nav class="page-tabs" aria-label="Primary">
-          <button type="button" class="page-tab active" data-page-target="overviewPage" data-i18n="overviewPage">组织 Overview</button>
-          <button type="button" class="page-tab" data-page-target="peoplePage" data-i18n="peoplePage">人员目录</button>
-          <button type="button" class="page-tab" data-page-target="talentDevelopmentPage" data-i18n="talentDevelopmentPage">人才发展</button>
-        </nav>
-
-        <section id="overviewPage" class="page-panel active">
-          <section class="org-section">
-            <div class="section-title">
-              <span data-i18n="orgChart">组织架构图</span>
-              <small data-i18n="orgOverviewHint">每个 Team 展示人数与成员预览，点击查看完整名单。</small>
+          <section class="start-panel">
+            <label for="requirementInput">Talent requirement</label>
+            <textarea id="requirementInput" rows="7" placeholder="Find researchers working on multimodal LLM evaluation in Europe."></textarea>
+            <div class="examples" aria-label="Example inputs">
+              <button type="button" data-example="Find researchers working on multimodal LLM evaluation in Europe.">Multimodal LLM evaluation</button>
+              <button type="button" data-example="Find senior engineers with experience in CUDA kernel optimisation.">CUDA kernel optimisation</button>
+              <button type="button" data-example="Find ETH PhD graduates working on robotic planning.">ETH robotic planning</button>
+              <button type="button" data-example="Find researchers working on AI compilers, MLIR, TVM, or Triton.">AI compilers</button>
             </div>
-            <div id="orgChart" class="org-chart"></div>
+            <button id="analyseBtn" class="primary" type="button">Analyse Requirement</button>
           </section>
 
-          <section class="team-roster-panel">
-            <div class="section-title">
-              <span id="overviewTeamTitle">Team Members</span>
-              <small id="overviewTeamCount"></small>
+          <section id="criteriaSection" class="section is-hidden" aria-live="polite">
+            <div class="section-heading">
+              <div>
+                <h2>Review Search Criteria</h2>
+                <p>Mock AI extraction. Edit the criteria before starting research.</p>
+              </div>
+              <button id="resetResearchBtn" class="secondary" type="button">Reset</button>
             </div>
-            <div id="overviewTeamRoster" class="compact-roster"></div>
-          </section>
-        </section>
-
-        <section id="peoplePage" class="page-panel">
-          <div class="page-heading">
-            <div>
-              <h2 data-i18n="peoplePage">人员目录</h2>
-              <p id="peopleFoundText"></p>
-            </div>
-          </div>
-          <section class="toolbar">
-            <div class="search-group">
-              <label for="searchInput" data-i18n="searchPeople">搜索人员</label>
-              <input id="searchInput" type="search" data-placeholder-i18n="searchPlaceholder" placeholder="工号、姓名、岗位、团队、合同类型" />
-            </div>
-            <div class="toolbar-actions owner-only">
-              <button id="showAddPersonBtn" type="button" class="primary" data-i18n="addEmployee">添加人员</button>
-              <button id="showDeletePersonBtn" type="button" class="danger-button" data-i18n="deleteEmployee">删除人员</button>
-            </div>
+            <div id="criteriaEditor" class="criteria-grid"></div>
+            <button id="startResearchBtn" class="primary" type="button">Start Research</button>
           </section>
 
-          <section class="content-grid">
-            <aside class="team-filter-panel">
-              <div class="section-title">
-                <span data-i18n="labFilter">Lab / Platform 筛选</span>
+          <section id="resultsSection" class="section is-hidden">
+            <div class="section-heading">
+              <div>
+                <h2>Candidate Results</h2>
+                <p id="resultsSummary">Ranked for recruiter review only.</p>
               </div>
-              <div id="labList" class="team-list filter-group"></div>
-              <div class="section-title spaced">
-                <span data-i18n="teamFilter">Team 筛选</span>
-              </div>
-              <div id="teamList" class="team-list"></div>
-            </aside>
-
-            <div class="people-column">
-              <div class="section-title">
-                <span id="selectedTeamTitle">全部团队</span>
-                <small id="selectedTeamCount"></small>
-              </div>
-              <div id="peopleGrid" class="people-grid"></div>
+              <details class="strategy">
+                <summary>Research Strategy</summary>
+                <div id="strategyTerms" class="strategy-body"></div>
+              </details>
             </div>
 
-            <aside class="detail-panel">
-              <div class="section-title">
-                <span data-i18n="peopleInsights">人员统计洞察</span>
-              </div>
-              <p class="hint" data-i18n="peopleInsightsHint">统计会跟随当前 Lab / Team / 搜索筛选变化。</p>
+            <div class="filters">
+              <label>
+                <span>Status</span>
+                <select id="statusFilter"></select>
+              </label>
+              <label>
+                <span>Minimum score</span>
+                <input id="scoreFilter" type="range" min="0" max="100" value="0" />
+                <small id="scoreFilterValue">0+</small>
+              </label>
+              <label>
+                <span>Location</span>
+                <input id="locationFilter" type="search" placeholder="e.g. Switzerland" />
+              </label>
+              <label>
+                <span>Research topic</span>
+                <input id="topicFilter" type="search" placeholder="e.g. MLIR" />
+              </label>
+              <label>
+                <span>Sort by</span>
+                <select id="sortSelect">
+                  <option value="total">Relevance score</option>
+                  <option value="research">Research relevance</option>
+                  <option value="recency">Publication recency</option>
+                </select>
+              </label>
+            </div>
 
-              <div class="section-title spaced">
-                <span data-i18n="contractBreakdown">合同类型分布</span>
-              </div>
-              <div id="contractBreakdown" class="breakdown"></div>
-
-              <div class="section-title spaced">
-                <span data-i18n="levelBreakdown">职级分布</span>
-              </div>
-              <div id="levelBreakdown" class="breakdown"></div>
-
-              <div class="section-title spaced">
-                <span data-i18n="orgBreakdown">组织人数分布</span>
-              </div>
-              <div id="orgBreakdown" class="breakdown"></div>
-
-              <div class="section-title spaced">
-                <span data-i18n="talentStats">人才标签与奖项</span>
-              </div>
-              <div id="talentStats" class="breakdown"></div>
-
-              <div class="section-title spaced">
-                <span data-i18n="currentAccess">当前权限范围</span>
-              </div>
-              <p id="permissionHint" class="hint"></p>
-
-            </aside>
+            <div id="candidateGrid" class="candidate-grid"></div>
           </section>
         </section>
 
-        <section id="talentDevelopmentPage" class="page-panel">
-          <div class="page-heading">
+        <section id="shortlistView" class="view">
+          <header class="page-header">
             <div>
-              <h2 data-i18n="talentDevelopmentPage">人才发展</h2>
-              <p data-i18n="talentDashboardHint">借鉴常见 HCM 做法，关注关键人才、行动计划、继任准备和保留风险。</p>
+              <p class="eyebrow">Recruiter review</p>
+              <h1>Shortlist</h1>
+              <p>Candidates marked Shortlisted or Strong Fit.</p>
             </div>
-          </div>
-          <details class="admin-placeholder talent-collapse talent-action-module">
-            <summary class="section-title">
-              <span data-i18n="talentActionPlan">人才行动计划</span>
-              <small data-i18n="talentActionHint">记录 IDP、继任、关键岗位备份、保留风险和学习发展动作。</small>
-            </summary>
-            <div id="talentDashboard" class="talent-dashboard compact-dashboard"></div>
-            <div class="talent-filter-grid">
-              <label>
-                <span data-i18n="labFilter">Lab / Platform 筛选</span>
-                <select id="talentUnitFilter"></select>
-              </label>
-              <label>
-                <span data-i18n="teamFilter">Team 筛选</span>
-                <select id="talentTeamFilter"></select>
-              </label>
-            </div>
-            <div class="talent-action-editor owner-hrbp-write">
-              <label class="talent-person-picker">
-                <span data-i18n="actionPerson">对象员工</span>
-                <select id="talentActionPerson" multiple size="8"></select>
-                <small class="hint" data-i18n="multiSelectPeopleHint">可按 Ctrl/Cmd 或 Shift 多选员工。</small>
-              </label>
-              <div class="talent-action-fields">
-                <label>
-                  <span data-i18n="actionType">行动类型</span>
-                  <select id="talentActionType"></select>
-                </label>
-                <label>
-                  <span data-i18n="actionPriority">优先级</span>
-                  <select id="talentActionPriority">
-                    <option value="High" data-i18n="priorityHigh">高</option>
-                    <option value="Medium" data-i18n="priorityMedium">中</option>
-                    <option value="Low" data-i18n="priorityLow">低</option>
-                  </select>
-                </label>
-                <label>
-                  <span data-i18n="actionStatus">状态</span>
-                  <select id="talentActionStatus">
-                    <option value="Open" data-i18n="statusOpen">进行中</option>
-                    <option value="Watch" data-i18n="statusWatch">观察中</option>
-                    <option value="Done" data-i18n="statusDone">已完成</option>
-                  </select>
-                </label>
-                <label>
-                  <span data-i18n="actionDueDate">目标日期</span>
-                  <input id="talentActionDueDate" type="date" />
-                </label>
-              </div>
-            </div>
-            <label class="owner-hrbp-write">
-              <span data-i18n="actionNote">行动说明</span>
-              <textarea id="talentActionNote" rows="3"></textarea>
-            </label>
-            <button id="addTalentActionBtn" type="button" class="primary owner-hrbp-write" data-i18n="addTalentAction">添加人才行动</button>
-            <div id="talentActionList" class="record-list"></div>
-          </details>
-
-          <details class="admin-placeholder talent-collapse annual-goal-module">
-            <summary class="section-title">
-              <span data-i18n="annualWorkGoals">年度重点与目标</span>
-              <small data-i18n="annualWorkHint">记录各 Lab / Team 当年的主要工作和目标。</small>
-            </summary>
-            <div class="form-grid owner-hrbp-write">
-              <label>
-                <span data-i18n="targetScope">记录对象</span>
-                <select id="goalScopeSelect"></select>
-              </label>
-              <label>
-                <span data-i18n="goalYear">年份</span>
-                <input id="goalYear" type="number" min="2020" max="2100" />
-              </label>
-            </div>
-            <div class="form-grid owner-hrbp-write">
-              <label>
-                <span data-i18n="currentSituation">Current Situation</span>
-                <textarea id="currentSituationInput" rows="3"></textarea>
-              </label>
-              <label>
-                <span data-i18n="goal">Goal</span>
-                <textarea id="goalInput" rows="3"></textarea>
-              </label>
-              <label>
-                <span data-i18n="gap">Gap</span>
-                <textarea id="gapInput" rows="3"></textarea>
-              </label>
-              <label>
-                <span data-i18n="majorWork">Major Work</span>
-                <textarea id="majorWorkInput" rows="3"></textarea>
-              </label>
-            </div>
-            <button id="addGoalBtn" type="button" class="primary owner-hrbp-write" data-i18n="saveGoal">保存目标</button>
-            <div id="goalList" class="record-list"></div>
-          </details>
-
-          <details class="admin-placeholder talent-collapse development-tree-module">
-            <summary class="section-title">
-              <span data-i18n="developmentTree">人才发展树</span>
-              <small data-i18n="developmentTreeHint">按 Lab / Platform 展开查看组织和 Team 的重点工作、目标与活动。</small>
-            </summary>
-            <div id="developmentTree" class="development-tree"></div>
-          </details>
-
-          <details class="admin-placeholder talent-collapse activity-module">
-            <summary class="section-title">
-              <span data-i18n="cultureActivities">氛围建设</span>
-              <small data-i18n="cultureHint">记录团队活动、峰会参与、分享会和跨团队协作。</small>
-            </summary>
-            <div class="form-grid owner-hrbp-write">
-              <label>
-                <span data-i18n="targetScope">记录对象</span>
-                <select id="activityScopeSelect"></select>
-              </label>
-              <label>
-                <span data-i18n="activityType">活动类型</span>
-                <select id="activityType"></select>
-              </label>
-              <label>
-                <span data-i18n="activityDate">日期</span>
-                <input id="activityDate" type="date" />
-              </label>
-              <label>
-                <span data-i18n="participants">参与人数</span>
-                <input id="activityParticipants" type="number" min="0" />
-              </label>
-            </div>
-            <label class="owner-hrbp-write">
-              <span data-i18n="activitySummary">活动记录</span>
-              <textarea id="activitySummary" rows="3"></textarea>
-            </label>
-            <button id="addActivityBtn" type="button" class="primary owner-hrbp-write" data-i18n="addActivity">添加活动</button>
-            <div id="activityList" class="record-list"></div>
-          </details>
+          </header>
+          <div id="shortlistGrid" class="candidate-grid"></div>
         </section>
-        <footer class="product-signature app-signature">product designed &amp; coded by <span>Rui Zhang</span></footer>
+
+        <footer class="disclaimer">
+          This tool supports candidate research and sourcing. It does not make employment decisions. Recruiters must independently verify candidate information and comply with applicable privacy, employment, anti-discrimination, and platform requirements.
+        </footer>
       </main>
     </div>
 
-    <dialog id="settingsDialog">
-      <form id="settingsForm" method="dialog">
-        <div class="dialog-head">
-          <h2 data-i18n="settings">设置</h2>
-          <button id="closeSettingsBtn" type="button" aria-label="关闭">×</button>
-        </div>
-        <details class="profile-section settings-section">
-          <summary class="section-title">
-            <span data-i18n="changePassword">修改密码</span>
-          </summary>
-          <div class="form-grid">
-            <label>
-              <span data-i18n="currentPassword">当前密码</span>
-              <input id="currentPasswordInput" type="password" autocomplete="current-password" />
-            </label>
-            <label>
-              <span data-i18n="newPassword">新密码</span>
-              <input id="newPasswordInput" type="password" autocomplete="new-password" />
-            </label>
-            <label>
-              <span data-i18n="confirmNewPassword">确认新密码</span>
-              <input id="confirmPasswordInput" type="password" autocomplete="new-password" />
-            </label>
-          </div>
-          <button id="changePasswordBtn" type="button" data-i18n="savePassword">保存密码</button>
-        </details>
-        <details class="profile-section settings-section owner-only">
-          <summary class="section-title">
-            <span data-i18n="appearanceSettings">外观设置</span>
-            <small data-i18n="appearanceHint">Owner 可调整全站主题、界面密度和说明文字显示方式。</small>
-          </summary>
-          <div class="appearance-editor">
-            <label>
-              <span data-i18n="themePreset">主题预设</span>
-              <select id="appearanceTheme">
-                <option value="executive" data-i18n="themeExecutive">Executive Calm</option>
-                <option value="linear" data-i18n="themeLinear">Linear Clean</option>
-                <option value="ashby" data-i18n="themeAshby">Ashby HR</option>
-                <option value="soft" data-i18n="themeSoft">Soft Premium</option>
-                <option value="slate" data-i18n="themeSlate">Slate Enterprise</option>
-              </select>
-            </label>
-            <label>
-              <span data-i18n="interfaceDensity">界面密度</span>
-              <select id="appearanceDensity">
-                <option value="spacious" data-i18n="densitySpacious">Spacious</option>
-                <option value="comfortable" data-i18n="densityComfortable">Comfortable</option>
-                <option value="compact" data-i18n="densityCompact">Compact</option>
-              </select>
-            </label>
-            <label>
-              <span data-i18n="cornerStyle">圆角风格</span>
-              <select id="appearanceRadius">
-                <option value="standard" data-i18n="radiusStandard">Standard</option>
-                <option value="soft" data-i18n="radiusSoft">Soft</option>
-                <option value="round" data-i18n="radiusRound">Round</option>
-              </select>
-            </label>
-            <label>
-              <span data-i18n="shadowStyle">阴影风格</span>
-              <select id="appearanceShadow">
-                <option value="none" data-i18n="shadowNone">None</option>
-                <option value="subtle" data-i18n="shadowSubtle">Subtle</option>
-                <option value="premium" data-i18n="shadowPremium">Premium</option>
-              </select>
-            </label>
-            <label class="inline-toggle">
-              <input id="appearanceShowPageDescriptions" type="checkbox" />
-              <span data-i18n="showPageDescriptions">显示页面说明</span>
-            </label>
-            <label class="inline-toggle">
-              <input id="appearanceShowModuleDescriptions" type="checkbox" />
-              <span data-i18n="showModuleDescriptions">显示模块说明</span>
-            </label>
-          </div>
-          <button id="saveAppearanceBtn" type="button" class="primary" data-i18n="saveAppearance">保存外观设置</button>
-        </details>
-        <details class="profile-section settings-section owner-only">
-          <summary class="section-title">
-            <span data-i18n="accountsAndPermissions">领导关系与权限</span>
-            <small data-i18n="ownerCanAssign">Owner 可添加账号、设置领导关系与访问范围。</small>
-          </summary>
-          <p class="settings-note" data-i18n="governanceWarningText">账号、领导关系与访问范围会影响人员信息可见性。保存前系统会要求再次确认。</p>
-          <p class="hint" data-i18n="hrbpSetupHint">HRBP 设置：新增或编辑账号时选择 HRBP 角色，然后在右侧 HRBP 面板里分配其覆盖 Team。</p>
-          <div class="account-form account-form-wide is-hidden" aria-hidden="true">
-            <label>
-              <span data-i18n="accountName">账号姓名</span>
-              <input id="newAccountName" type="text" />
-            </label>
-            <label>
-              <span data-i18n="email">邮箱</span>
-              <input id="newAccountEmail" type="email" />
-            </label>
-            <label>
-              <span data-i18n="password">密码</span>
-              <input id="newAccountPassword" type="password" />
-            </label>
-            <label>
-              <span data-i18n="permissionRole">授权角色</span>
-              <select id="newAccountRole"></select>
-            </label>
-            <label>
-              <span data-i18n="scope">授权范围</span>
-              <select id="newAccountScope"></select>
-            </label>
-            <button id="addManagerBtn" type="button" data-i18n="addAccount">添加账号</button>
-          </div>
-          <div class="leadership-access-grid settings-leadership-grid">
-            <section>
-              <div class="section-title">
-                <span data-i18n="businessLeadership">业务主管</span>
-              </div>
-              <div id="businessAccountForm"></div>
-              <div id="accountList" class="account-list account-list-wide"></div>
-            </section>
-            <section>
-              <div class="section-title">
-                <span data-i18n="hrbpManagement">HRBP Team 覆盖范围</span>
-              </div>
-              <div id="hrbpAccountForm"></div>
-              <div id="hrbpAssignmentList" class="account-list account-list-wide"></div>
-            </section>
-          </div>
-        </details>
-        <details class="profile-section settings-section owner-only">
-          <summary class="section-title">
-            <span data-i18n="roleSettings">角色设置</span>
-            <small data-i18n="roleSettingsHint">可修改角色显示名称；权限逻辑仍由系统内置角色类型控制。</small>
-          </summary>
-          <div id="roleSettingList" class="settings-list"></div>
-        </details>
-        <details class="profile-section settings-section owner-only">
-          <summary class="section-title">
-            <span data-i18n="orgEditor">组织编辑</span>
-            <small data-i18n="orgEditHint">Owner 可新增组织和 Team；有人员的 Team 不能直接删除。</small>
-          </summary>
-          <div class="settings-subsection compact-admin-row">
-            <label for="instituteName" data-i18n="mainInstitute">主研究所</label>
-            <input id="instituteName" type="text" />
-          </div>
-          <div class="org-create-actions">
-            <details class="org-create-group">
-              <summary><span data-i18n="createBusinessUnit">创建 Business Unit</span></summary>
-              <div class="form-grid compact-form-grid">
-                <label>
-                  <span data-i18n="unitType">组织类型</span>
-                  <select id="newUnitType">
-                    <option value="lab">Research Lab</option>
-                    <option value="researchTeam">Independent Research Team</option>
-                    <option value="platform">Platform</option>
-                  </select>
-                </label>
-                <label>
-                  <span id="unitNameLabel" data-i18n="unitName">Lab / Platform 名称</span>
-                  <input id="newUnitName" type="text" />
-                </label>
-              </div>
-              <button id="addUnitBtn" type="button" data-i18n="addUnit">新增 Lab / Platform</button>
-            </details>
-            <details class="org-create-group">
-              <summary><span data-i18n="createTeamUnderUnit">创建下级 Team</span></summary>
-              <div class="form-grid compact-form-grid">
-                <label>
-                  <span data-i18n="parentUnit">所属 Lab / Platform</span>
-                  <select id="newTeamUnit"></select>
-                </label>
-                <label>
-                  <span data-i18n="teamName">Team 名称</span>
-                  <input id="newTeamName" type="text" />
-                </label>
-              </div>
-              <button id="addOrgTeamBtn" type="button" data-i18n="addTeam">新增 Team</button>
-            </details>
-          </div>
-          <div id="orgEditList" class="org-edit-list"></div>
-        </details>
-        <details class="profile-section settings-section owner-only">
-          <summary class="section-title">
-            <span data-i18n="employeeMigration">员工组织迁移</span>
-            <small data-i18n="employeeMigrationHint">删除组织前，可先把员工批量或单个迁移到保留的 Team。</small>
-          </summary>
-          <div class="form-grid">
-            <label>
-              <span data-i18n="sourceTeam">来源 Team</span>
-              <select id="moveSourceTeam"></select>
-            </label>
-            <label>
-              <span data-i18n="targetTeam">目标 Team</span>
-              <select id="moveTargetTeam"></select>
-            </label>
-          </div>
-          <div id="movePeopleList" class="migration-list"></div>
-          <div class="migration-footer">
-            <button id="moveSelectedPeopleBtn" type="button" class="primary" data-i18n="moveSelectedPeople">迁移选中员工</button>
-            <details class="danger-action">
-              <summary data-i18n="bulkMoveOptions">批量迁移选项</summary>
-              <p class="hint" data-i18n="bulkMoveHint">该操作会迁移来源 Team 的全部员工，请谨慎确认。</p>
-              <button id="moveAllPeopleBtn" type="button" class="danger-button" data-i18n="moveAllPeople">迁移该 Team 全部员工</button>
-            </details>
-          </div>
-        </details>
-        <details class="profile-section settings-section owner-only">
-          <summary class="section-title">
-            <span data-i18n="bulkArchiveEmployees">批量归档员工</span>
-            <small data-i18n="bulkArchiveHint">批量将员工转入已离职员工档案。</small>
-          </summary>
-          <label>
-            <span data-i18n="deleteReason">删除 / 离职原因</span>
-            <textarea id="bulkArchiveReason" rows="3"></textarea>
-          </label>
-          <div class="dialog-actions">
-            <button id="bulkArchiveEmployeesBtn" type="button" class="danger-button" data-i18n="archiveSelectedEmployees">归档选中员工</button>
-          </div>
-          <div id="bulkArchivePeopleList" class="migration-list"></div>
-        </details>
-        <details class="profile-section settings-section owner-only">
-          <summary class="section-title">
-            <span data-i18n="formerEmployeeArchive">已离职员工档案</span>
-            <small data-i18n="formerEmployeeHint">查看和导出已归档员工记录。</small>
-          </summary>
-          <div class="dialog-actions">
-            <button id="downloadFormerEmployeesBtn" type="button" data-i18n="downloadArchive">下载档案</button>
-          </div>
-          <div id="formerEmployeeList" class="settings-list"></div>
-        </details>
-        <details class="profile-section settings-section owner-only">
-          <summary class="section-title">
-            <span data-i18n="bulkImportEmployees">批量导入员工</span>
-            <small data-i18n="bulkImportHint">支持 Excel 复制粘贴或 CSV / TSV 文件。</small>
-          </summary>
-          <div class="form-grid">
-            <label>
-              <span data-i18n="importFile">上传 CSV / TSV</span>
-              <input id="employeeImportFile" type="file" accept=".csv,.tsv,.txt" />
-            </label>
-            <label>
-              <span data-i18n="importMode">导入方式</span>
-              <select id="employeeImportMode">
-                <option value="upsert" data-i18n="importUpsert">按工号新增或更新</option>
-                <option value="addOnly" data-i18n="importAddOnly">只新增不存在工号</option>
-              </select>
-            </label>
-          </div>
-          <label>
-            <span data-i18n="pasteExcelData">粘贴 Excel 表格</span>
-            <textarea id="employeeImportText" rows="5" data-placeholder-i18n="importPlaceholder" placeholder="employeeNo,name,teamId,role,level,contractType,startDate,notes"></textarea>
-          </label>
-          <p class="hint" data-i18n="importColumnsHint">推荐列：employeeNo, name, teamId 或 team, role, level, contractType, startDate, notes。team 可填 Team 名称。</p>
-          <div class="dialog-actions">
-            <div class="button-row">
-              <button id="downloadImportTemplateBtn" type="button" data-i18n="downloadTemplate">下载模板</button>
-              <button id="clearImportBtn" type="button" data-i18n="clear">清空</button>
-            </div>
-            <button id="importEmployeesBtn" type="button" class="primary" data-i18n="importEmployees">导入员工</button>
-          </div>
-          <p id="employeeImportResult" class="hint"></p>
-        </details>
-        <details class="profile-section settings-section owner-only">
-          <summary class="section-title">
-            <span data-i18n="talentSettings">人才标签设置</span>
-          </summary>
-          <div class="settings-paired-controls">
-            <label class="inline-setting-control">
-              <span data-i18n="newTalentTag">新增优秀标签</span>
-              <input id="newTalentTag" type="text" placeholder="AI / 领军人物 / 优秀人才" />
-              <button id="addTalentTagBtn" type="button" data-i18n="addTag">添加标签</button>
-            </label>
-            <label class="inline-setting-control">
-              <span data-i18n="newAwardName">新增奖项名称</span>
-              <input id="newAwardName" type="text" placeholder="年度创新奖" />
-              <button id="addAwardNameBtn" type="button" data-i18n="addAwardName">添加奖项</button>
-            </label>
-          </div>
-          <div id="talentSettingList" class="tag-cloud"></div>
-        </details>
-        <details class="profile-section settings-section owner-only">
-          <summary class="section-title">
-            <span data-i18n="developmentSettings">人才发展设置</span>
-          </summary>
-          <div class="settings-paired-controls">
-            <label class="inline-setting-control">
-              <span data-i18n="newActionType">新增行动类型</span>
-              <input id="newActionType" type="text" placeholder="IDP / Succession" />
-              <button id="addActionTypeBtn" type="button" data-i18n="addActionType">添加行动类型</button>
-            </label>
-            <label class="inline-setting-control">
-              <span data-i18n="newActivityType">新增活动类型</span>
-              <input id="newActivityType" type="text" placeholder="技术分享 / 峰会参会" />
-              <button id="addActivityTypeBtn" type="button" data-i18n="addActivityType">添加活动类型</button>
-            </label>
-          </div>
-          <div id="developmentSettingList" class="settings-list"></div>
-        </details>
-      </form>
+    <dialog id="candidateDialog" class="candidate-dialog">
+      <article id="candidateBrief"></article>
     </dialog>
 
-    <dialog id="personDialog">
-      <form id="personForm" method="dialog">
-        <div class="dialog-head">
-          <h2 data-i18n="addEmployee">添加人员</h2>
-          <button id="closeDialogBtn" type="button" aria-label="关闭">×</button>
-        </div>
-
-        <div class="form-grid">
-          <label>
-            <span data-i18n="employeeNo">工号</span>
-            <input name="employeeNo" type="text" required />
-          </label>
-          <label>
-            <span data-i18n="name">姓名</span>
-            <input name="name" type="text" required />
-          </label>
-          <label>
-            <span data-i18n="team">团队</span>
-            <select name="teamId"></select>
-          </label>
-          <label>
-            <span data-i18n="role">岗位</span>
-            <input name="role" type="text" required />
-          </label>
-          <label>
-            <span data-i18n="level">职级</span>
-            <input name="level" type="text" data-placeholder-i18n="levelPlaceholder" placeholder="例如：13-22" />
-          </label>
-          <label>
-            <span data-i18n="contractType">合同类型</span>
-            <select name="contractType" required>
-              <option>Employee</option>
-              <option>Leased Labour</option>
-              <option>Intern</option>
-            </select>
-          </label>
-          <label>
-            <span data-i18n="startDate">入职日期</span>
-            <input name="startDate" type="date" required />
-          </label>
-          <label>
-            <span data-i18n="institute">研究所归属</span>
-            <select name="institute" required></select>
-          </label>
-          <label>
-            <span data-i18n="assignedManager">负责 Manager</span>
-            <select name="managerId"></select>
-          </label>
-        </div>
-
-        <label>
-          <span data-i18n="notes">备注</span>
-          <textarea name="notes" rows="3" data-placeholder-i18n="notesPlaceholder" placeholder="关键技能、培养计划、风险等"></textarea>
-        </label>
-
-        <div class="dialog-actions">
-          <button type="button" id="cancelPersonBtn" data-i18n="cancel">取消</button>
-          <button type="submit" class="primary" data-i18n="save">保存</button>
-        </div>
-      </form>
-    </dialog>
-
-    <dialog id="deleteEmployeeDialog">
-      <form id="deleteEmployeeForm" method="dialog">
-        <div class="dialog-head">
-          <h2 data-i18n="deleteEmployee">删除人员</h2>
-          <button id="closeDeleteEmployeeBtn" type="button" aria-label="关闭">×</button>
-        </div>
-        <p class="hint" data-i18n="deleteEmployeeHint">该操作会将员工转入已离职员工档案，并保留原因记录。</p>
-        <label>
-          <span data-i18n="employee">员工</span>
-          <select name="personId" required></select>
-        </label>
-        <label>
-          <span data-i18n="deleteReason">删除 / 离职原因</span>
-          <textarea name="reason" rows="4" required></textarea>
-        </label>
-        <div class="dialog-actions">
-          <button type="button" id="cancelDeleteEmployeeBtn" data-i18n="cancel">取消</button>
-          <button type="submit" class="danger-button" data-i18n="archiveEmployee">确认归档</button>
-        </div>
-      </form>
-    </dialog>
-
-    <dialog id="profileDialog">
-      <div id="profileForm">
+    <dialog id="manualDialog" class="manual-dialog">
+      <form id="manualForm" method="dialog">
         <div class="dialog-head">
           <div>
-            <h2 id="profileName">人员档案</h2>
-            <p id="profileMeta" class="subtitle"></p>
+            <p class="eyebrow">Recruiter-entered</p>
+            <h2>Add Manual Candidate</h2>
           </div>
-          <button id="closeProfileBtn" type="button" aria-label="关闭">×</button>
+          <button class="icon-btn" value="cancel" type="submit" aria-label="Close">x</button>
         </div>
-
-        <section class="profile-grid">
-          <div class="profile-section">
-            <div class="section-title">
-              <span data-i18n="basicInfo">基础信息</span>
-            </div>
-            <div id="profileBasics" class="info-list"></div>
-            <div class="dialog-actions owner-only">
-              <button id="editBasicInfoBtn" type="button" data-i18n="editBasicInfo">编辑基础信息</button>
-            </div>
-          </div>
-
-          <div class="profile-section is-hidden" aria-hidden="true">
-            <div class="section-title">
-              <span data-i18n="ownerManagement">Owner 管理</span>
-            </div>
-            <label for="profileManager" data-i18n="assignManager">分配 Manager</label>
-            <select id="profileManager"></select>
-            <button id="saveProfileManagerBtn" type="button" data-i18n="saveAssignment">保存分配</button>
-          </div>
-        </section>
-
-        <section class="profile-section">
-          <div class="section-title">
-            <span data-i18n="talentHighlights">优秀标签与获奖记录</span>
-          </div>
-          <div id="personTalentTags" class="tag-cloud"></div>
-          <div id="personAwards" class="tag-cloud"></div>
-          <details id="talentEditor" class="sensitive-editor">
-            <summary>
-              <span data-i18n="editTalentHighlights">添加 / 编辑标签与奖项</span>
-            </summary>
-            <div class="form-grid">
-              <label>
-                <span data-i18n="talentTag">优秀标签</span>
-                <select id="talentTagSelect"></select>
-              </label>
-              <label>
-                <span data-i18n="awardName">奖项名称</span>
-                <select id="awardNameSelect"></select>
-              </label>
-              <label>
-                <span data-i18n="awardDate">获奖日期</span>
-                <input id="awardDate" type="date" />
-              </label>
-              <label>
-                <span data-i18n="awardNote">说明</span>
-                <input id="awardNote" type="text" />
-              </label>
-            </div>
-            <div class="dialog-actions">
-              <button id="addPersonTagBtn" type="button" data-i18n="addTag">添加标签</button>
-              <button id="addAwardBtn" type="button" data-i18n="addAward">添加奖项</button>
-            </div>
-          </details>
-        </section>
-
-        <section class="profile-section">
-          <div class="section-title">
-            <span data-i18n="growthPath">成长轨迹</span>
-          </div>
-          <div id="growthTimeline" class="history-timeline"></div>
-          <details id="growthEditor" class="sensitive-editor">
-            <summary>
-              <span data-i18n="editGrowthPath">添加成长轨迹</span>
-            </summary>
-            <div class="form-grid">
-              <label>
-                <span data-i18n="growthType">成长类型</span>
-                <select id="growthType">
-                  <option value="晋升">晋升</option>
-                  <option value="轮岗">轮岗</option>
-                  <option value="关键项目">关键项目</option>
-                  <option value="培养计划">培养计划</option>
-                </select>
-              </label>
-              <label>
-                <span data-i18n="growthDate">日期</span>
-                <input id="growthDate" type="date" />
-              </label>
-            </div>
-            <label id="growthNoteWrap">
-              <span data-i18n="growthNote">成长记录</span>
-              <textarea id="growthNote" rows="3"></textarea>
-            </label>
-            <button id="addGrowthBtn" type="button" class="primary" data-i18n="addGrowth">添加成长记录</button>
-          </details>
-        </section>
-
-        <section class="profile-section">
-          <div class="section-title">
-            <span data-i18n="managerRecords">主管记录</span>
-            <small id="managerRecordPermissionText"></small>
-          </div>
-          <div id="managerRecordList" class="record-list"></div>
-          <details id="managerRecordEditor" class="sensitive-editor">
-            <summary>
-              <span data-i18n="newManagerRecord">新增主管记录</span>
-            </summary>
-            <div class="form-grid">
-              <label>
-                <span data-i18n="recordType">记录类型</span>
-                <select id="managerRecordType">
-                  <option value="优秀事迹">优秀事迹</option>
-                  <option value="平时表现">平时表现</option>
-                </select>
-              </label>
-              <label>
-                <span data-i18n="recordDate">记录日期</span>
-                <input id="managerRecordDate" type="date" />
-              </label>
-            </div>
-            <label>
-              <span data-i18n="content">内容</span>
-              <textarea id="managerRecordContent" rows="4" data-placeholder-i18n="recordPlaceholder" placeholder="例如：关键项目贡献、协作表现、风险提醒、成长建议等"></textarea>
-            </label>
-            <button id="addManagerRecordBtn" type="button" class="primary" data-i18n="addRecord">添加记录</button>
-          </details>
-        </section>
-
-        <section class="profile-section">
-          <div class="section-title">
-            <span data-i18n="talentActionPlan">人才行动计划</span>
-          </div>
-          <div id="profileTalentActions" class="record-list"></div>
-          <details id="profileTalentActionEditor" class="sensitive-editor">
-            <summary>
-              <span data-i18n="addTalentAction">添加人才行动</span>
-            </summary>
-            <div class="form-grid">
-              <label>
-                <span data-i18n="actionType">行动类型</span>
-                <select id="profileTalentActionType"></select>
-              </label>
-              <label>
-                <span data-i18n="actionPriority">优先级</span>
-                <select id="profileTalentActionPriority">
-                  <option value="High">High</option>
-                  <option value="Medium">Medium</option>
-                  <option value="Low">Low</option>
-                </select>
-              </label>
-              <label>
-                <span data-i18n="actionStatus">状态</span>
-                <select id="profileTalentActionStatus">
-                  <option value="Open">Open</option>
-                  <option value="Watch">Watch</option>
-                  <option value="Done">Done</option>
-                </select>
-              </label>
-              <label>
-                <span data-i18n="actionDueDate">目标日期</span>
-                <input id="profileTalentActionDueDate" type="date" />
-              </label>
-            </div>
-            <label>
-              <span data-i18n="actionNote">行动说明</span>
-              <textarea id="profileTalentActionNote" rows="3"></textarea>
-            </label>
-            <button id="addProfileTalentActionBtn" type="button" class="primary" data-i18n="addTalentAction">添加人才行动</button>
-          </details>
-        </section>
-
-        <section class="profile-section">
-          <div class="section-title">
-            <span data-i18n="talentInsights">人才洞察</span>
-            <small id="talentInsightPermissionText"></small>
-          </div>
-          <div id="talentInsightList" class="record-list"></div>
-          <details id="talentInsightEditor" class="sensitive-editor">
-            <summary>
-              <span data-i18n="newTalentInsight">新增人才洞察</span>
-            </summary>
-            <div class="form-grid">
-              <label>
-                <span data-i18n="recordType">记录类型</span>
-                <select id="talentInsightType">
-                  <option value="Talent Insight">Talent Insight</option>
-                  <option value="人才风险">人才风险</option>
-                  <option value="培养建议">培养建议</option>
-                </select>
-              </label>
-              <label>
-                <span data-i18n="recordDate">记录日期</span>
-                <input id="talentInsightDate" type="date" />
-              </label>
-            </div>
-            <label>
-              <span data-i18n="content">内容</span>
-              <textarea id="talentInsightContent" rows="4" data-placeholder-i18n="recordPlaceholder" placeholder="例如：关键项目贡献、协作表现、风险提醒、成长建议等"></textarea>
-            </label>
-            <button id="addTalentInsightBtn" type="button" class="primary" data-i18n="addRecord">添加记录</button>
-          </details>
-        </section>
-      </div>
+        <div class="form-grid">
+          <label><span>Full name *</span><input name="fullName" required /></label>
+          <label><span>Current title</span><input name="currentTitle" /></label>
+          <label><span>Current organisation</span><input name="currentOrganisation" /></label>
+          <label><span>Location</span><input name="location" /></label>
+          <label><span>LinkedIn URL</span><input name="linkedinUrl" type="url" /></label>
+          <label><span>Google Scholar URL</span><input name="scholarUrl" type="url" /></label>
+          <label><span>GitHub URL</span><input name="githubUrl" type="url" /></label>
+          <label><span>Personal website</span><input name="website" type="url" /></label>
+        </div>
+        <label><span>Public biography</span><textarea name="bio" rows="4"></textarea></label>
+        <label><span>Notes</span><textarea name="notes" rows="3"></textarea></label>
+        <div class="dialog-actions">
+          <button class="secondary" value="cancel" type="submit">Cancel</button>
+          <button id="saveManualBtn" class="primary" value="default" type="submit">Save Candidate</button>
+        </div>
+      </form>
     </dialog>
 
-    <div id="toast" class="toast" aria-live="polite"></div>
-
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="./app.js?v=20260622-goal-gap-framework"></script>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script src="./app.js"></script>
   </body>
 </html>
