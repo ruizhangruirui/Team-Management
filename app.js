@@ -115,7 +115,10 @@ class RuleBasedCriteriaService {
       target_roles: pickByText(text, {
         researcher: ["Research Scientist", "Senior Research Scientist", "Applied Scientist"],
         engineer: ["Senior Software Engineer", "Applied Scientist", "Technical Specialist"],
-        phd: ["PhD Candidate", "Postdoctoral Researcher", "Research Scientist"],
+        phd: ["PhD Candidate", "Postdoctoral Researcher", "Recent PhD Graduate"],
+        graduate: ["Recent PhD Graduate", "PhD Candidate", "Postdoctoral Researcher"],
+        intern: ["Research Intern", "PhD Candidate", "Master Student"],
+        campus: ["Research Intern", "PhD Candidate", "Recent PhD Graduate"],
       }, ["Research Scientist", "Applied Scientist"]),
       seniority: text.includes("senior") || text.includes("principal") ? "senior" : text.includes("phd") ? "doctoral" : "not specified",
       core_technical_skills: unique([...extractKnownTerms(text, TECHNICAL_TERM_LIBRARY), ...jdTerms.skills]),
@@ -261,6 +264,7 @@ class OpenAlexCandidateSource extends sourceArchitecture.CandidateSource {
             _institutions: [],
             _countries: [],
             _citations: 0,
+            _authorPositions: [],
             _matchedQueries: [],
           });
         }
@@ -269,6 +273,7 @@ class OpenAlexCandidateSource extends sourceArchitecture.CandidateSource {
         const countries = authorship.countries || [];
         candidateRecord._institutions.push(...institutions);
         candidateRecord._countries.push(...countries);
+        candidateRecord._authorPositions.push(authorship.author_position || "");
         candidateRecord._matchedQueries.push(work.matchedQuery);
         candidateRecord._citations += Number(work.cited_by_count || 0);
         const sourceUrl = work.primary_location?.landing_page_url || work.doi || work.id;
@@ -303,7 +308,9 @@ class OpenAlexCandidateSource extends sourceArchitecture.CandidateSource {
       });
     });
 
-    return [...authors.values()].map((candidateRecord) => this.finalizeCandidate(candidateRecord, criteria, options));
+    return [...authors.values()]
+      .map((candidateRecord) => this.finalizeCandidate(candidateRecord, criteria, options))
+      .filter((candidateRecord) => !isExcludedByCandidateStage(candidateRecord, options));
   }
 
   finalizeCandidate(candidateRecord, criteria, options = {}) {
@@ -327,6 +334,7 @@ class OpenAlexCandidateSource extends sourceArchitecture.CandidateSource {
       { text: `Has ${candidateRecord.publications.length} recent OpenAlex-indexed publication(s) matching this project.`, sourceIds: candidateRecord.sourceIds.slice(0, 2) },
       { text: `Matched research terms: ${unique(candidateRecord._matchedQueries).slice(0, 3).join(", ")}.`, sourceIds: candidateRecord.sourceIds.slice(0, 2) },
       { text: `Publication metadata links the author to ${candidateRecord.currentOrganisation}.`, sourceIds: candidateRecord.sourceIds.slice(0, 1) },
+      ...(options.candidateStage === "early-career" ? [{ text: "Early-career mode prioritizes authors with first-author or non-PI-style publication evidence; graduation status still needs manual verification.", sourceIds: candidateRecord.sourceIds.slice(0, 2) }] : []),
       ...(options.searchMode === "swiss-campus" ? [{ text: "Swiss university affiliation appears in OpenAlex publication authorship metadata.", sourceIds: candidateRecord.sourceIds.slice(0, 2) }] : []),
     ];
     const score = scoreOpenAlexCandidate(candidateRecord, criteria);
@@ -336,6 +344,8 @@ class OpenAlexCandidateSource extends sourceArchitecture.CandidateSource {
     delete candidateRecord._institutions;
     delete candidateRecord._countries;
     delete candidateRecord._citations;
+    candidateRecord.authorPositions = unique(candidateRecord._authorPositions);
+    delete candidateRecord._authorPositions;
     delete candidateRecord._matchedQueries;
     return candidateRecord;
   }
@@ -557,6 +567,7 @@ function normalizeProject(project) {
     results: project.results || [],
     candidateState: project.candidateState || {},
     searchMode: project.searchMode || "openalex",
+    candidateStage: project.candidateStage || "any",
     criteriaAnalysisMode: project.criteriaAnalysisMode || "Local rules",
     status: project.status || "draft",
     createdAt: project.createdAt || TODAY,
@@ -587,10 +598,6 @@ function init() {
 
 function bindEvents() {
   $all(".nav-btn").forEach((button) => button.addEventListener("click", () => switchView(button.dataset.view)));
-  $all("[data-example]").forEach((button) => button.addEventListener("click", () => {
-    $("#requirementInput").value = button.dataset.example;
-    renderJdKeywordPreview();
-  }));
   $("#requirementInput").addEventListener("input", renderJdKeywordPreview);
   $("#analyseBtn").addEventListener("click", analyseRequirement);
   $("#newProjectBtn").addEventListener("click", newProjectDraft);
@@ -612,6 +619,7 @@ function newProjectDraft() {
   state.activeProjectId = "";
   $("#projectTitleInput").value = "";
   $("#searchModeSelect").value = "openalex";
+  $("#candidateStageSelect").value = "any";
   $("#requirementInput").value = "";
   renderJdKeywordPreview();
   $("#criteriaSection").classList.add("is-hidden");
@@ -653,6 +661,7 @@ function renderActiveProject() {
   const project = activeProject();
   $("#projectTitleInput").value = project?.title || "";
   $("#searchModeSelect").value = project?.searchMode || "openalex";
+  $("#candidateStageSelect").value = project?.candidateStage || "any";
   $("#requirementInput").value = project?.originalRequest || "";
   renderJdKeywordPreview();
   if (!project?.criteria) {
@@ -720,6 +729,7 @@ async function analyseRequirement() {
   project.title = nextTitle;
   project.originalRequest = originalRequest;
   project.searchMode = $("#searchModeSelect").value;
+  project.candidateStage = $("#candidateStageSelect").value;
   project.status = "criteria_review";
   project.updatedAt = TODAY;
   project.results = [];
@@ -824,7 +834,7 @@ async function startResearch() {
   setLoading($("#startResearchBtn"), project.searchMode === "swiss-campus" ? "Searching Swiss universities..." : "Searching OpenAlex...");
   project.searchTerms = await llmService.expandResearchTerms(project.criteria);
   try {
-    const results = await openAlexSource.search(project.criteria, 16, { searchMode: project.searchMode });
+    const results = await openAlexSource.search(project.criteria, 16, { searchMode: project.searchMode, candidateStage: project.candidateStage });
     project.results = await Promise.all(results.map(async (candidateRecord) => {
       const reasons = await llmService.explainCandidateMatch(candidateRecord, project.criteria, { total: candidateRecord.totalScore });
       return {
@@ -879,7 +889,10 @@ function renderCandidates() {
     return;
   }
   const filtered = getFilteredResults();
-  const modeLabel = project.searchMode === "swiss-campus" ? "Swiss university-affiliated" : "OpenAlex";
+  const modeLabel = [
+    project.searchMode === "swiss-campus" ? "Swiss university-affiliated" : "OpenAlex",
+    project.candidateStage === "early-career" ? "early-career" : "",
+  ].filter(Boolean).join(" ");
   $("#resultsSummary").textContent = `${filtered.length} ${modeLabel} candidate${filtered.length === 1 ? "" : "s"} shown for ${project.title}. Scores prioritize recruiter review only.`;
   grid.innerHTML = filtered.length ? filtered.map(candidateCardTemplate).join("") : `<div class="empty-state">No candidates match the current filters.</div>`;
   $all("[data-open-candidate]", grid).forEach((button) => button.addEventListener("click", () => openCandidate(button.dataset.openCandidate)));
@@ -1239,8 +1252,9 @@ function scoreOpenAlexCandidate(candidate, criteria) {
   const matchedTermCount = terms.filter((term) => topicText.includes(term.toLowerCase()) || fuzzyIncludes(topicText, term.toLowerCase())).length;
   const recentCount = candidate.publications.filter((publication) => Number(publication.year) >= 2023).length;
   const hasInstitution = candidate.currentOrganisation && candidate.currentOrganisation !== "Evidence unavailable";
+  const earlyCareerSignal = (candidate._authorPositions || []).filter((position) => ["first", "middle"].includes(position)).length;
   const breakdown = {
-    technical: clamp(matchedTermCount * 5, 0, 30),
+    technical: clamp(matchedTermCount * 5 + earlyCareerSignal * 2, 0, 30),
     publications: clamp(candidate.publications.length * 5 + recentCount * 3, 0, 25),
     role: 10,
     education: 0,
@@ -1249,6 +1263,14 @@ function scoreOpenAlexCandidate(candidate, criteria) {
   };
   const total = clamp(Object.values(breakdown).reduce((sum, value) => sum + value, 0), 25, 100);
   return { total, breakdown };
+}
+
+function isExcludedByCandidateStage(candidate, options = {}) {
+  if (options.candidateStage !== "early-career") return false;
+  const positions = candidate.authorPositions || [];
+  const hasFirstOrMiddleAuthorEvidence = positions.some((position) => ["first", "middle"].includes(position));
+  const hasOnlyLastAuthorEvidence = positions.length > 0 && positions.every((position) => position === "last");
+  return hasOnlyLastAuthorEvidence || (!hasFirstOrMiddleAuthorEvidence && candidate.publications.length >= 3);
 }
 
 function buildOpenAlexQueries(criteria, options = {}) {
@@ -1270,6 +1292,12 @@ function buildOpenAlexQueries(criteria, options = {}) {
     compound.push(`${base} ETH Zurich`);
     compound.push(`${base} EPFL`);
     compound.push(`${base} Switzerland university`);
+  }
+  if (options.candidateStage === "early-career") {
+    const base = highSignal[0] || criteria.research_topics[0] || criteria.core_technical_skills[0] || "computer science";
+    compound.push(`${base} PhD candidate`);
+    compound.push(`${base} recent PhD`);
+    compound.push(`${base} postdoctoral researcher`);
   }
   return unique([...compound, ...highSignal]).slice(0, 6);
 }
