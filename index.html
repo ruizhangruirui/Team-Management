@@ -45,6 +45,12 @@
           <section class="start-panel">
             <label for="projectTitleInput">Role / Project name</label>
             <input id="projectTitleInput" type="text" placeholder="e.g. Senior CUDA Kernel Engineer" />
+            <label for="searchModeSelect">Search mode</label>
+            <select id="searchModeSelect">
+              <option value="openalex">All public researchers</option>
+              <option value="swiss-campus">Swiss universities only</option>
+            </select>
+            <p class="campus-note">Swiss campus mode filters by public Swiss university affiliation evidence only. It does not infer nationality, ethnicity, citizenship, or origin from names.</p>
             <label for="requirementInput">Talent requirement</label>
             <textarea id="requirementInput" rows="7" placeholder="Find researchers working on multimodal LLM evaluation in Europe."></textarea>
             <div class="examples" aria-label="Example inputs">

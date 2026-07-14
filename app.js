@@ -123,22 +123,22 @@ class OpenAlexCandidateSource extends sourceArchitecture.CandidateSource {
     super("OpenAlexSource", sourceArchitecture.AccessMode.API);
   }
 
-  async search(criteria, limit = 16) {
-    const queries = buildOpenAlexQueries(criteria).slice(0, 4);
+  async search(criteria, limit = 16, options = {}) {
+    const queries = buildOpenAlexQueries(criteria, options).slice(0, 4);
     if (!queries.length) {
       throw new Error("No searchable research terms were extracted from this requirement.");
     }
     const workMap = new Map();
     for (const query of queries) {
-      const works = await this.fetchWorks(query);
+      const works = await this.fetchWorks(query, options);
       works.forEach((work) => workMap.set(work.id, { ...work, matchedQuery: query }));
     }
-    return this.aggregateAuthors([...workMap.values()], criteria)
+    return this.aggregateAuthors([...workMap.values()], criteria, options)
       .sort((a, b) => b.totalScore - a.totalScore)
       .slice(0, limit);
   }
 
-  async fetchWorks(query) {
+  async fetchWorks(query, options = {}) {
     const params = new URLSearchParams({
       search: query,
       filter: "from_publication_date:2021-01-01,is_retracted:false",
@@ -156,10 +156,11 @@ class OpenAlexCandidateSource extends sourceArchitecture.CandidateSource {
     return payload.results || [];
   }
 
-  aggregateAuthors(works, criteria) {
+  aggregateAuthors(works, criteria, options = {}) {
     const authors = new Map();
     works.forEach((work) => {
       (work.authorships || []).forEach((authorship) => {
+        if (options.searchMode === "swiss-campus" && !hasSwissUniversityEvidence(authorship)) return;
         const author = authorship.author || {};
         if (!author.id || !author.display_name) return;
         if (!authors.has(author.id)) {
@@ -188,6 +189,7 @@ class OpenAlexCandidateSource extends sourceArchitecture.CandidateSource {
             matchReasons: [],
             missingInformation: [
               "Current employer and title are not verified; OpenAlex affiliations may come from publication metadata.",
+              ...(options.searchMode === "swiss-campus" ? ["Current student status is not verified; recruiter must confirm enrollment manually."] : []),
               "Employment dates are unavailable.",
               "GitHub and LinkedIn profiles require manual verification.",
             ],
@@ -239,10 +241,10 @@ class OpenAlexCandidateSource extends sourceArchitecture.CandidateSource {
       });
     });
 
-    return [...authors.values()].map((candidateRecord) => this.finalizeCandidate(candidateRecord, criteria));
+    return [...authors.values()].map((candidateRecord) => this.finalizeCandidate(candidateRecord, criteria, options));
   }
 
-  finalizeCandidate(candidateRecord, criteria) {
+  finalizeCandidate(candidateRecord, criteria, options = {}) {
     candidateRecord.publications = uniqueBy(candidateRecord.publications, (publication) => publication.sourceUrl || publication.title)
       .sort((a, b) => (Number(b.year) || 0) - (Number(a.year) || 0))
       .slice(0, 5);
@@ -263,6 +265,7 @@ class OpenAlexCandidateSource extends sourceArchitecture.CandidateSource {
       { text: `Has ${candidateRecord.publications.length} recent OpenAlex-indexed publication(s) matching this project.`, sourceIds: candidateRecord.sourceIds.slice(0, 2) },
       { text: `Matched research terms: ${unique(candidateRecord._matchedQueries).slice(0, 3).join(", ")}.`, sourceIds: candidateRecord.sourceIds.slice(0, 2) },
       { text: `Publication metadata links the author to ${candidateRecord.currentOrganisation}.`, sourceIds: candidateRecord.sourceIds.slice(0, 1) },
+      ...(options.searchMode === "swiss-campus" ? [{ text: "Swiss university affiliation appears in OpenAlex publication authorship metadata.", sourceIds: candidateRecord.sourceIds.slice(0, 2) }] : []),
     ];
     const score = scoreOpenAlexCandidate(candidateRecord, criteria);
     candidateRecord.scoreBreakdown = score.breakdown;
@@ -492,6 +495,7 @@ function normalizeProject(project) {
     searchTerms: project.searchTerms || null,
     results: project.results || [],
     candidateState: project.candidateState || {},
+    searchMode: project.searchMode || "openalex",
     status: project.status || "draft",
     createdAt: project.createdAt || TODAY,
     updatedAt: project.updatedAt || TODAY,
@@ -543,6 +547,7 @@ function bindEvents() {
 function newProjectDraft() {
   state.activeProjectId = "";
   $("#projectTitleInput").value = "";
+  $("#searchModeSelect").value = "openalex";
   $("#requirementInput").value = "";
   $("#criteriaSection").classList.add("is-hidden");
   $("#resultsSection").classList.add("is-hidden");
@@ -582,6 +587,7 @@ function renderProjectList() {
 function renderActiveProject() {
   const project = activeProject();
   $("#projectTitleInput").value = project?.title || "";
+  $("#searchModeSelect").value = project?.searchMode || "openalex";
   $("#requirementInput").value = project?.originalRequest || "";
   if (!project?.criteria) {
     $("#criteriaSection").classList.add("is-hidden");
@@ -610,6 +616,7 @@ async function analyseRequirement() {
     id: `project-${Date.now()}`,
     title: $("#projectTitleInput").value.trim() || deriveProjectTitle(originalRequest),
     originalRequest,
+    searchMode: $("#searchModeSelect").value,
     status: "criteria_review",
     createdAt: TODAY,
     updatedAt: TODAY,
@@ -691,10 +698,10 @@ async function startResearch() {
     toast("Create or select a project and review criteria first.");
     return;
   }
-  setLoading($("#startResearchBtn"), "Searching OpenAlex...");
+  setLoading($("#startResearchBtn"), project.searchMode === "swiss-campus" ? "Searching Swiss universities..." : "Searching OpenAlex...");
   project.searchTerms = await llmService.expandResearchTerms(project.criteria);
   try {
-    const results = await openAlexSource.search(project.criteria, 16);
+    const results = await openAlexSource.search(project.criteria, 16, { searchMode: project.searchMode });
     project.results = await Promise.all(results.map(async (candidateRecord) => {
       const reasons = await llmService.explainCandidateMatch(candidateRecord, project.criteria, { total: candidateRecord.totalScore });
       return {
@@ -717,6 +724,11 @@ async function startResearch() {
   renderProjectList();
   renderStrategy();
   renderCandidates();
+  if (!project.results.length) {
+    toast(project.searchMode === "swiss-campus"
+      ? "No Swiss university-affiliated OpenAlex authors found. Try broader research terms."
+      : "No OpenAlex authors found. Try broader research terms.");
+  }
   $("#resultsSection").classList.remove("is-hidden");
   $("#resultsSection").scrollIntoView({ behavior: "smooth", block: "start" });
   clearLoading($("#startResearchBtn"), "Start Research");
@@ -744,7 +756,8 @@ function renderCandidates() {
     return;
   }
   const filtered = getFilteredResults();
-  $("#resultsSummary").textContent = `${filtered.length} candidate${filtered.length === 1 ? "" : "s"} shown for ${project.title}. Scores prioritize recruiter review only.`;
+  const modeLabel = project.searchMode === "swiss-campus" ? "Swiss university-affiliated" : "OpenAlex";
+  $("#resultsSummary").textContent = `${filtered.length} ${modeLabel} candidate${filtered.length === 1 ? "" : "s"} shown for ${project.title}. Scores prioritize recruiter review only.`;
   grid.innerHTML = filtered.length ? filtered.map(candidateCardTemplate).join("") : `<div class="empty-state">No candidates match the current filters.</div>`;
   $all("[data-open-candidate]", grid).forEach((button) => button.addEventListener("click", () => openCandidate(button.dataset.openCandidate)));
 }
@@ -830,7 +843,9 @@ function briefTemplate(candidate, persisted, links) {
           <span class="badge">Score: ${totalScore}/100</span>
           <span class="badge ${confidenceClass(confidence)}">Confidence: ${confidence}</span>
           ${candidate.enteredManually ? "<span class=\"manual-label\">Recruiter-entered</span>" : "<span class=\"ai-label\">AI-generated summary</span>"}
+          ${project?.searchMode === "swiss-campus" ? "<span class=\"badge\">Swiss university evidence</span>" : ""}
         </div>
+        ${project?.searchMode === "swiss-campus" ? "<p class=\"hint\">Campus mode filters by public Swiss university affiliation evidence only. It does not infer nationality, ethnicity, citizenship, or origin.</p>" : ""}
       </div>
       <button class="icon-btn" type="button" data-close-brief aria-label="Close">x</button>
     </header>
@@ -1113,7 +1128,7 @@ function scoreOpenAlexCandidate(candidate, criteria) {
   return { total, breakdown };
 }
 
-function buildOpenAlexQueries(criteria) {
+function buildOpenAlexQueries(criteria, options = {}) {
   const highSignal = unique([
     ...criteria.publication_keywords,
     ...criteria.research_topics,
@@ -1126,6 +1141,12 @@ function buildOpenAlexQueries(criteria) {
   }
   if (criteria.research_topics[0] && criteria.location[0]) {
     compound.push(`${criteria.research_topics[0]} ${criteria.location[0]}`);
+  }
+  if (options.searchMode === "swiss-campus") {
+    const base = highSignal[0] || criteria.research_topics[0] || criteria.core_technical_skills[0] || "computer science";
+    compound.push(`${base} ETH Zurich`);
+    compound.push(`${base} EPFL`);
+    compound.push(`${base} Switzerland university`);
   }
   return unique([...compound, ...highSignal]).slice(0, 6);
 }
@@ -1147,6 +1168,18 @@ function mostCommon(values) {
     return map;
   }, new Map());
   return [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || "";
+}
+
+function hasSwissUniversityEvidence(authorship) {
+  const institutions = authorship.institutions || [];
+  return institutions.some((institution) => {
+    const name = String(institution.display_name || "").toLowerCase();
+    const type = String(institution.type || "").toLowerCase();
+    return institution.country_code === "CH" && (
+      type === "education" ||
+      /eth zurich|epfl|university|universität|universite|università|institute|institut|eawag|idsia|cern/.test(name)
+    );
+  });
 }
 
 function extractJdTerms(input) {

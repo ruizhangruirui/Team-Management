@@ -151,6 +151,7 @@ summary:focus-visible {
 .hero p,
 .page-header p,
 .section-heading p,
+.campus-note,
 .hint {
   color: var(--muted);
 }
@@ -316,6 +317,15 @@ summary:focus-visible {
   display: grid;
   gap: 18px;
   padding: 24px;
+}
+
+.campus-note,
+.mock-source-note {
+  border-left: 3px solid #b7ccee;
+  background: #f8fafc;
+  margin: 0;
+  padding: 9px 11px;
+  font-size: 12px;
 }
 
 .examples {
