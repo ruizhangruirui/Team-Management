@@ -532,7 +532,9 @@ function bindEvents() {
   $all(".nav-btn").forEach((button) => button.addEventListener("click", () => switchView(button.dataset.view)));
   $all("[data-example]").forEach((button) => button.addEventListener("click", () => {
     $("#requirementInput").value = button.dataset.example;
+    renderJdKeywordPreview();
   }));
+  $("#requirementInput").addEventListener("input", renderJdKeywordPreview);
   $("#analyseBtn").addEventListener("click", analyseRequirement);
   $("#newProjectBtn").addEventListener("click", newProjectDraft);
   $("#startResearchBtn").addEventListener("click", startResearch);
@@ -554,6 +556,7 @@ function newProjectDraft() {
   $("#projectTitleInput").value = "";
   $("#searchModeSelect").value = "openalex";
   $("#requirementInput").value = "";
+  renderJdKeywordPreview();
   $("#criteriaSection").classList.add("is-hidden");
   $("#resultsSection").classList.add("is-hidden");
   resetFilters();
@@ -594,6 +597,7 @@ function renderActiveProject() {
   $("#projectTitleInput").value = project?.title || "";
   $("#searchModeSelect").value = project?.searchMode || "openalex";
   $("#requirementInput").value = project?.originalRequest || "";
+  renderJdKeywordPreview();
   if (!project?.criteria) {
     $("#criteriaSection").classList.add("is-hidden");
     $("#resultsSection").classList.add("is-hidden");
@@ -608,6 +612,27 @@ function renderActiveProject() {
   } else {
     $("#resultsSection").classList.add("is-hidden");
   }
+}
+
+function renderJdKeywordPreview() {
+  const container = $("#jdKeywordPreview");
+  if (!container) return;
+  const input = $("#requirementInput").value.trim();
+  if (!input) {
+    container.innerHTML = `<span class="chip muted-chip">Enter a JD to detect search keywords.</span>`;
+    return;
+  }
+  const terms = extractJdTerms(input);
+  const detected = unique([
+    ...terms.skills,
+    ...terms.topics,
+    ...terms.phrases,
+    ...terms.universities,
+    ...terms.locations,
+  ]).slice(0, 18);
+  container.innerHTML = detected.length
+    ? detected.map((term) => `<span class="chip">${escapeHtml(term)}</span>`).join("")
+    : `<span class="chip muted-chip">No strong technical keywords detected yet.</span>`;
 }
 
 async function analyseRequirement() {

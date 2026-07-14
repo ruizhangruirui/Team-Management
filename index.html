@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AI Talent Research Workspace</title>
-    <link rel="stylesheet" href="./styles.css?v=20260714-project-update" />
+    <link rel="stylesheet" href="./styles.css?v=20260714-dynamic-keywords" />
   </head>
   <body>
     <div class="app-shell">
@@ -53,6 +53,16 @@
             <p class="campus-note">Swiss campus mode filters by public Swiss university affiliation evidence only. It does not infer nationality, ethnicity, citizenship, or origin from names.</p>
             <label for="requirementInput">Talent requirement</label>
             <textarea id="requirementInput" rows="7" placeholder="Find researchers working on multimodal LLM evaluation in Europe."></textarea>
+            <div class="detected-keywords" aria-live="polite">
+              <div class="detected-keywords-head">
+                <span>Detected JD keywords</span>
+                <small>Updates as you type</small>
+              </div>
+              <div id="jdKeywordPreview" class="chips">
+                <span class="chip muted-chip">Enter a JD to detect search keywords.</span>
+              </div>
+            </div>
+            <p class="example-label">Examples</p>
             <div class="examples" aria-label="Example inputs">
               <button type="button" data-example="Find researchers working on multimodal LLM evaluation in Europe.">Multimodal LLM evaluation</button>
               <button type="button" data-example="Find senior engineers with experience in CUDA kernel optimisation.">CUDA kernel optimisation</button>
@@ -169,6 +179,6 @@
     </dialog>
 
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
-    <script src="./app.js?v=20260714-project-update"></script>
+    <script src="./app.js?v=20260714-dynamic-keywords"></script>
   </body>
 </html>
