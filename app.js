@@ -972,24 +972,17 @@ function renderCriteria() {
     "business_expert_keywords",
     "must_have_evidence",
     "related_terminology",
-    "candidate_profile_hypothesis",
     "recommended_evidence_channels",
-    "selected_candidate_archetypes",
-    "archetype_reasoning",
     "expected_discovery_limitations",
   ];
-  editor.insertAdjacentHTML("beforeend", `<div class="criteria-subhead">Structured Research Brief</div>`);
+  editor.insertAdjacentHTML("beforeend", `<div class="criteria-subhead">Research Brief</div>`);
   briefSections.forEach((key) => appendCriterionCard(editor, key, project.criteria[key], true));
-  editor.insertAdjacentHTML("beforeend", `<div class="criteria-subhead">Search Filters And Evidence Terms</div>`);
-  Object.entries(project.criteria).filter(([key]) => !briefSections.includes(key)).forEach(([key, values]) => {
-    appendCriterionCard(editor, key, values, false);
-  });
 }
 
 function appendCriterionCard(editor, key, values, featured) {
     const valueList = Array.isArray(values) ? values : [values].filter(Boolean);
     const card = document.createElement("article");
-    card.className = `criterion-card ${featured ? "criterion-card-featured" : ""}`;
+    card.className = `criterion-card ${featured ? "criterion-card-featured" : ""} ${isLongTextCriterion(key) ? "criterion-card-wide" : ""}`;
     if (!Array.isArray(values) && valueList.length <= 1 && isLongTextCriterion(key)) {
       card.innerHTML = `
         <h3>${labelize(key)}</h3>
@@ -1026,8 +1019,8 @@ function renderCriteriaAnalysisMode() {
   const currentMode = project?.criteriaAnalysisMode || llmService.lastAnalysisMode;
   const isAi = currentMode === "AI analyzed";
   mode.textContent = isAi
-    ? "AI-analyzed JD criteria. Edit before live OpenAlex research."
-    : "Local rule-based fallback. Add OPENAI_API_KEY on the backend for true AI JD analysis.";
+    ? "AI-analyzed research brief. Edit before sourcing."
+    : "Research brief generated locally. Edit before sourcing.";
   mode.classList.toggle("ai-mode", isAi);
 }
 
