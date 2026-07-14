@@ -9,7 +9,7 @@ This prototype is designed to identify specialised research and technical talent
 1. Recruiter enters a natural-language talent requirement.
 2. The app tries an AI criteria parser first, then falls back to a free local parser if no backend/API key is available.
 3. Recruiter reviews a structured research brief with business expert keywords, must-have evidence, candidate profile hypotheses, recommended evidence channels, archetypes, and expected limitations.
-4. An automatic source planner selects a source mix, then OpenAlex and GitHub public APIs retrieve publication, repository-owner, and contributor evidence. It also generates university official-site, laboratory, research-group, conference, patent, and company-page discovery queries for manual verification.
+4. Recruiters can choose which source families to use: Academic journals/OpenAlex, GitHub, and University/lab websites. The planner then runs only the selected sources and keeps source labels visible in results.
 5. Candidate cards show score, top reasons, expertise, confidence, and status.
 6. Candidate Brief shows evidence-linked reasons, score breakdown, timeline, publications, sources, and uncertainty.
 7. Recruiter can change status, add notes, tags, rejection reason, public URL, verified information, and corrections.

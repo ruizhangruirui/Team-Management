@@ -367,6 +367,37 @@ summary:focus-visible {
   padding: 12px;
 }
 
+.source-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  margin: 0;
+  padding: 12px;
+}
+
+.source-selector legend {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 850;
+  padding: 0 5px;
+}
+
+.source-selector label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.source-selector input {
+  width: auto;
+  min-height: auto;
+}
+
 .detected-keywords-head {
   display: flex;
   justify-content: space-between;

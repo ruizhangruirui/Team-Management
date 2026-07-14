@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AI Talent Research Workspace</title>
-    <link rel="stylesheet" href="./styles.css?v=20260714-university-labs" />
+    <link rel="stylesheet" href="./styles.css?v=20260714-source-controls" />
   </head>
   <body>
     <div class="app-shell">
@@ -61,6 +61,12 @@
             <textarea id="businessKeywordsInput" rows="2" placeholder="Terms from a hiring manager or domain expert, e.g. MLIR, TorchInductor, kernel fusion"></textarea>
             <label for="requirementInput">Talent requirement</label>
             <textarea id="requirementInput" rows="7" placeholder="Find researchers working on multimodal LLM evaluation in Europe."></textarea>
+            <fieldset class="source-selector">
+              <legend>Candidate sources</legend>
+              <label><input type="checkbox" name="sourceToggle" value="academic" checked />Academic journals / OpenAlex</label>
+              <label><input type="checkbox" name="sourceToggle" value="github" />GitHub</label>
+              <label><input type="checkbox" name="sourceToggle" value="labs" checked />University / lab websites</label>
+            </fieldset>
             <div class="detected-keywords" aria-live="polite">
               <div class="detected-keywords-head">
                 <span>Detected JD keywords</span>
@@ -115,6 +121,15 @@
               <label>
                 <span>Research topic</span>
                 <input id="topicFilter" type="search" placeholder="e.g. MLIR" />
+              </label>
+              <label>
+                <span>Source</span>
+                <select id="sourceFilter">
+                  <option value="all">All sources</option>
+                  <option value="academic">Academic journals / OpenAlex</option>
+                  <option value="github">GitHub</option>
+                  <option value="labs">University / lab websites</option>
+                </select>
               </label>
               <label>
                 <span>Sort by</span>
@@ -180,6 +195,6 @@
     </dialog>
 
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
-    <script src="./app.js?v=20260714-university-labs"></script>
+    <script src="./app.js?v=20260714-source-controls"></script>
   </body>
 </html>

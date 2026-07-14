@@ -14,6 +14,7 @@ const REJECTION_REASONS = [
   "Information could not be verified",
   "Other",
 ];
+const DEFAULT_SELECTED_SOURCES = ["academic", "labs"];
 const TECHNICAL_TERM_LIBRARY = [
   "CUDA", "Triton", "MLIR", "TVM", "LLVM", "XLA", "JAX", "PyTorch", "TensorFlow",
   "robotic planning", "motion planning", "reinforcement learning", "LLM evaluation",
@@ -764,6 +765,7 @@ function normalizeProject(project) {
     searchMode: project.searchMode || "openalex",
     candidateStage: project.candidateStage || "any",
     businessExpertKeywords: project.businessExpertKeywords || [],
+    selectedSources: project.selectedSources || DEFAULT_SELECTED_SOURCES,
     sourcePlan: project.sourcePlan || null,
     criteriaAnalysisMode: project.criteriaAnalysisMode || "Local rules",
     status: project.status || "draft",
@@ -807,6 +809,7 @@ function bindEvents() {
   });
   $("#locationFilter").addEventListener("input", renderCandidates);
   $("#topicFilter").addEventListener("input", renderCandidates);
+  $("#sourceFilter").addEventListener("change", renderCandidates);
   $("#sortSelect").addEventListener("change", renderCandidates);
   $("#manualCandidateBtn").addEventListener("click", () => $("#manualDialog").showModal());
   $("#manualForm").addEventListener("submit", saveManualCandidate);
@@ -818,6 +821,7 @@ function newProjectDraft() {
   $("#searchModeSelect").value = "openalex";
   $("#candidateStageSelect").value = "any";
   $("#businessKeywordsInput").value = "";
+  setSelectedSources(DEFAULT_SELECTED_SOURCES);
   $("#requirementInput").value = "";
   renderJdKeywordPreview();
   $("#criteriaSection").classList.add("is-hidden");
@@ -861,6 +865,7 @@ function renderActiveProject() {
   $("#searchModeSelect").value = project?.searchMode || "openalex";
   $("#candidateStageSelect").value = project?.candidateStage || "any";
   $("#businessKeywordsInput").value = (project?.businessExpertKeywords || []).join(", ");
+  setSelectedSources(project?.selectedSources || DEFAULT_SELECTED_SOURCES);
   $("#requirementInput").value = project?.originalRequest || "";
   renderJdKeywordPreview();
   if (!project?.criteria) {
@@ -930,6 +935,7 @@ async function analyseRequirement() {
   project.searchMode = $("#searchModeSelect").value;
   project.candidateStage = $("#candidateStageSelect").value;
   project.businessExpertKeywords = parseBusinessExpertKeywords();
+  project.selectedSources = getSelectedSources();
   project.status = "criteria_review";
   project.updatedAt = TODAY;
   project.results = [];
@@ -1070,25 +1076,34 @@ async function startResearch() {
     return;
   }
   setLoading($("#startResearchBtn"), project.searchMode === "swiss-campus" ? "Searching Swiss universities..." : "Searching OpenAlex...");
+  project.selectedSources = getSelectedSources();
   const sourcePlan = sourcePlanner.plan(project.criteria, project);
   project.sourcePlan = sourcePlan;
   project.searchTerms = {
     ...(await llmService.expandResearchTerms(project.criteria)),
-    agent_source_plan: [`Mode: ${sourcePlan.mode}`, `Boost: ${sourcePlan.boost}`, `Sources: ${sourcePlan.sources.join(", ")}`],
+    agent_source_plan: [`Mode: ${sourcePlan.mode}`, `Boost: ${sourcePlan.boost}`, `Recruiter-selected sources: ${project.selectedSources.map(sourceLabel).join(", ")}`],
     agent_discovery_queries: sourcePlan.discoveryQueries,
   };
   try {
     setLoading($("#startResearchBtn"), `Agent searching ${sourcePlan.mode} sources...`);
-    const [openAlexOutcome, githubOutcome] = await Promise.allSettled([
-      openAlexSource.search(project.criteria, sourcePlan.openAlexLimit, { searchMode: project.searchMode, candidateStage: project.candidateStage, sourcePlan }),
-      githubSource.search(project.criteria, sourcePlan.githubLimit, { sourcePlan }),
-    ]);
-    const sourceErrors = [openAlexOutcome, githubOutcome]
+    const selectedSources = project.selectedSources || DEFAULT_SELECTED_SOURCES;
+    const sourceTasks = [
+      selectedSources.includes("academic")
+        ? openAlexSource.search(project.criteria, sourcePlan.openAlexLimit, { searchMode: project.searchMode, candidateStage: project.candidateStage, sourcePlan })
+        : Promise.resolve([]),
+      selectedSources.includes("github")
+        ? githubSource.search(project.criteria, sourcePlan.githubLimit, { sourcePlan })
+        : Promise.resolve([]),
+      Promise.resolve(selectedSources.includes("labs") ? buildLabDiscoveryLeads(project.criteria) : []),
+    ];
+    const [openAlexOutcome, githubOutcome, labOutcome] = await Promise.allSettled(sourceTasks);
+    const sourceErrors = [openAlexOutcome, githubOutcome, labOutcome]
       .filter((outcome) => outcome.status === "rejected")
       .map((outcome) => outcome.reason?.message || "Source unavailable");
     const results = mergeCandidateResults([
       ...(openAlexOutcome.status === "fulfilled" ? openAlexOutcome.value : []),
       ...(githubOutcome.status === "fulfilled" ? githubOutcome.value : []),
+      ...(labOutcome.status === "fulfilled" ? labOutcome.value : []),
     ]);
     project.results = await Promise.all(results.map(async (candidateRecord) => {
       const reasons = await llmService.explainCandidateMatch(candidateRecord, project.criteria, { total: candidateRecord.totalScore });
@@ -1158,12 +1173,14 @@ function getFilteredResults() {
   const minimum = Number($("#scoreFilter").value);
   const location = $("#locationFilter").value.trim().toLowerCase();
   const topic = $("#topicFilter").value.trim().toLowerCase();
+  const source = $("#sourceFilter").value;
   const sort = $("#sortSelect").value;
   return project.results
     .filter((candidate) => status === "all" || getCandidateState(candidate.id).status === status)
     .filter((candidate) => candidate.totalScore >= minimum)
     .filter((candidate) => !location || candidate.location.toLowerCase().includes(location))
     .filter((candidate) => !topic || [...candidate.researchTopics, ...candidate.skills].some((item) => item.toLowerCase().includes(topic)))
+    .filter((candidate) => source === "all" || candidateHasSource(candidate, source))
     .sort((a, b) => {
       if (sort === "research") return b.scoreBreakdown.technical - a.scoreBreakdown.technical;
       if (sort === "recency") return latestPublicationYear(b) - latestPublicationYear(a);
@@ -1658,6 +1675,68 @@ function buildUniversityLabQueries(criteria) {
   return unique(queries).slice(0, 8);
 }
 
+function buildLabDiscoveryLeads(criteria) {
+  return buildUniversityLabQueries(criteria).slice(0, 6).map((query, index) => {
+    const sourceUrl = `https://www.google.com/search?q=${encodeURIComponent(query.replace(/^[^:]+:\s*/, ""))}`;
+    const sourceRecord = {
+      id: `lab-source-${index}-${Date.now()}`,
+      sourceType: "University lab website lead",
+      sourceTitle: query,
+      sourceUrl,
+      extractedFacts: [
+        "Generated from selected University / lab websites source.",
+        "This is a discovery lead, not a verified person.",
+        "Open the source link to inspect lab members and add relevant candidates manually.",
+      ],
+      sourceConfidence: "Low",
+      retrievalDate: TODAY,
+      enteredManually: false,
+    };
+    return {
+      id: `lab-lead-${index}-${Math.abs(hashCode(query))}`,
+      fullName: query,
+      currentTitle: "University / lab discovery lead",
+      currentOrganisation: inferOrganisationFromLabQuery(query),
+      previousOrganisations: [],
+      location: "Evidence unavailable",
+      education: "Evidence unavailable",
+      university: inferOrganisationFromLabQuery(query),
+      skills: unique([...criteria.business_expert_keywords, ...criteria.core_technical_skills]).slice(0, 6),
+      researchTopics: unique([...criteria.research_topics, ...criteria.related_terminology]).slice(0, 6),
+      summary: "Manual lab website discovery lead. Use this to inspect official lab members, PhD students, postdocs, and research engineers.",
+      publications: [],
+      sourceIds: [sourceRecord.id],
+      sourceRecords: [sourceRecord],
+      githubUrl: "",
+      personalWebsite: sourceUrl,
+      orcidUrl: "",
+      linkedinSearchLink: "",
+      scholarSearchLink: "",
+      timeline: [{ date: TODAY, label: query, source: "University lab website search" }],
+      matchReasons: [{ text: `Generated lab/member search for: ${query}.`, sourceIds: [sourceRecord.id] }],
+      missingInformation: ["No person has been verified yet.", "Open the lab page and manually add relevant members.", "Current role, availability, and identity require manual verification."],
+      enteredManually: false,
+      createdAt: TODAY,
+      updatedAt: TODAY,
+      scoreBreakdown: { technical: 12, publications: 0, role: 0, education: 0, employer: 0, location: 0 },
+      totalScore: 18,
+      evidenceConfidence: "Low",
+    };
+  });
+}
+
+function inferOrganisationFromLabQuery(query) {
+  if (/ethz\.ch|eth epfl|ETH/i.test(query)) return "ETH Zurich";
+  if (/epfl\.ch|EPFL/i.test(query)) return "EPFL";
+  if (/uzh\.ch/i.test(query)) return "University of Zurich";
+  if (/unibas\.ch/i.test(query)) return "University of Basel";
+  if (/unige\.ch/i.test(query)) return "University of Geneva";
+  if (/usi\.ch/i.test(query)) return "USI";
+  if (/stanford\.edu/i.test(query)) return "Stanford University";
+  if (/mit\.edu/i.test(query)) return "MIT";
+  return "University / laboratory";
+}
+
 function inferUniversitySites(criteria) {
   const universities = unique(criteria.universities || []);
   const sites = universities.flatMap((uni) => {
@@ -1794,6 +1873,26 @@ function extractJdTerms(input) {
 function parseBusinessExpertKeywords() {
   const input = $("#businessKeywordsInput")?.value || "";
   return unique(input.split(/[,;\n]+/).map((item) => item.trim())).slice(0, 20);
+}
+
+function getSelectedSources() {
+  const selected = $all("input[name='sourceToggle']:checked").map((input) => input.value);
+  return selected.length ? selected : DEFAULT_SELECTED_SOURCES;
+}
+
+function setSelectedSources(sources) {
+  const selected = new Set(sources || DEFAULT_SELECTED_SOURCES);
+  $all("input[name='sourceToggle']").forEach((input) => {
+    input.checked = selected.has(input.value);
+  });
+}
+
+function sourceLabel(source) {
+  return {
+    academic: "Academic journals / OpenAlex",
+    github: "GitHub",
+    labs: "University / lab websites",
+  }[source] || source;
 }
 
 function enrichResearchBrief(criteria, originalRequest = "") {
@@ -2127,6 +2226,7 @@ function evidenceSourceBadges(candidate) {
     const type = String(record.sourceType || "").toLowerCase();
     if (type.includes("openalex") || type.includes("publication")) sources.add("OpenAlex");
     if (type.includes("github")) sources.add("GitHub");
+    if (type.includes("university lab") || type.includes("laboratory")) sources.add("University lab");
     if (type.includes("patent")) sources.add("Patent");
     if (type.includes("manual")) sources.add("Manual");
     if (!sources.size && type) sources.add(record.sourceType);
@@ -2134,6 +2234,16 @@ function evidenceSourceBadges(candidate) {
   if (candidate.githubUrl) sources.add("GitHub");
   if (!sources.size) sources.add("Web");
   return [...sources].slice(0, 5);
+}
+
+function candidateHasSource(candidate, source) {
+  return (candidate.sourceRecords || []).some((record) => {
+    const type = String(record.sourceType || "").toLowerCase();
+    if (source === "academic") return type.includes("openalex") || type.includes("publication");
+    if (source === "github") return type.includes("github");
+    if (source === "labs") return type.includes("university lab") || type.includes("laboratory");
+    return true;
+  });
 }
 
 function buildVerificationSearches(candidate, criteria) {
@@ -2212,6 +2322,7 @@ function resetFilters() {
   $("#scoreFilterValue").textContent = "0+";
   $("#locationFilter").value = "";
   $("#topicFilter").value = "";
+  $("#sourceFilter").value = "all";
   $("#sortSelect").value = "total";
 }
 
@@ -2349,6 +2460,10 @@ function uniqueBy(values, keyFn) {
 
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
+}
+
+function hashCode(value) {
+  return String(value).split("").reduce((hash, char) => ((hash << 5) - hash + char.charCodeAt(0)) | 0, 0);
 }
 
 function fuzzyIncludes(haystack, needle) {
