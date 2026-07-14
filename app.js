@@ -69,8 +69,8 @@ class CriteriaAnalysisService {
     this.lastAnalysisMode = "Local rules";
   }
 
-  async extractCriteria(userInput) {
-    const localCriteria = await this.localParser.extractCriteria(userInput);
+  async extractCriteria(userInput, businessExpertKeywords = []) {
+    const localCriteria = await this.localParser.extractCriteria(userInput, businessExpertKeywords);
     const endpoint = getAiCriteriaEndpoint();
     if (!endpoint) {
       this.lastAnalysisMode = "Local rules";
@@ -80,7 +80,7 @@ class CriteriaAnalysisService {
       const response = await fetchWithTimeout(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({ job_description: userInput }),
+        body: JSON.stringify({ job_description: userInput, business_expert_keywords: businessExpertKeywords }),
       }, 18000);
       if (!response.ok) {
         throw new Error(`AI parser returned ${response.status}`);
@@ -108,7 +108,7 @@ class CriteriaAnalysisService {
 }
 
 class RuleBasedCriteriaService {
-  async extractCriteria(userInput) {
+  async extractCriteria(userInput, businessExpertKeywords = []) {
     const text = userInput.toLowerCase();
     const jdTerms = extractJdTerms(userInput);
     const criteria = {
@@ -139,10 +139,11 @@ class RuleBasedCriteriaService {
       required_criteria: jdTerms.required,
       preferred_criteria: jdTerms.preferred,
       exclusion_criteria: jdTerms.exclusions,
+      business_expert_keywords: businessExpertKeywords,
     };
     criteria.related_terminology = expandTerms([...criteria.core_technical_skills, ...criteria.research_topics]);
-    criteria.publication_keywords = unique([...criteria.research_topics, ...criteria.core_technical_skills, ...criteria.related_terminology, ...jdTerms.phrases]).slice(0, 12);
-    return fillEmptyCriteria(criteria);
+    criteria.publication_keywords = unique([...businessExpertKeywords, ...criteria.research_topics, ...criteria.core_technical_skills, ...criteria.related_terminology, ...jdTerms.phrases]).slice(0, 12);
+    return enrichResearchBrief(fillEmptyCriteria(criteria), userInput);
   }
 
   async expandResearchTerms(criteria) {
@@ -762,6 +763,7 @@ function normalizeProject(project) {
     candidateState: project.candidateState || {},
     searchMode: project.searchMode || "openalex",
     candidateStage: project.candidateStage || "any",
+    businessExpertKeywords: project.businessExpertKeywords || [],
     sourcePlan: project.sourcePlan || null,
     criteriaAnalysisMode: project.criteriaAnalysisMode || "Local rules",
     status: project.status || "draft",
@@ -815,6 +817,7 @@ function newProjectDraft() {
   $("#projectTitleInput").value = "";
   $("#searchModeSelect").value = "openalex";
   $("#candidateStageSelect").value = "any";
+  $("#businessKeywordsInput").value = "";
   $("#requirementInput").value = "";
   renderJdKeywordPreview();
   $("#criteriaSection").classList.add("is-hidden");
@@ -857,6 +860,7 @@ function renderActiveProject() {
   $("#projectTitleInput").value = project?.title || "";
   $("#searchModeSelect").value = project?.searchMode || "openalex";
   $("#candidateStageSelect").value = project?.candidateStage || "any";
+  $("#businessKeywordsInput").value = (project?.businessExpertKeywords || []).join(", ");
   $("#requirementInput").value = project?.originalRequest || "";
   renderJdKeywordPreview();
   if (!project?.criteria) {
@@ -925,10 +929,11 @@ async function analyseRequirement() {
   project.originalRequest = originalRequest;
   project.searchMode = $("#searchModeSelect").value;
   project.candidateStage = $("#candidateStageSelect").value;
+  project.businessExpertKeywords = parseBusinessExpertKeywords();
   project.status = "criteria_review";
   project.updatedAt = TODAY;
   project.results = [];
-  project.criteria = await llmService.extractCriteria(originalRequest);
+  project.criteria = await llmService.extractCriteria(originalRequest, project.businessExpertKeywords);
   project.criteriaAnalysisMode = llmService.lastAnalysisMode;
   project.searchTerms = await llmService.expandResearchTerms(project.criteria);
   saveState();
@@ -956,30 +961,56 @@ function renderCriteria() {
   if (!project?.criteria) return;
   const editor = $("#criteriaEditor");
   editor.innerHTML = "";
-  Object.entries(project.criteria).forEach(([key, values]) => {
+  const briefSections = [
+    "core_research_objective",
+    "business_expert_keywords",
+    "must_have_evidence",
+    "related_terminology",
+    "candidate_profile_hypothesis",
+    "recommended_evidence_channels",
+    "selected_candidate_archetypes",
+    "archetype_reasoning",
+    "expected_discovery_limitations",
+  ];
+  editor.insertAdjacentHTML("beforeend", `<div class="criteria-subhead">Structured Research Brief</div>`);
+  briefSections.forEach((key) => appendCriterionCard(editor, key, project.criteria[key], true));
+  editor.insertAdjacentHTML("beforeend", `<div class="criteria-subhead">Search Filters And Evidence Terms</div>`);
+  Object.entries(project.criteria).filter(([key]) => !briefSections.includes(key)).forEach(([key, values]) => {
+    appendCriterionCard(editor, key, values, false);
+  });
+}
+
+function appendCriterionCard(editor, key, values, featured) {
     const valueList = Array.isArray(values) ? values : [values].filter(Boolean);
     const card = document.createElement("article");
-    card.className = "criterion-card";
-    card.innerHTML = `
-      <h3>${labelize(key)}</h3>
-      <div class="chips">${valueList.map((value, index) => chipTemplate(key, value, index)).join("")}</div>
-      <div class="add-row">
-        <input aria-label="Add ${labelize(key)}" placeholder="Add criterion" />
-        <button type="button">Add</button>
-      </div>
-    `;
-    card.querySelector(".chips").addEventListener("click", (event) => {
-      if (event.target.matches("button")) {
-        removeCriterion(key, Number(event.target.dataset.index));
-      }
-    });
-    card.querySelector(".add-row button").addEventListener("click", () => {
-      const input = card.querySelector(".add-row input");
-      addCriterion(key, input.value);
-      input.value = "";
-    });
+    card.className = `criterion-card ${featured ? "criterion-card-featured" : ""}`;
+    if (!Array.isArray(values) && valueList.length <= 1 && isLongTextCriterion(key)) {
+      card.innerHTML = `
+        <h3>${labelize(key)}</h3>
+        <textarea rows="4" data-criterion-text="${key}">${escapeHtml(valueList[0] || "")}</textarea>
+      `;
+      card.querySelector("textarea").addEventListener("change", (event) => updateCriterionText(key, event.target.value));
+    } else {
+      card.innerHTML = `
+        <h3>${labelize(key)}</h3>
+        <div class="chips">${valueList.map((value, index) => chipTemplate(key, value, index)).join("") || "<span class=\"chip muted-chip\">No items yet</span>"}</div>
+        <div class="add-row">
+          <input aria-label="Add ${labelize(key)}" placeholder="Add criterion" />
+          <button type="button">Add</button>
+        </div>
+      `;
+      card.querySelector(".chips").addEventListener("click", (event) => {
+        if (event.target.matches("button")) {
+          removeCriterion(key, Number(event.target.dataset.index));
+        }
+      });
+      card.querySelector(".add-row button").addEventListener("click", () => {
+        const input = card.querySelector(".add-row input");
+        addCriterion(key, input.value);
+        input.value = "";
+      });
+    }
     editor.append(card);
-  });
 }
 
 function renderCriteriaAnalysisMode() {
@@ -1018,6 +1049,18 @@ function removeCriterion(key, index) {
   project.updatedAt = TODAY;
   saveState();
   renderCriteria();
+}
+
+function updateCriterionText(key, value) {
+  const project = activeProject();
+  if (!project?.criteria) return;
+  project.criteria[key] = value.trim();
+  project.updatedAt = TODAY;
+  saveState();
+}
+
+function isLongTextCriterion(key) {
+  return ["core_research_objective", "archetype_reasoning", "expected_discovery_limitations"].includes(key);
 }
 
 async function startResearch() {
@@ -1705,6 +1748,67 @@ function extractJdTerms(input) {
   return { skills, topics, phrases, organisations, universities, companies, locations, languages, degreeStage, availability, manualVerification, ...criteriaSentences };
 }
 
+function parseBusinessExpertKeywords() {
+  const input = $("#businessKeywordsInput")?.value || "";
+  return unique(input.split(/[,;\n]+/).map((item) => item.trim())).slice(0, 20);
+}
+
+function enrichResearchBrief(criteria, originalRequest = "") {
+  const objectiveTerms = unique([...criteria.business_expert_keywords, ...criteria.core_technical_skills, ...criteria.research_topics]).slice(0, 8);
+  const roleHint = criteria.target_roles[0] || "specialised research or technical candidates";
+  criteria.core_research_objective = criteria.core_research_objective || `Identify ${roleHint.toLowerCase()} with recent public evidence related to ${objectiveTerms.join(", ") || deriveProjectTitle(originalRequest)}. Prioritise narrow, verifiable technical contribution over generic title matching.`;
+  criteria.must_have_evidence = unique(criteria.must_have_evidence?.length ? criteria.must_have_evidence : [
+    "Strong public evidence in the target topic",
+    "Recent activity in the target field",
+    "Relevant publication, repository, laboratory, conference, patent, or technical-writing evidence",
+    ...(criteria.business_expert_keywords.length ? [`Evidence matching business expert keywords: ${criteria.business_expert_keywords.join(", ")}`] : []),
+  ]);
+  criteria.candidate_profile_hypothesis = unique(criteria.candidate_profile_hypothesis?.length ? criteria.candidate_profile_hypothesis : buildCandidateProfileHypothesis(criteria));
+  criteria.recommended_evidence_channels = unique(criteria.recommended_evidence_channels?.length ? criteria.recommended_evidence_channels : buildRecommendedEvidenceChannels(criteria));
+  const archetypePlan = selectCandidateArchetypes(criteria);
+  criteria.selected_candidate_archetypes = unique(criteria.selected_candidate_archetypes?.length ? criteria.selected_candidate_archetypes : archetypePlan.archetypes);
+  criteria.archetype_reasoning = criteria.archetype_reasoning || archetypePlan.reason;
+  criteria.expected_discovery_limitations = criteria.expected_discovery_limitations || "This search may miss experienced industry candidates whose work is private, visible only on restricted platforms, or not connected to public publications, repositories, patents, conferences, laboratory pages, or technical writing.";
+  return criteria;
+}
+
+function buildCandidateProfileHypothesis(criteria) {
+  const text = unique([...criteria.core_technical_skills, ...criteria.research_topics, ...criteria.degree_stage]).join(" ").toLowerCase();
+  const profiles = [];
+  if (/phd|campus|master|bachelor/.test(text)) profiles.push("Recent PhD, PhD candidate, or graduate student with visible public research evidence");
+  if (/compiler|mlir|llvm|tvm|triton|cuda|systems|kernel|distributed/.test(text)) profiles.push("Research engineer or academic engineer contributing to systems, compiler, runtime, or infrastructure projects");
+  if (/github|open source|pytorch|llvm|mlir|tvm|triton/.test(text)) profiles.push("Open-source contributor with repositories or contribution history in the target technology");
+  if (/patent|semiconductor|wireless|hardware|communication/.test(text)) profiles.push("Patent inventor or technical specialist with public R&D evidence");
+  return profiles.length ? profiles : ["Specialised researcher or technical contributor with strong public evidence in the target domain"];
+}
+
+function buildRecommendedEvidenceChannels(criteria) {
+  const text = unique([...criteria.core_technical_skills, ...criteria.research_topics, ...criteria.related_terminology]).join(" ").toLowerCase();
+  const channels = ["High priority: GitHub repositories and contributors", "High priority: OpenAlex publications", "High priority: University laboratories or research group pages"];
+  if (/compiler|systems|hpc|robot|vision|language|learning|security|wireless/.test(text)) channels.push("High priority: Conference programmes, workshops, speakers, and accepted papers");
+  channels.push("Medium priority: Patents, technical blogs, personal websites, and company research pages");
+  channels.push("Manual verification: LinkedIn, company profiles, CVs, and restricted professional platforms");
+  return channels;
+}
+
+function selectCandidateArchetypes(criteria) {
+  const text = unique(Object.values(criteria || {}).flat()).join(" ").toLowerCase();
+  const archetypes = [];
+  if (/phd|campus|master|bachelor|first-author/.test(text)) archetypes.push("recent_phd");
+  if (/postdoc|postdoctoral/.test(text)) archetypes.push("postdoctoral_researcher");
+  if (/research scientist|publication|openalex|paper|university|laboratory/.test(text)) archetypes.push("academic_researcher");
+  if (/engineer|systems|compiler|runtime|cuda|kernel|infrastructure/.test(text)) archetypes.push("research_engineer");
+  if (/github|open source|llvm|mlir|tvm|triton|pytorch|repository/.test(text)) archetypes.push("open_source_specialist");
+  if (/blog|technical writing|author|tutorial/.test(text)) archetypes.push("technical_author");
+  if (/patent|inventor|semiconductor|wireless|hardware/.test(text)) archetypes.push("patent_inventor");
+  if (/conference|workshop|speaker|organizer|programme/.test(text)) archetypes.push("conference_contributor");
+  const selected = unique(archetypes.length ? archetypes : ["research_engineer", "academic_researcher"]);
+  return {
+    archetypes: selected.slice(0, 5),
+    reason: `Selected because the requirement points to specialised public evidence: ${unique([...criteria.business_expert_keywords, ...criteria.core_technical_skills, ...criteria.research_topics]).slice(0, 8).join(", ") || "narrow technical contribution"}. The planner favours verifiable evidence channels over broad job titles.`,
+  };
+}
+
 function extractLanguageCriteria(input) {
   const text = input.toLowerCase();
   const languageMap = {
@@ -1882,6 +1986,14 @@ function pickIndustries(text) {
 
 function fillEmptyCriteria(criteria) {
   const defaults = {
+    core_research_objective: "",
+    business_expert_keywords: [],
+    must_have_evidence: [],
+    candidate_profile_hypothesis: [],
+    recommended_evidence_channels: [],
+    selected_candidate_archetypes: [],
+    archetype_reasoning: "",
+    expected_discovery_limitations: "",
     target_roles: [],
     seniority: "not specified",
     core_technical_skills: [],
@@ -2056,6 +2168,14 @@ async function fetchWithTimeout(url, options, timeoutMs) {
 
 function normalizeCriteria(criteria, fallback = fillEmptyCriteria({})) {
   const aliases = {
+    core_research_objective: ["core_research_objective", "research_objective", "objective"],
+    business_expert_keywords: ["business_expert_keywords", "expert_keywords"],
+    must_have_evidence: ["must_have_evidence", "required_evidence", "evidence_requirements"],
+    candidate_profile_hypothesis: ["candidate_profile_hypothesis", "profile_hypothesis", "likely_candidate_profiles"],
+    recommended_evidence_channels: ["recommended_evidence_channels", "evidence_channels", "recommended_sources"],
+    selected_candidate_archetypes: ["selected_candidate_archetypes", "candidate_archetypes", "archetypes"],
+    archetype_reasoning: ["archetype_reasoning", "archetype_reason", "reason"],
+    expected_discovery_limitations: ["expected_discovery_limitations", "discovery_limitations", "limitations"],
     target_roles: ["target_roles", "role_titles", "roles"],
     seniority: ["seniority"],
     core_technical_skills: ["core_technical_skills", "must_have_keywords", "skills", "technical_skills"],
@@ -2082,6 +2202,8 @@ function normalizeCriteria(criteria, fallback = fillEmptyCriteria({})) {
     const value = keyAliases.map((alias) => criteria?.[alias]).find((item) => item !== undefined && item !== null);
     if (key === "seniority") {
       normalized[key] = String(value || fallback[key] || "not specified").trim() || "not specified";
+    } else if (["core_research_objective", "archetype_reasoning", "expected_discovery_limitations"].includes(key)) {
+      normalized[key] = String(value || fallback[key] || "").trim();
     } else {
       normalized[key] = unique(flattenCriteriaValue(value)).length ? unique(flattenCriteriaValue(value)) : unique(flattenCriteriaValue(fallback[key]));
     }
@@ -2093,7 +2215,7 @@ function normalizeCriteria(criteria, fallback = fillEmptyCriteria({})) {
     ...normalized.core_technical_skills,
     ...normalized.jd_keywords,
   ]).slice(0, 14);
-  return normalized;
+  return enrichResearchBrief(normalized);
 }
 
 function flattenCriteriaValue(value) {

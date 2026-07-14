@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AI Talent Research Workspace</title>
-    <link rel="stylesheet" href="./styles.css?v=20260714-source-agent" />
+    <link rel="stylesheet" href="./styles.css?v=20260714-phase-a-brief" />
   </head>
   <body>
     <div class="app-shell">
@@ -43,6 +43,7 @@
           </header>
 
           <section class="start-panel">
+            <p class="scope-banner">This prototype is designed to identify specialised research and technical talent with publicly available evidence. It is not a complete professional talent database and may not identify experienced industry candidates whose work is not publicly visible.</p>
             <label for="projectTitleInput">Role / Project name</label>
             <input id="projectTitleInput" type="text" placeholder="e.g. Senior CUDA Kernel Engineer" />
             <label for="searchModeSelect">Search mode</label>
@@ -56,6 +57,8 @@
               <option value="early-career">Strict early-career / recent PhD</option>
             </select>
             <p class="campus-note">For campus hiring, choose Strict early-career / recent PhD. It filters for first-author evidence and removes high-output PI-style profiles when OpenAlex metrics are available.</p>
+            <label for="businessKeywordsInput">Business expert keywords</label>
+            <textarea id="businessKeywordsInput" rows="2" placeholder="Terms from a hiring manager or domain expert, e.g. MLIR, TorchInductor, kernel fusion"></textarea>
             <label for="requirementInput">Talent requirement</label>
             <textarea id="requirementInput" rows="7" placeholder="Find researchers working on multimodal LLM evaluation in Europe."></textarea>
             <div class="detected-keywords" aria-live="polite">
@@ -87,7 +90,7 @@
               <div>
                 <h2>Candidate Results</h2>
                 <p id="resultsSummary">Ranked for recruiter review only.</p>
-                <p class="mock-source-note">Source mode: live OpenAlex publication search. Results are real public scholarly records, not mock candidates.</p>
+                <p class="mock-source-note">Results prioritise specialised candidates with strong public evidence. A small result set is expected when evidence is limited.</p>
               </div>
               <details class="strategy">
                 <summary>Research Strategy</summary>
@@ -177,6 +180,6 @@
     </dialog>
 
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
-    <script src="./app.js?v=20260714-source-agent"></script>
+    <script src="./app.js?v=20260714-phase-a-brief"></script>
   </body>
 </html>

@@ -43,6 +43,7 @@ server.listen(PORT, HOST, () => {
 async function handleAnalyzeJd(request, response) {
   const body = await readJson(request);
   const jobDescription = String(body.job_description || "").trim();
+  const businessExpertKeywords = Array.isArray(body.business_expert_keywords) ? body.business_expert_keywords.map(String).filter(Boolean) : [];
   if (!jobDescription) {
     sendJson(response, 400, { error: "job_description is required" });
     return;
@@ -51,11 +52,11 @@ async function handleAnalyzeJd(request, response) {
     sendJson(response, 503, { error: "OPENAI_API_KEY is not configured" });
     return;
   }
-  const criteria = await analyzeWithOpenAI(jobDescription);
+  const criteria = await analyzeWithOpenAI(jobDescription, businessExpertKeywords);
   sendJson(response, 200, { mode: "ai", model: OPENAI_MODEL, criteria });
 }
 
-async function analyzeWithOpenAI(jobDescription) {
+async function analyzeWithOpenAI(jobDescription, businessExpertKeywords = []) {
   const prompt = [
     "You are an expert technical recruiting analyst.",
     "Convert the job description into strict JSON only.",
@@ -66,6 +67,14 @@ async function analyzeWithOpenAI(jobDescription) {
     "",
     "Return exactly this JSON object shape:",
     JSON.stringify({
+      core_research_objective: "",
+      business_expert_keywords: [],
+      must_have_evidence: [],
+      candidate_profile_hypothesis: [],
+      recommended_evidence_channels: [],
+      selected_candidate_archetypes: [],
+      archetype_reasoning: "",
+      expected_discovery_limitations: "",
       target_roles: [],
       seniority: "not specified",
       core_technical_skills: [],
@@ -87,6 +96,8 @@ async function analyzeWithOpenAI(jobDescription) {
       exclusion_criteria: [],
       jd_keywords: [],
     }),
+    "",
+    `Business expert keywords that must be preserved and prioritised: ${businessExpertKeywords.join(", ") || "None provided"}`,
     "",
     "Job description:",
     jobDescription,

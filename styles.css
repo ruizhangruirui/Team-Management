@@ -320,12 +320,19 @@ summary:focus-visible {
 }
 
 .campus-note,
+.scope-banner,
 .mock-source-note {
   border-left: 3px solid #b7ccee;
   background: #f8fafc;
   margin: 0;
   padding: 9px 11px;
   font-size: 12px;
+}
+
+.scope-banner {
+  border-left-color: var(--warning);
+  background: #fff8eb;
+  color: #5c3b00;
 }
 
 #criteriaAnalysisMode.ai-mode {
@@ -396,6 +403,15 @@ summary:focus-visible {
   gap: 14px;
 }
 
+.criteria-subhead {
+  grid-column: 1 / -1;
+  color: var(--primary-dark);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
 .criterion-card {
   display: grid;
   gap: 9px;
@@ -404,6 +420,21 @@ summary:focus-visible {
   border-radius: 8px;
   background: var(--surface-soft);
   padding: 14px;
+}
+
+.criterion-card-featured {
+  background: #fff;
+}
+
+.criterion-card-featured:nth-of-type(2),
+.criterion-card-featured:nth-of-type(7),
+.criterion-card-featured:nth-of-type(10) {
+  grid-column: span 2;
+}
+
+.criterion-card textarea {
+  min-height: 96px;
+  resize: vertical;
 }
 
 .criterion-card h3 {
