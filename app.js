@@ -617,19 +617,25 @@ async function analyseRequirement() {
     return;
   }
   setLoading($("#analyseBtn"), "Analysing...");
-  const project = normalizeProject({
-    id: `project-${Date.now()}`,
-    title: $("#projectTitleInput").value.trim() || deriveProjectTitle(originalRequest),
-    originalRequest,
-    searchMode: $("#searchModeSelect").value,
-    status: "criteria_review",
-    createdAt: TODAY,
-    updatedAt: TODAY,
-  });
+  let project = activeProject();
+  const isNewProject = !project;
+  if (!project) {
+    project = normalizeProject({
+      id: `project-${Date.now()}`,
+      createdAt: TODAY,
+      candidateState: {},
+    });
+    state.projects.unshift(project);
+    state.activeProjectId = project.id;
+  }
+  project.title = $("#projectTitleInput").value.trim() || deriveProjectTitle(originalRequest);
+  project.originalRequest = originalRequest;
+  project.searchMode = $("#searchModeSelect").value;
+  project.status = "criteria_review";
+  project.updatedAt = TODAY;
+  project.results = [];
   project.criteria = await llmService.extractCriteria(originalRequest);
   project.searchTerms = await llmService.expandResearchTerms(project.criteria);
-  state.projects.unshift(project);
-  state.activeProjectId = project.id;
   saveState();
   resetFilters();
   renderProjectList();
@@ -637,7 +643,7 @@ async function analyseRequirement() {
   $("#criteriaSection").classList.remove("is-hidden");
   $("#resultsSection").classList.add("is-hidden");
   clearLoading($("#analyseBtn"), "Analyse Requirement");
-  toast(`Project created: ${project.title}`);
+  toast(`Project ${isNewProject ? "created" : "updated"}: ${project.title}`);
 }
 
 function renderCriteria() {
