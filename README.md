@@ -7,7 +7,7 @@ Simple MVP prototype for technical recruiters researching specialised candidates
 1. Recruiter enters a natural-language talent requirement.
 2. The app tries an AI criteria parser first, then falls back to a free local parser if no backend/API key is available.
 3. Recruiter can add or remove criteria before research starts.
-4. OpenAlex live search retrieves real public scholarly works and aggregates authors as candidates.
+4. An automatic source planner selects a source mix, then OpenAlex and GitHub public APIs retrieve publication, repository-owner, and contributor evidence.
 5. Candidate cards show score, top reasons, expertise, confidence, and status.
 6. Candidate Brief shows evidence-linked reasons, score breakdown, timeline, publications, sources, and uncertainty.
 7. Recruiter can change status, add notes, tags, rejection reason, public URL, verified information, and corrections.
@@ -21,21 +21,24 @@ The current repository is a plain static web app, so Phase 1 is implemented as a
 
 - `index.html`: application shell and dialogs.
 - `styles.css`: responsive research-workspace UI.
-- `app.js`: AI criteria client, rule-based fallback parser, source-provider interfaces, OpenAlex source, search-link provider, scoring, persistence, and UI rendering.
+- `app.js`: AI criteria client, rule-based fallback parser, automatic source planner, OpenAlex source, GitHub source, search-link provider, scoring, persistence, and UI rendering.
 - `server.js`: small Node server for static files plus `POST /api/analyze-jd`.
 
 The JavaScript intentionally mirrors the requested service boundaries:
 
 - `CriteriaAnalysisService`
 - `RuleBasedCriteriaService`
+- `SourcePlanner`
 - `CandidateSource`
 - `OpenAlexCandidateSource`
+- `GitHubCandidateSource`
 - `MockCandidateSource`
 - `SearchLinkProvider`
 
 ## Assumptions
 
 - The live candidate search uses OpenAlex public scholarly records and requires browser network access.
+- GitHub repository and contributor search uses the public GitHub API. Without a GitHub token, public search rate limits can apply.
 - AI JD parsing requires a backend with `OPENAI_API_KEY`. Without that key, the frontend automatically uses local rules and does not incur AI API cost.
 - Language ability, current enrollment, graduation date, visa, and availability can be captured as criteria but must be verified manually; OpenAlex cannot prove them.
 - LinkedIn and Google Scholar remain manual verification links only.

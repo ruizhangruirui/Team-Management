@@ -167,6 +167,33 @@ class RuleBasedCriteriaService {
   }
 }
 
+class SourcePlanner {
+  plan(criteria, project = {}) {
+    const text = unique(Object.values(criteria || {}).flat()).join(" ").toLowerCase();
+    const isCampus = project.candidateStage === "early-career" || /\b(phd candidate|recent phd|intern|campus|master student|bachelor)\b/.test(text);
+    const isIndustry = /\b(senior|principal|staff|engineer|architect|cuda|compiler|kernel|systems|infrastructure|production|nvidia|google|microsoft|huawei|meta|amazon)\b/.test(text);
+    const isOpenSource = /\b(github|open source|llvm|mlir|tvm|triton|pytorch|kubernetes|linux)\b/.test(text);
+    const isAcademic = /\b(publication|research scientist|professor|postdoctoral|paper|academic|university)\b/.test(text);
+    let mode = "balanced";
+    if (isCampus) mode = "campus";
+    else if (isOpenSource) mode = "open-source";
+    else if (isIndustry) mode = "industry";
+    else if (isAcademic) mode = "academic";
+    const plans = {
+      campus: { mode, openAlexLimit: 14, githubLimit: 6, githubContributorDepth: 2, boost: "first-author and university evidence" },
+      industry: { mode, openAlexLimit: 6, githubLimit: 14, githubContributorDepth: 5, boost: "GitHub contributors, company pages, patents, and technical forums" },
+      "open-source": { mode, openAlexLimit: 4, githubLimit: 16, githubContributorDepth: 6, boost: "GitHub repositories and contributors" },
+      academic: { mode, openAlexLimit: 16, githubLimit: 5, githubContributorDepth: 2, boost: "publication and affiliation evidence" },
+      balanced: { mode, openAlexLimit: 10, githubLimit: 10, githubContributorDepth: 3, boost: "mixed publication and engineering evidence" },
+    };
+    return {
+      ...plans[mode],
+      sources: ["OpenAlex", "GitHub", "Patent search tasks", "Company/web verification tasks"],
+      discoveryQueries: buildAgentDiscoveryQueries(criteria, mode),
+    };
+  }
+}
+
 class MockCandidateSource extends sourceArchitecture.CandidateSource {
   constructor() {
     super("MockCandidateSource", sourceArchitecture.AccessMode.MANUAL_INPUT);
@@ -379,26 +406,38 @@ class GitHubCandidateSource extends sourceArchitecture.CandidateSource {
     super("GitHubSource", sourceArchitecture.AccessMode.API);
   }
 
-  async search(criteria, limit = 8) {
+  async search(criteria, limit = 8, options = {}) {
     const queries = buildGitHubQueries(criteria).slice(0, 3);
     if (!queries.length) return [];
     const repoMap = new Map();
+    const contributorDepth = options.sourcePlan?.githubContributorDepth || 3;
     for (const query of queries) {
       const repos = await this.fetchRepositories(query);
       repos.forEach((repo) => {
         const owner = repo.owner?.login;
         if (!owner) return;
-        const existing = repoMap.get(owner) || { owner, repos: [], matchedQueries: [] };
-        existing.repos.push(repo);
-        existing.matchedQueries.push(query);
-        repoMap.set(owner, existing);
+        this.addLead(repoMap, owner, repo, query, "owner");
       });
+      for (const repo of repos.slice(0, contributorDepth)) {
+        const contributors = await this.fetchContributors(repo);
+        contributors.slice(0, 5).forEach((contributor) => {
+          if (contributor.login) this.addLead(repoMap, contributor.login, repo, query, "contributor");
+        });
+      }
     }
-    const leads = await Promise.all([...repoMap.values()].slice(0, limit * 2).map((entry) => this.buildLead(entry, criteria)));
+    const leads = await Promise.all([...repoMap.values()].slice(0, limit * 2).map((entry) => this.buildLead(entry, criteria, options.sourcePlan)));
     return leads
       .filter(Boolean)
       .sort((a, b) => b.totalScore - a.totalScore)
       .slice(0, limit);
+  }
+
+  addLead(map, login, repo, query, relation) {
+    const existing = map.get(login) || { owner: login, repos: [], matchedQueries: [], relations: [] };
+    existing.repos.push({ ...repo, _leadRelation: relation });
+    existing.matchedQueries.push(query);
+    existing.relations.push(relation);
+    map.set(login, existing);
   }
 
   async fetchRepositories(query) {
@@ -426,15 +465,29 @@ class GitHubCandidateSource extends sourceArchitecture.CandidateSource {
     return response.json();
   }
 
-  async buildLead(entry, criteria) {
+  async fetchContributors(repo) {
+    if (!repo.contributors_url) return [];
+    try {
+      const response = await fetch(`${repo.contributors_url}?per_page=8`, {
+        headers: { Accept: "application/vnd.github+json" },
+      });
+      if (!response.ok) return [];
+      return response.json();
+    } catch {
+      return [];
+    }
+  }
+
+  async buildLead(entry, criteria, sourcePlan = {}) {
     const profile = await this.fetchUser(entry.owner);
     const repos = uniqueBy(entry.repos, (repo) => repo.html_url).slice(0, 4);
     const sourceRecords = repos.map((repo, index) => ({
       id: `github-source-${entry.owner}-${index}`,
-      sourceType: "GitHub repository",
+      sourceType: repo._leadRelation === "contributor" ? "GitHub contributor" : "GitHub repository owner",
       sourceTitle: repo.full_name || repo.name || "GitHub repository",
       sourceUrl: repo.html_url || "",
       extractedFacts: [
+        `Relationship: ${repo._leadRelation || "repository lead"}`,
         `Repository description: ${repo.description || "Not provided"}`,
         `Stars: ${repo.stargazers_count || 0}`,
         `Primary language: ${repo.language || "Evidence unavailable"}`,
@@ -466,11 +519,11 @@ class GitHubCandidateSource extends sourceArchitecture.CandidateSource {
       scholarSearchLink: "",
       timeline: repos.map((repo) => ({
         date: repo.updated_at ? repo.updated_at.slice(0, 10) : "Date not verified",
-        label: repo.full_name || repo.name,
+        label: `${repo._leadRelation === "contributor" ? "Contributor to" : "Owner of"} ${repo.full_name || repo.name}`,
         source: "GitHub repository",
       })),
       matchReasons: [
-        { text: `Owns or contributes to GitHub repositories matching: ${unique(entry.matchedQueries).slice(0, 3).join(", ")}.`, sourceIds: sourceRecords.slice(0, 2).map((record) => record.id) },
+        { text: `GitHub evidence shows ${unique(entry.relations).join(" / ")} activity in repositories matching: ${unique(entry.matchedQueries).slice(0, 3).join(", ")}.`, sourceIds: sourceRecords.slice(0, 2).map((record) => record.id) },
         { text: `Repository evidence includes ${repos.map((repo) => repo.full_name).filter(Boolean).slice(0, 2).join(", ")}.`, sourceIds: sourceRecords.slice(0, 2).map((record) => record.id) },
       ],
       missingInformation: [
@@ -482,7 +535,7 @@ class GitHubCandidateSource extends sourceArchitecture.CandidateSource {
       createdAt: TODAY,
       updatedAt: TODAY,
     };
-    const score = scoreGitHubCandidate(candidate, repos, criteria);
+    const score = scoreGitHubCandidate(candidate, repos, criteria, sourcePlan);
     candidate.scoreBreakdown = score.breakdown;
     candidate.totalScore = score.total;
     candidate.evidenceConfidence = computeConfidence(candidate);
@@ -508,6 +561,7 @@ class SearchLinkProvider extends sourceArchitecture.CandidateSource {
 }
 
 const llmService = new CriteriaAnalysisService();
+const sourcePlanner = new SourcePlanner();
 const openAlexSource = new OpenAlexCandidateSource();
 const githubSource = new GitHubCandidateSource();
 const linkProvider = new SearchLinkProvider();
@@ -708,6 +762,7 @@ function normalizeProject(project) {
     candidateState: project.candidateState || {},
     searchMode: project.searchMode || "openalex",
     candidateStage: project.candidateStage || "any",
+    sourcePlan: project.sourcePlan || null,
     criteriaAnalysisMode: project.criteriaAnalysisMode || "Local rules",
     status: project.status || "draft",
     createdAt: project.createdAt || TODAY,
@@ -972,12 +1027,18 @@ async function startResearch() {
     return;
   }
   setLoading($("#startResearchBtn"), project.searchMode === "swiss-campus" ? "Searching Swiss universities..." : "Searching OpenAlex...");
-  project.searchTerms = await llmService.expandResearchTerms(project.criteria);
+  const sourcePlan = sourcePlanner.plan(project.criteria, project);
+  project.sourcePlan = sourcePlan;
+  project.searchTerms = {
+    ...(await llmService.expandResearchTerms(project.criteria)),
+    agent_source_plan: [`Mode: ${sourcePlan.mode}`, `Boost: ${sourcePlan.boost}`, `Sources: ${sourcePlan.sources.join(", ")}`],
+    agent_discovery_queries: sourcePlan.discoveryQueries,
+  };
   try {
-    setLoading($("#startResearchBtn"), "Searching public sources...");
+    setLoading($("#startResearchBtn"), `Agent searching ${sourcePlan.mode} sources...`);
     const [openAlexOutcome, githubOutcome] = await Promise.allSettled([
-      openAlexSource.search(project.criteria, 16, { searchMode: project.searchMode, candidateStage: project.candidateStage }),
-      githubSource.search(project.criteria, 8),
+      openAlexSource.search(project.criteria, sourcePlan.openAlexLimit, { searchMode: project.searchMode, candidateStage: project.candidateStage, sourcePlan }),
+      githubSource.search(project.criteria, sourcePlan.githubLimit, { sourcePlan }),
     ]);
     const sourceErrors = [openAlexOutcome, githubOutcome]
       .filter((outcome) => outcome.status === "rejected")
@@ -1431,7 +1492,7 @@ function scoreOpenAlexCandidate(candidate, criteria) {
   return { total, breakdown };
 }
 
-function scoreGitHubCandidate(candidate, repos, criteria) {
+function scoreGitHubCandidate(candidate, repos, criteria, sourcePlan = {}) {
   const terms = unique([
     ...criteria.core_technical_skills,
     ...criteria.research_topics,
@@ -1451,7 +1512,8 @@ function scoreGitHubCandidate(candidate, repos, criteria) {
     location: candidate.location !== "Evidence unavailable" ? 4 : 0,
     activity: clamp(recentRepos * 5 + Math.log10(stars + 1) * 8, 0, 25),
   };
-  const total = clamp(Object.values(breakdown).reduce((sum, value) => sum + value, 0) + 18, 20, 100);
+  const sourceBoost = ["industry", "open-source", "balanced"].includes(sourcePlan.mode) ? 12 : 0;
+  const total = clamp(Object.values(breakdown).reduce((sum, value) => sum + value, 0) + 18 + sourceBoost, 20, 100);
   return { total, breakdown };
 }
 
@@ -1501,6 +1563,48 @@ function inferGitHubSkills(repos, criteria) {
     ...criteria.core_technical_skills.filter((term) => repoText.includes(term.toLowerCase()) || fuzzyIncludes(repoText, term.toLowerCase())),
     ...repos.map((repo) => repo.language).filter(Boolean),
   ]).slice(0, 8);
+}
+
+function buildAgentDiscoveryQueries(criteria, mode) {
+  const terms = unique([
+    ...criteria.core_technical_skills,
+    ...criteria.research_topics,
+    ...criteria.related_terminology,
+    ...criteria.target_companies,
+  ]).slice(0, 5);
+  const topic = terms.slice(0, 3).join(" ") || "AI systems";
+  const company = criteria.target_companies[0] || "";
+  const conferenceSites = inferConferenceSites(criteria).slice(0, 5);
+  const companyQuery = company ? `${topic} ${company}` : topic;
+  const queries = [
+    `GitHub contributors: ${topic}`,
+    `Google Patents inventors: ${companyQuery}`,
+    `Company engineering pages: ${companyQuery} engineer profile team`,
+    `Technical blogs: ${topic} engineering blog`,
+    ...conferenceSites.map((site) => `Conference speakers ${site}: ${topic}`),
+  ];
+  if (mode === "campus") {
+    queries.unshift(`University lab pages: ${topic} PhD candidate`);
+  }
+  if (mode === "industry" || mode === "open-source") {
+    queries.unshift(`Open-source maintainers: ${topic}`);
+    queries.unshift(`Forum experts: ${topic} developer forum discourse`);
+  }
+  return unique(queries).slice(0, 10);
+}
+
+function inferConferenceSites(criteria) {
+  const text = unique([...criteria.core_technical_skills, ...criteria.research_topics, ...criteria.related_terminology]).join(" ").toLowerCase();
+  if (/compiler|mlir|llvm|tvm|triton|cuda|kernel|gpu|systems|infrastructure|hpc/.test(text)) {
+    return ["llvm.org", "nvidia.com/gtc", "mlsys.org", "usenix.org", "acm.org"];
+  }
+  if (/robot|planning|control|slam|autonomous/.test(text)) {
+    return ["ieee-ras.org", "roboticsconference.org", "corl.org", "iros2026.org"];
+  }
+  if (/language|llm|nlp|rag|retrieval|multimodal/.test(text)) {
+    return ["aclweb.org", "openreview.net", "huggingface.co", "neurips.cc", "iclr.cc"];
+  }
+  return ["openreview.net", "acm.org", "ieee.org", "usenix.org"];
 }
 
 function isExcludedByCandidateStage(candidate, options = {}) {
@@ -1888,6 +1992,9 @@ function buildVerificationSearches(candidate, criteria) {
     { label: "Patents", url: `https://patents.google.com/?q=${encodeURIComponent(technical)}` },
     { label: "Web", url: `https://www.google.com/search?q=${encodeURIComponent(technical)}` },
     { label: "Company pages", url: `https://www.google.com/search?q=${encodeURIComponent(`${technical} site:*.com profile OR team OR staff`)}` },
+    { label: "Conference", url: `https://www.google.com/search?q=${encodeURIComponent(`${technical} speaker OR talk OR workshop`)}` },
+    { label: "Forums", url: `https://www.google.com/search?q=${encodeURIComponent(`${technical} discourse OR forum OR issue OR pull request`)}` },
+    { label: "Blogs", url: `https://www.google.com/search?q=${encodeURIComponent(`${technical} engineering blog OR technical blog`)}` },
   ];
 }
 
