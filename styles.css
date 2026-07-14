@@ -171,6 +171,79 @@ summary:focus-visible {
   color: var(--primary-dark);
 }
 
+.project-panel {
+  display: grid;
+  gap: 10px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding: 16px 0;
+}
+
+.sidebar-section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 850;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.mini-btn {
+  min-height: 28px;
+  border-radius: 999px;
+  font-size: 11px;
+  padding: 3px 9px;
+}
+
+.project-list {
+  display: grid;
+  gap: 8px;
+  max-height: 42vh;
+  overflow: auto;
+  padding-right: 2px;
+}
+
+.project-item {
+  display: grid;
+  gap: 5px;
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  padding: 10px;
+  text-align: left;
+}
+
+.project-item.active {
+  border-color: #b7ccee;
+  background: #eef5ff;
+}
+
+.project-item strong {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-item small {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.project-empty {
+  border: 1px dashed #b6c4d6;
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  padding: 12px;
+}
+
 .workspace {
   display: grid;
   gap: 22px;

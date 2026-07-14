@@ -20,6 +20,13 @@
           <button class="nav-btn active" type="button" data-view="research">Research Projects</button>
           <button class="nav-btn" type="button" data-view="shortlist">Shortlist</button>
         </nav>
+        <section class="project-panel" aria-label="Research projects">
+          <div class="sidebar-section-title">
+            <span>Projects / Roles</span>
+            <button id="newProjectBtn" class="mini-btn" type="button">New</button>
+          </div>
+          <div id="projectList" class="project-list"></div>
+        </section>
         <button id="manualCandidateBtn" class="secondary full-width" type="button">Add Manual Candidate</button>
         <p class="sidebar-note">Mock data only. LinkedIn and Google Scholar are manual verification links, never scraped.</p>
       </aside>
@@ -36,6 +43,8 @@
           </header>
 
           <section class="start-panel">
+            <label for="projectTitleInput">Role / Project name</label>
+            <input id="projectTitleInput" type="text" placeholder="e.g. Senior CUDA Kernel Engineer" />
             <label for="requirementInput">Talent requirement</label>
             <textarea id="requirementInput" rows="7" placeholder="Find researchers working on multimodal LLM evaluation in Europe."></textarea>
             <div class="examples" aria-label="Example inputs">
@@ -108,7 +117,7 @@
             <div>
               <p class="eyebrow">Recruiter review</p>
               <h1>Shortlist</h1>
-              <p>Candidates marked Shortlisted or Strong Fit.</p>
+              <p id="shortlistSubtitle">Candidates marked Shortlisted or Strong Fit for the selected project.</p>
             </div>
           </header>
           <div id="shortlistGrid" class="candidate-grid"></div>

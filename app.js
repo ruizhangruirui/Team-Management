@@ -14,12 +14,9 @@ const REJECTION_REASONS = [
 ];
 
 const state = {
-  project: null,
-  criteria: null,
-  searchTerms: null,
-  results: [],
+  projects: [],
+  activeProjectId: "",
   manualCandidates: [],
-  candidateState: {},
   activeView: "research",
 };
 
@@ -285,18 +282,55 @@ function loadState() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
     state.manualCandidates = saved.manualCandidates || [];
-    state.candidateState = saved.candidateState || {};
+    state.projects = (saved.projects || []).map(normalizeProject);
+    state.activeProjectId = saved.activeProjectId || state.projects[0]?.id || "";
+    if (!state.projects.length && saved.candidateState) {
+      state.projects = [normalizeProject({
+        id: `project-${Date.now()}`,
+        title: "Recovered research project",
+        originalRequest: "",
+        criteria: null,
+        searchTerms: null,
+        results: [],
+        candidateState: saved.candidateState,
+        status: "draft",
+        createdAt: TODAY,
+        updatedAt: TODAY,
+      })];
+      state.activeProjectId = state.projects[0].id;
+    }
   } catch {
     state.manualCandidates = [];
-    state.candidateState = {};
+    state.projects = [];
+    state.activeProjectId = "";
   }
 }
 
 function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    projects: state.projects,
+    activeProjectId: state.activeProjectId,
     manualCandidates: state.manualCandidates,
-    candidateState: state.candidateState,
   }));
+}
+
+function normalizeProject(project) {
+  return {
+    id: project.id || `project-${Date.now()}`,
+    title: project.title || "Untitled role",
+    originalRequest: project.originalRequest || "",
+    criteria: project.criteria || null,
+    searchTerms: project.searchTerms || null,
+    results: project.results || [],
+    candidateState: project.candidateState || {},
+    status: project.status || "draft",
+    createdAt: project.createdAt || TODAY,
+    updatedAt: project.updatedAt || TODAY,
+  };
+}
+
+function activeProject() {
+  return state.projects.find((project) => project.id === state.activeProjectId) || null;
 }
 
 function $(selector, root = document) {
@@ -311,6 +345,8 @@ function init() {
   loadState();
   bindEvents();
   renderStatusOptions();
+  renderProjectList();
+  renderActiveProject();
   renderShortlist();
 }
 
@@ -320,6 +356,7 @@ function bindEvents() {
     $("#requirementInput").value = button.dataset.example;
   }));
   $("#analyseBtn").addEventListener("click", analyseRequirement);
+  $("#newProjectBtn").addEventListener("click", newProjectDraft);
   $("#startResearchBtn").addEventListener("click", startResearch);
   $("#resetResearchBtn").addEventListener("click", resetResearch);
   $("#statusFilter").addEventListener("change", renderCandidates);
@@ -334,6 +371,65 @@ function bindEvents() {
   $("#manualForm").addEventListener("submit", saveManualCandidate);
 }
 
+function newProjectDraft() {
+  state.activeProjectId = "";
+  $("#projectTitleInput").value = "";
+  $("#requirementInput").value = "";
+  $("#criteriaSection").classList.add("is-hidden");
+  $("#resultsSection").classList.add("is-hidden");
+  resetFilters();
+  renderProjectList();
+  switchView("research");
+  $("#projectTitleInput").focus();
+}
+
+function switchProject(projectId) {
+  state.activeProjectId = projectId;
+  saveState();
+  renderProjectList();
+  renderActiveProject();
+  renderShortlist();
+  switchView("research");
+}
+
+function renderProjectList() {
+  const list = $("#projectList");
+  if (!state.projects.length) {
+    list.innerHTML = `<div class="project-empty">Create one project per role or hiring requirement.</div>`;
+    return;
+  }
+  list.innerHTML = state.projects.map((project) => {
+    const shortlistCount = Object.values(project.candidateState || {}).filter((record) => ["Shortlisted", "Strong Fit"].includes(record.status)).length;
+    return `
+      <button class="project-item ${project.id === state.activeProjectId ? "active" : ""}" type="button" data-project-id="${project.id}">
+        <strong>${escapeHtml(project.title)}</strong>
+        <small>${project.results.length} results · ${shortlistCount} shortlisted · ${escapeHtml(project.status)}</small>
+      </button>
+    `;
+  }).join("");
+  $all("[data-project-id]", list).forEach((button) => button.addEventListener("click", () => switchProject(button.dataset.projectId)));
+}
+
+function renderActiveProject() {
+  const project = activeProject();
+  $("#projectTitleInput").value = project?.title || "";
+  $("#requirementInput").value = project?.originalRequest || "";
+  if (!project?.criteria) {
+    $("#criteriaSection").classList.add("is-hidden");
+    $("#resultsSection").classList.add("is-hidden");
+    return;
+  }
+  renderCriteria();
+  $("#criteriaSection").classList.remove("is-hidden");
+  if (project.results.length) {
+    renderStrategy();
+    renderCandidates();
+    $("#resultsSection").classList.remove("is-hidden");
+  } else {
+    $("#resultsSection").classList.add("is-hidden");
+  }
+}
+
 async function analyseRequirement() {
   const originalRequest = $("#requirementInput").value.trim();
   if (!originalRequest) {
@@ -341,26 +437,34 @@ async function analyseRequirement() {
     return;
   }
   setLoading($("#analyseBtn"), "Analysing...");
-  state.project = {
+  const project = normalizeProject({
     id: `project-${Date.now()}`,
-    title: originalRequest.slice(0, 72),
+    title: $("#projectTitleInput").value.trim() || deriveProjectTitle(originalRequest),
     originalRequest,
     status: "criteria_review",
     createdAt: TODAY,
     updatedAt: TODAY,
-  };
-  state.criteria = await llmService.extractCriteria(originalRequest);
-  state.searchTerms = await llmService.expandResearchTerms(state.criteria);
+  });
+  project.criteria = await llmService.extractCriteria(originalRequest);
+  project.searchTerms = await llmService.expandResearchTerms(project.criteria);
+  state.projects.unshift(project);
+  state.activeProjectId = project.id;
+  saveState();
+  resetFilters();
+  renderProjectList();
   renderCriteria();
   $("#criteriaSection").classList.remove("is-hidden");
   $("#resultsSection").classList.add("is-hidden");
   clearLoading($("#analyseBtn"), "Analyse Requirement");
+  toast(`Project created: ${project.title}`);
 }
 
 function renderCriteria() {
+  const project = activeProject();
+  if (!project?.criteria) return;
   const editor = $("#criteriaEditor");
   editor.innerHTML = "";
-  Object.entries(state.criteria).forEach(([key, values]) => {
+  Object.entries(project.criteria).forEach(([key, values]) => {
     const valueList = Array.isArray(values) ? values : [values].filter(Boolean);
     const card = document.createElement("article");
     card.className = "criterion-card";
@@ -391,25 +495,38 @@ function chipTemplate(key, value, index) {
 }
 
 function addCriterion(key, value) {
+  const project = activeProject();
+  if (!project?.criteria) return;
   const clean = value.trim();
   if (!clean) return;
-  const current = Array.isArray(state.criteria[key]) ? state.criteria[key] : [state.criteria[key]].filter(Boolean);
-  state.criteria[key] = unique([...current, clean]);
+  const current = Array.isArray(project.criteria[key]) ? project.criteria[key] : [project.criteria[key]].filter(Boolean);
+  project.criteria[key] = unique([...current, clean]);
+  project.updatedAt = TODAY;
+  saveState();
   renderCriteria();
 }
 
 function removeCriterion(key, index) {
-  const current = Array.isArray(state.criteria[key]) ? state.criteria[key] : [state.criteria[key]].filter(Boolean);
-  state.criteria[key] = current.filter((_, itemIndex) => itemIndex !== index);
+  const project = activeProject();
+  if (!project?.criteria) return;
+  const current = Array.isArray(project.criteria[key]) ? project.criteria[key] : [project.criteria[key]].filter(Boolean);
+  project.criteria[key] = current.filter((_, itemIndex) => itemIndex !== index);
+  project.updatedAt = TODAY;
+  saveState();
   renderCriteria();
 }
 
 async function startResearch() {
+  const project = activeProject();
+  if (!project?.criteria) {
+    toast("Create or select a project and review criteria first.");
+    return;
+  }
   setLoading($("#startResearchBtn"), "Searching mock sources...");
-  state.searchTerms = await llmService.expandResearchTerms(state.criteria);
-  const results = await mockSource.search(state.criteria, 16);
-  state.results = await Promise.all(results.map(async (candidateRecord) => {
-    const reasons = await llmService.explainCandidateMatch(candidateRecord, state.criteria, { total: candidateRecord.totalScore });
+  project.searchTerms = await llmService.expandResearchTerms(project.criteria);
+  const results = await mockSource.search(project.criteria, 16);
+  project.results = await Promise.all(results.map(async (candidateRecord) => {
+    const reasons = await llmService.explainCandidateMatch(candidateRecord, project.criteria, { total: candidateRecord.totalScore });
     return {
       ...candidateRecord,
       matchReasons: reasons.length ? reasons : [{ text: "Evidence unavailable", sourceIds: [] }],
@@ -417,6 +534,10 @@ async function startResearch() {
       reviewStatus: getCandidateState(candidateRecord.id).status,
     };
   }));
+  project.status = "researched";
+  project.updatedAt = TODAY;
+  saveState();
+  renderProjectList();
   renderStrategy();
   renderCandidates();
   $("#resultsSection").classList.remove("is-hidden");
@@ -425,7 +546,8 @@ async function startResearch() {
 }
 
 function renderStrategy() {
-  $("#strategyTerms").innerHTML = Object.entries(state.searchTerms).map(([group, terms]) => `
+  const project = activeProject();
+  $("#strategyTerms").innerHTML = Object.entries(project?.searchTerms || {}).map(([group, terms]) => `
     <div class="term-group">
       <strong>${labelize(group)}</strong>
       <div class="chips">${terms.map((term) => `<span class="chip">${escapeHtml(term)}</span>`).join("") || "<span class=\"chip\">Evidence unavailable</span>"}</div>
@@ -439,19 +561,26 @@ function renderStatusOptions() {
 
 function renderCandidates() {
   const grid = $("#candidateGrid");
+  const project = activeProject();
+  if (!project) {
+    grid.innerHTML = `<div class="empty-state">Create a project to start researching candidates.</div>`;
+    return;
+  }
   const filtered = getFilteredResults();
-  $("#resultsSummary").textContent = `${filtered.length} candidate${filtered.length === 1 ? "" : "s"} shown. Scores prioritize recruiter review only.`;
+  $("#resultsSummary").textContent = `${filtered.length} candidate${filtered.length === 1 ? "" : "s"} shown for ${project.title}. Scores prioritize recruiter review only.`;
   grid.innerHTML = filtered.length ? filtered.map(candidateCardTemplate).join("") : `<div class="empty-state">No candidates match the current filters.</div>`;
   $all("[data-open-candidate]", grid).forEach((button) => button.addEventListener("click", () => openCandidate(button.dataset.openCandidate)));
 }
 
 function getFilteredResults() {
+  const project = activeProject();
+  if (!project) return [];
   const status = $("#statusFilter").value;
   const minimum = Number($("#scoreFilter").value);
   const location = $("#locationFilter").value.trim().toLowerCase();
   const topic = $("#topicFilter").value.trim().toLowerCase();
   const sort = $("#sortSelect").value;
-  return state.results
+  return project.results
     .filter((candidate) => status === "all" || getCandidateState(candidate.id).status === status)
     .filter((candidate) => candidate.totalScore >= minimum)
     .filter((candidate) => !location || candidate.location.toLowerCase().includes(location))
@@ -497,7 +626,8 @@ function candidateCardTemplate(candidate) {
 }
 
 function openCandidate(candidateId) {
-  const candidate = [...state.results, ...MOCK_CANDIDATES, ...state.manualCandidates].find((item) => item.id === candidateId);
+  const project = activeProject();
+  const candidate = [...(project?.results || []), ...MOCK_CANDIDATES, ...state.manualCandidates].find((item) => item.id === candidateId);
   if (!candidate) return;
   const persisted = getCandidateState(candidate.id);
   const links = linkProvider.searchLinks(candidate);
@@ -507,14 +637,16 @@ function openCandidate(candidateId) {
 }
 
 function briefTemplate(candidate, persisted, links) {
-  const scoreBreakdown = candidate.scoreBreakdown || scoreCandidate(candidate, state.criteria || fillEmptyCriteria({})).breakdown;
-  const totalScore = candidate.totalScore || scoreCandidate(candidate, state.criteria || fillEmptyCriteria({})).total;
+  const project = activeProject();
+  const criteria = project?.criteria || fillEmptyCriteria({});
+  const scoreBreakdown = candidate.scoreBreakdown || scoreCandidate(candidate, criteria).breakdown;
+  const totalScore = candidate.totalScore || scoreCandidate(candidate, criteria).total;
   const confidence = candidate.evidenceConfidence || computeConfidence(candidate);
   const sources = candidate.sourceRecords || [];
   return `
     <header class="brief-header">
       <div>
-        <p class="eyebrow">${candidate.enteredManually ? "Recruiter-entered" : "Candidate Brief"}</p>
+        <p class="eyebrow">${candidate.enteredManually ? "Recruiter-entered" : `Candidate Brief · ${escapeHtml(project?.title || "Selected project")}`}</p>
         <h2>${escapeHtml(candidate.fullName)}</h2>
         <p>${escapeHtml(candidate.currentTitle || "Evidence unavailable")} - ${escapeHtml(candidate.currentOrganisation || "Evidence unavailable")} - ${escapeHtml(candidate.location || "Evidence unavailable")}</p>
         <div class="chips">
@@ -631,11 +763,12 @@ function bindBriefEvents(candidate) {
   $("#candidateBrief [data-shortlist]").addEventListener("click", () => {
     const candidateState = getCandidateState(candidate.id);
     candidateState.status = "Shortlisted";
-    state.candidateState[candidate.id] = candidateState;
+    setCandidateState(candidate.id, candidateState);
     saveState();
     toast("Candidate shortlisted.");
     renderCandidates();
     renderShortlist();
+    renderProjectList();
     openCandidate(candidate.id);
   });
   $("#candidateBrief [data-find-similar]").addEventListener("click", () => renderSimilarCandidates(candidate));
@@ -653,10 +786,11 @@ function saveCandidateActions(candidateId) {
   candidateState.correction = $("[data-correction]", root).value;
   candidateState.verifications = $all("[data-verification]", root).filter((box) => box.checked).map((box) => box.dataset.verification);
   candidateState.updatedAt = TODAY;
-  state.candidateState[candidateId] = candidateState;
+  setCandidateState(candidateId, candidateState);
   saveState();
   renderCandidates();
   renderShortlist();
+  renderProjectList();
   toast("Candidate review information saved.");
 }
 
@@ -683,14 +817,23 @@ function renderSimilarCandidates(candidate) {
 }
 
 function renderShortlist() {
-  const all = [...state.results, ...MOCK_CANDIDATES, ...state.manualCandidates];
+  const project = activeProject();
+  const subtitle = $("#shortlistSubtitle");
+  if (subtitle) {
+    subtitle.textContent = project ? `Candidates marked Shortlisted or Strong Fit for ${project.title}.` : "Select a project to see its shortlist.";
+  }
+  if (!project) {
+    $("#shortlistGrid").innerHTML = `<div class="empty-state">Select or create a project first.</div>`;
+    return;
+  }
+  const all = [...project.results, ...MOCK_CANDIDATES, ...state.manualCandidates];
   const shortlist = uniqueById(all).filter((candidate) => ["Shortlisted", "Strong Fit"].includes(getCandidateState(candidate.id).status));
   $("#shortlistGrid").innerHTML = shortlist.length ? shortlist.map((candidate) => candidateCardTemplate({
     ...candidate,
-    totalScore: candidate.totalScore || scoreCandidate(candidate, state.criteria || fillEmptyCriteria({})).total,
-    scoreBreakdown: candidate.scoreBreakdown || scoreCandidate(candidate, state.criteria || fillEmptyCriteria({})).breakdown,
+    totalScore: candidate.totalScore || scoreCandidate(candidate, project.criteria || fillEmptyCriteria({})).total,
+    scoreBreakdown: candidate.scoreBreakdown || scoreCandidate(candidate, project.criteria || fillEmptyCriteria({})).breakdown,
     evidenceConfidence: candidate.evidenceConfidence || computeConfidence(candidate),
-  })).join("") : `<div class="empty-state">No shortlisted candidates yet.</div>`;
+  })).join("") : `<div class="empty-state">No shortlisted candidates yet for this project.</div>`;
   $all("[data-open-candidate]", $("#shortlistGrid")).forEach((button) => button.addEventListener("click", () => openCandidate(button.dataset.openCandidate)));
 }
 
@@ -741,14 +884,17 @@ function saveManualCandidate(event) {
     updatedAt: now,
   };
   state.manualCandidates.push(manual);
-  state.candidateState[manual.id] = { ...getCandidateState(manual.id), notes: data.notes.trim(), status: "Reviewing" };
+  if (activeProject()) {
+    setCandidateState(manual.id, { ...getCandidateState(manual.id), notes: data.notes.trim(), status: "Reviewing" });
+  }
   saveState();
   form.reset();
   $("#manualDialog").close();
   toast("Manual candidate saved as recruiter-entered information.");
-  if (state.results.length) {
+  if (activeProject()?.results.length) {
     startResearch();
   }
+  renderProjectList();
   renderShortlist();
 }
 
@@ -836,7 +982,8 @@ function fillEmptyCriteria(criteria) {
 }
 
 function getCandidateState(candidateId) {
-  return state.candidateState[candidateId] || {
+  const project = activeProject();
+  return project?.candidateState?.[candidateId] || {
     status: "New",
     notes: "",
     tags: [],
@@ -847,6 +994,13 @@ function getCandidateState(candidateId) {
     verifications: [],
     updatedAt: TODAY,
   };
+}
+
+function setCandidateState(candidateId, value) {
+  const project = activeProject();
+  if (!project) return;
+  project.candidateState[candidateId] = value;
+  project.updatedAt = TODAY;
 }
 
 function computeConfidence(candidate) {
@@ -911,13 +1065,21 @@ function sharedTerms(left, right) {
 }
 
 function resetResearch() {
-  state.project = null;
-  state.criteria = null;
-  state.searchTerms = null;
-  state.results = [];
-  $("#criteriaSection").classList.add("is-hidden");
-  $("#resultsSection").classList.add("is-hidden");
-  $("#requirementInput").focus();
+  newProjectDraft();
+}
+
+function resetFilters() {
+  $("#statusFilter").value = "all";
+  $("#scoreFilter").value = "0";
+  $("#scoreFilterValue").textContent = "0+";
+  $("#locationFilter").value = "";
+  $("#topicFilter").value = "";
+  $("#sortSelect").value = "total";
+}
+
+function deriveProjectTitle(originalRequest) {
+  const clean = originalRequest.replace(/\s+/g, " ").trim();
+  return clean.length > 58 ? `${clean.slice(0, 58)}...` : clean;
 }
 
 function switchView(view) {
