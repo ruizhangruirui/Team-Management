@@ -1,6 +1,8 @@
 "use strict";
 
 const STORAGE_KEY = "ai-talent-research-mvp-v1";
+const AI_CRITERIA_ENDPOINT_KEY = "ai-talent-research-ai-endpoint";
+const DEFAULT_AI_CRITERIA_ENDPOINT = "/api/analyze-jd";
 const TODAY = new Date().toISOString().slice(0, 10);
 const STATUSES = ["New", "Reviewing", "Potential Fit", "Strong Fit", "Not Relevant", "Shortlisted", "Archived"];
 const REJECTION_REASONS = [
@@ -61,7 +63,51 @@ const sourceArchitecture = {
   },
 };
 
-class MockLLMService {
+class CriteriaAnalysisService {
+  constructor() {
+    this.localParser = new RuleBasedCriteriaService();
+    this.lastAnalysisMode = "Local rules";
+  }
+
+  async extractCriteria(userInput) {
+    const localCriteria = await this.localParser.extractCriteria(userInput);
+    const endpoint = getAiCriteriaEndpoint();
+    if (!endpoint) {
+      this.lastAnalysisMode = "Local rules";
+      return localCriteria;
+    }
+    try {
+      const response = await fetchWithTimeout(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ job_description: userInput }),
+      }, 18000);
+      if (!response.ok) {
+        throw new Error(`AI parser returned ${response.status}`);
+      }
+      const payload = await response.json();
+      if (!payload?.criteria) {
+        throw new Error("AI parser returned no criteria.");
+      }
+      this.lastAnalysisMode = payload.mode === "ai" ? "AI analyzed" : "Local rules";
+      return normalizeCriteria(payload.criteria, localCriteria);
+    } catch (error) {
+      console.warn("AI criteria parser unavailable; using local parser.", error);
+      this.lastAnalysisMode = "Local rules fallback";
+      return localCriteria;
+    }
+  }
+
+  async expandResearchTerms(criteria) {
+    return this.localParser.expandResearchTerms(criteria);
+  }
+
+  async explainCandidateMatch(candidate, criteria, score) {
+    return this.localParser.explainCandidateMatch(candidate, criteria, score);
+  }
+}
+
+class RuleBasedCriteriaService {
   async extractCriteria(userInput) {
     const text = userInput.toLowerCase();
     const jdTerms = extractJdTerms(userInput);
@@ -81,6 +127,11 @@ class MockLLMService {
       universities: unique([...extractKnownTerms(text, ["ETH Zurich", "EPFL", "Oxford", "Cambridge", "TU Munich", "Imperial College London", "Stanford", "MIT", "Carnegie Mellon", "Berkeley"]), ...jdTerms.universities]),
       academic_background: text.includes("phd") ? ["PhD", "doctoral research"] : [],
       location: unique([...extractKnownTerms(text, ["Europe", "Switzerland", "Zurich", "Germany", "UK", "London", "France", "Paris", "Netherlands", "United States", "China", "Singapore", "Canada"]), ...jdTerms.locations]),
+      languages_required: jdTerms.languages.required,
+      languages_preferred: jdTerms.languages.preferred,
+      degree_stage: jdTerms.degreeStage,
+      availability: jdTerms.availability,
+      manually_verify: jdTerms.manualVerification,
       jd_keywords: jdTerms.phrases,
       required_criteria: jdTerms.required,
       preferred_criteria: jdTerms.preferred,
@@ -307,7 +358,7 @@ class SearchLinkProvider extends sourceArchitecture.CandidateSource {
   }
 }
 
-const llmService = new MockLLMService();
+const llmService = new CriteriaAnalysisService();
 const openAlexSource = new OpenAlexCandidateSource();
 const linkProvider = new SearchLinkProvider();
 
@@ -506,6 +557,7 @@ function normalizeProject(project) {
     results: project.results || [],
     candidateState: project.candidateState || {},
     searchMode: project.searchMode || "openalex",
+    criteriaAnalysisMode: project.criteriaAnalysisMode || "Local rules",
     status: project.status || "draft",
     createdAt: project.createdAt || TODAY,
     updatedAt: project.updatedAt || TODAY,
@@ -609,6 +661,7 @@ function renderActiveProject() {
     return;
   }
   renderCriteria();
+  renderCriteriaAnalysisMode();
   $("#criteriaSection").classList.remove("is-hidden");
   if (project.results.length) {
     renderStrategy();
@@ -634,6 +687,9 @@ function renderJdKeywordPreview() {
     ...terms.phrases,
     ...terms.universities,
     ...terms.locations,
+    ...terms.languages.required,
+    ...terms.languages.preferred,
+    ...terms.degreeStage,
   ]).slice(0, 18);
   container.innerHTML = detected.length
     ? detected.map((term) => `<span class="chip">${escapeHtml(term)}</span>`).join("")
@@ -668,11 +724,13 @@ async function analyseRequirement() {
   project.updatedAt = TODAY;
   project.results = [];
   project.criteria = await llmService.extractCriteria(originalRequest);
+  project.criteriaAnalysisMode = llmService.lastAnalysisMode;
   project.searchTerms = await llmService.expandResearchTerms(project.criteria);
   saveState();
   resetFilters();
   renderProjectList();
   renderCriteria();
+  renderCriteriaAnalysisMode();
   $("#criteriaSection").classList.remove("is-hidden");
   $("#resultsSection").classList.add("is-hidden");
   clearLoading($("#analyseBtn"), "Analyse Requirement");
@@ -717,6 +775,18 @@ function renderCriteria() {
     });
     editor.append(card);
   });
+}
+
+function renderCriteriaAnalysisMode() {
+  const project = activeProject();
+  const mode = $("#criteriaAnalysisMode");
+  if (!mode) return;
+  const currentMode = project?.criteriaAnalysisMode || llmService.lastAnalysisMode;
+  const isAi = currentMode === "AI analyzed";
+  mode.textContent = isAi
+    ? "AI-analyzed JD criteria. Edit before live OpenAlex research."
+    : "Local rule-based fallback. Add OPENAI_API_KEY on the backend for true AI JD analysis.";
+  mode.classList.toggle("ai-mode", isAi);
 }
 
 function chipTemplate(key, value, index) {
@@ -1241,6 +1311,7 @@ function extractJdTerms(input) {
   const topics = extractResearchTopics(text);
   const phrases = extractTechnicalPhrases(input);
   const criteriaSentences = extractCriteriaSentences(input);
+  const languages = extractLanguageCriteria(input);
   const organisations = extractCapitalizedPhrases(input, /(lab|labs|research|systems|technologies|university|institute|inc|corp|corporation|group|gmbh|ag|sa|llc|ltd)/i).slice(0, 8);
   const universities = organisations.filter((item) => /(university|institute|eth|epfl|mit|stanford|cambridge|oxford)/i.test(item));
   const companies = unique([
@@ -1248,7 +1319,78 @@ function extractJdTerms(input) {
     ...organisations.filter((item) => isCompanyLikeName(item)),
   ]).filter((item) => !isUniversityLikeName(item) && !isGenericOrganisationToken(item));
   const locations = extractKnownTerms(text, ["Europe", "Switzerland", "Zurich", "Germany", "UK", "London", "France", "Paris", "Netherlands", "United States", "China", "Singapore", "Canada"]);
-  return { skills, topics, phrases, organisations, universities, companies, locations, ...criteriaSentences };
+  const degreeStage = extractDegreeStage(text);
+  const availability = extractAvailability(input);
+  const manualVerification = unique([
+    ...(languages.required.length || languages.preferred.length ? ["Language ability must be verified manually; OpenAlex cannot prove spoken languages."] : []),
+    ...(degreeStage.length ? ["Current enrollment, graduation date, and degree stage require manual verification."] : []),
+    ...(text.includes("visa") || text.includes("work permit") ? ["Visa or work authorization must be verified manually."] : []),
+  ]);
+  return { skills, topics, phrases, organisations, universities, companies, locations, languages, degreeStage, availability, manualVerification, ...criteriaSentences };
+}
+
+function extractLanguageCriteria(input) {
+  const text = input.toLowerCase();
+  const languageMap = {
+    english: "English",
+    英语: "English",
+    german: "German",
+    deutsch: "German",
+    德语: "German",
+    french: "French",
+    francais: "French",
+    français: "French",
+    法语: "French",
+    italian: "Italian",
+    意大利语: "Italian",
+    chinese: "Chinese",
+    mandarin: "Mandarin Chinese",
+    中文: "Chinese",
+    普通话: "Mandarin Chinese",
+  };
+  const required = [];
+  const preferred = [];
+  Object.entries(languageMap).forEach(([needle, label]) => {
+    if (!text.includes(needle)) return;
+    const nearby = languageClause(input, needle).toLowerCase();
+    if (/\b(preferred|nice to have|bonus|plus|optional)\b|优先|加分|最好/i.test(nearby)) {
+      preferred.push(label);
+    } else if (/\b(required|must|need|fluent|native|mandatory|excellent|proficient)\b|必须|需要|流利/i.test(nearby)) {
+      required.push(label);
+    } else {
+      preferred.push(label);
+    }
+  });
+  return { required: unique(required), preferred: unique(preferred) };
+}
+
+function languageClause(input, needle) {
+  const nearby = nearbyText(input, needle, 45);
+  return nearby
+    .split(/[,;。\n]/)
+    .find((part) => part.toLowerCase().includes(needle.toLowerCase())) || nearby;
+}
+
+function nearbyText(input, needle, radius) {
+  const lower = input.toLowerCase();
+  const index = lower.indexOf(needle.toLowerCase());
+  if (index < 0) return "";
+  return input.slice(Math.max(0, index - radius), Math.min(input.length, index + needle.length + radius));
+}
+
+function extractDegreeStage(text) {
+  const stages = [];
+  if (/\bbachelor|undergraduate|本科/.test(text)) stages.push("Bachelor");
+  if (/\bmaster|msc|研究生|硕士/.test(text)) stages.push("Master");
+  if (/\bphd|doctoral|博士/.test(text)) stages.push("PhD");
+  if (/\bpostdoc|postdoctoral/.test(text)) stages.push("Postdoc");
+  if (/\bintern|internship|实习|校招|campus/.test(text)) stages.push("Intern / campus hire");
+  return unique(stages);
+}
+
+function extractAvailability(input) {
+  const matches = input.match(/\b(?:20\d{2}|Q[1-4]\s*20\d{2}|summer|fall|autumn|spring|winter)\b/gi) || [];
+  return unique(matches).slice(0, 6);
 }
 
 function isCompanyLikeName(value) {
@@ -1375,6 +1517,11 @@ function fillEmptyCriteria(criteria) {
     universities: [],
     academic_background: [],
     location: [],
+    languages_required: [],
+    languages_preferred: [],
+    degree_stage: [],
+    availability: [],
+    manually_verify: [],
     required_criteria: [],
     preferred_criteria: [],
     exclusion_criteria: [],
@@ -1477,6 +1624,71 @@ function resetFilters() {
   $("#locationFilter").value = "";
   $("#topicFilter").value = "";
   $("#sortSelect").value = "total";
+}
+
+function getAiCriteriaEndpoint() {
+  const configured = localStorage.getItem(AI_CRITERIA_ENDPOINT_KEY);
+  if (configured === "off") return "";
+  return configured || DEFAULT_AI_CRITERIA_ENDPOINT;
+}
+
+async function fetchWithTimeout(url, options, timeoutMs) {
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    window.clearTimeout(timer);
+  }
+}
+
+function normalizeCriteria(criteria, fallback = fillEmptyCriteria({})) {
+  const aliases = {
+    target_roles: ["target_roles", "role_titles", "roles"],
+    seniority: ["seniority"],
+    core_technical_skills: ["core_technical_skills", "must_have_keywords", "skills", "technical_skills"],
+    research_topics: ["research_topics", "research_areas", "topics"],
+    related_terminology: ["related_terminology", "synonyms", "expanded_terms"],
+    publication_keywords: ["publication_keywords", "search_keywords", "openalex_keywords"],
+    target_companies: ["target_companies", "companies"],
+    relevant_industries: ["relevant_industries", "industries"],
+    universities: ["universities", "target_universities", "schools"],
+    academic_background: ["academic_background", "education"],
+    location: ["location", "locations"],
+    languages_required: ["languages_required", "required_languages"],
+    languages_preferred: ["languages_preferred", "preferred_languages"],
+    degree_stage: ["degree_stage", "candidate_stage", "degree_levels"],
+    availability: ["availability", "start_date", "graduation_timeline"],
+    manually_verify: ["manually_verify", "manual_verification", "needs_manual_check"],
+    required_criteria: ["required_criteria", "must_haves"],
+    preferred_criteria: ["preferred_criteria", "nice_to_haves"],
+    exclusion_criteria: ["exclusion_criteria", "exclusions"],
+    jd_keywords: ["jd_keywords", "keywords"],
+  };
+  const normalized = fillEmptyCriteria({});
+  Object.entries(aliases).forEach(([key, keyAliases]) => {
+    const value = keyAliases.map((alias) => criteria?.[alias]).find((item) => item !== undefined && item !== null);
+    if (key === "seniority") {
+      normalized[key] = String(value || fallback[key] || "not specified").trim() || "not specified";
+    } else {
+      normalized[key] = unique(flattenCriteriaValue(value)).length ? unique(flattenCriteriaValue(value)) : unique(flattenCriteriaValue(fallback[key]));
+    }
+  });
+  normalized.target_companies = normalized.target_companies.filter((item) => !isUniversityLikeName(item) && !isGenericOrganisationToken(item));
+  normalized.publication_keywords = unique([
+    ...normalized.publication_keywords,
+    ...normalized.research_topics,
+    ...normalized.core_technical_skills,
+    ...normalized.jd_keywords,
+  ]).slice(0, 14);
+  return normalized;
+}
+
+function flattenCriteriaValue(value) {
+  if (!value) return [];
+  if (Array.isArray(value)) return value.flatMap(flattenCriteriaValue);
+  if (typeof value === "object") return Object.values(value).flatMap(flattenCriteriaValue);
+  return [String(value)];
 }
 
 function deriveProjectTitle(originalRequest) {

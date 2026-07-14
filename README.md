@@ -1,11 +1,11 @@
 # AI Talent Research Workspace
 
-Simple MVP prototype for technical recruiters researching specialised candidates with free live OpenAlex publication search.
+Simple MVP prototype for technical recruiters researching specialised candidates with free live OpenAlex publication search and optional AI-powered JD criteria parsing.
 
 ## Core MVP in 10 points
 
 1. Recruiter enters a natural-language talent requirement.
-2. A free rule-based parser extracts structured criteria and expands related terms.
+2. The app tries an AI criteria parser first, then falls back to a free local parser if no backend/API key is available.
 3. Recruiter can add or remove criteria before research starts.
 4. OpenAlex live search retrieves real public scholarly works and aggregates authors as candidates.
 5. Candidate cards show score, top reasons, expertise, confidence, and status.
@@ -21,11 +21,13 @@ The current repository is a plain static web app, so Phase 1 is implemented as a
 
 - `index.html`: application shell and dialogs.
 - `styles.css`: responsive research-workspace UI.
-- `app.js`: rule-based JD parser, source-provider interfaces, OpenAlex source, search-link provider, scoring, persistence, and UI rendering.
+- `app.js`: AI criteria client, rule-based fallback parser, source-provider interfaces, OpenAlex source, search-link provider, scoring, persistence, and UI rendering.
+- `server.js`: small Node server for static files plus `POST /api/analyze-jd`.
 
 The JavaScript intentionally mirrors the requested service boundaries:
 
-- `MockLLMService`
+- `CriteriaAnalysisService`
+- `RuleBasedCriteriaService`
 - `CandidateSource`
 - `OpenAlexCandidateSource`
 - `MockCandidateSource`
@@ -34,7 +36,8 @@ The JavaScript intentionally mirrors the requested service boundaries:
 ## Assumptions
 
 - The live candidate search uses OpenAlex public scholarly records and requires browser network access.
-- The JD parser is not a paid LLM yet; it uses local rules and technical term extraction.
+- AI JD parsing requires a backend with `OPENAI_API_KEY`. Without that key, the frontend automatically uses local rules and does not incur AI API cost.
+- Language ability, current enrollment, graduation date, visa, and availability can be captured as criteria but must be verified manually; OpenAlex cannot prove them.
 - LinkedIn and Google Scholar remain manual verification links only.
 - Candidate status and recruiter notes are stored in browser `localStorage`.
 
@@ -47,16 +50,29 @@ The JavaScript intentionally mirrors the requested service boundaries:
 Open `index.html` directly, or run:
 
 ```bash
-python3 -m http.server 8011
+node server.js
 ```
 
 Then visit `http://127.0.0.1:8011`.
 
+To enable real AI criteria parsing:
+
+```bash
+export OPENAI_API_KEY="your_api_key"
+export OPENAI_MODEL="gpt-4.1-mini"
+node server.js
+```
+
+OpenAI API calls are paid usage. If `OPENAI_API_KEY` is not set, `/api/analyze-jd` returns unavailable and the browser falls back to the free local parser.
+
+GitHub Pages can only host the static frontend, so it cannot securely store an API key. Use Render/Vercel/Railway or another backend for `POST /api/analyze-jd`.
+
 ## Free live-data functions
 
-- `MockLLMService.extractCriteria`
-- `MockLLMService.expandResearchTerms`
-- `MockLLMService.explainCandidateMatch`
+- `CriteriaAnalysisService.extractCriteria`
+- `RuleBasedCriteriaService.extractCriteria`
+- `RuleBasedCriteriaService.expandResearchTerms`
+- `RuleBasedCriteriaService.explainCandidateMatch`
 - `OpenAlexCandidateSource.search`
 - `OpenAlexCandidateSource.aggregateAuthors`
 - `scoreOpenAlexCandidate`
@@ -64,12 +80,11 @@ Then visit `http://127.0.0.1:8011`.
 
 ## Not yet implemented
 
-- FastAPI backend
+- Production auth and backend persistence
 - SQLite persistence
 - Pydantic models
 - React/TypeScript/Vite frontend
 - Backend tests and frontend production build
 - GitHub public API integration
-- Real LLM provider
 - Database migrations
 - Docker Compose

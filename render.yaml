@@ -1,6 +1,6 @@
 services:
   - type: web
     name: team-management
-    runtime: static
+    runtime: node
     buildCommand: ""
-    staticPublishPath: .
+    startCommand: "HOST=0.0.0.0 node server.js"
