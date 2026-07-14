@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AI Talent Research Workspace</title>
-    <link rel="stylesheet" href="./styles.css?v=20260714-early-career" />
+    <link rel="stylesheet" href="./styles.css?v=20260714-strict-early-career" />
   </head>
   <body>
     <div class="app-shell">
@@ -53,9 +53,9 @@
             <label for="candidateStageSelect">Candidate stage</label>
             <select id="candidateStageSelect">
               <option value="any">Any public researcher</option>
-              <option value="early-career">Early-career / recent PhD</option>
+              <option value="early-career">Strict early-career / recent PhD</option>
             </select>
-            <p class="campus-note">Swiss campus mode filters by public Swiss university affiliation evidence. Language, enrollment, graduation date, and work authorization still require manual verification.</p>
+            <p class="campus-note">For campus hiring, choose Strict early-career / recent PhD. It filters for first-author evidence and removes high-output PI-style profiles when OpenAlex metrics are available.</p>
             <label for="requirementInput">Talent requirement</label>
             <textarea id="requirementInput" rows="7" placeholder="Find researchers working on multimodal LLM evaluation in Europe."></textarea>
             <div class="detected-keywords" aria-live="polite">
@@ -177,6 +177,6 @@
     </dialog>
 
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
-    <script src="./app.js?v=20260714-early-career"></script>
+    <script src="./app.js?v=20260714-strict-early-career"></script>
   </body>
 </html>

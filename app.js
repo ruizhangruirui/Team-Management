@@ -198,7 +198,12 @@ class OpenAlexCandidateSource extends sourceArchitecture.CandidateSource {
       const works = await this.fetchWorks(query, options);
       works.forEach((work) => workMap.set(work.id, { ...work, matchedQuery: query }));
     }
-    return this.aggregateAuthors([...workMap.values()], criteria, options)
+    const candidates = this.aggregateAuthors([...workMap.values()], criteria, options);
+    if (options.candidateStage === "early-career") {
+      await this.hydrateAuthorMetrics(candidates);
+    }
+    return candidates
+      .filter((candidateRecord) => !isExcludedByCandidateStage(candidateRecord, options))
       .sort((a, b) => b.totalScore - a.totalScore)
       .slice(0, limit);
   }
@@ -219,6 +224,26 @@ class OpenAlexCandidateSource extends sourceArchitecture.CandidateSource {
     }
     const payload = await response.json();
     return payload.results || [];
+  }
+
+  async hydrateAuthorMetrics(candidates) {
+    await Promise.all(candidates.slice(0, 30).map(async (candidate) => {
+      try {
+        const params = new URLSearchParams({
+          select: "id,works_count,cited_by_count,summary_stats",
+        });
+        const response = await fetch(`${candidate.openAlexAuthorId}?${params.toString()}`, {
+          headers: { Accept: "application/json" },
+        });
+        if (!response.ok) return;
+        const payload = await response.json();
+        candidate.openAlexWorksCount = Number(payload.works_count || 0);
+        candidate.openAlexCitedByCount = Number(payload.cited_by_count || 0);
+        candidate.openAlexHIndex = Number(payload.summary_stats?.h_index || 0);
+      } catch (error) {
+        console.warn("OpenAlex author metrics unavailable.", error);
+      }
+    }));
   }
 
   aggregateAuthors(works, criteria, options = {}) {
@@ -308,9 +333,7 @@ class OpenAlexCandidateSource extends sourceArchitecture.CandidateSource {
       });
     });
 
-    return [...authors.values()]
-      .map((candidateRecord) => this.finalizeCandidate(candidateRecord, criteria, options))
-      .filter((candidateRecord) => !isExcludedByCandidateStage(candidateRecord, options));
+    return [...authors.values()].map((candidateRecord) => this.finalizeCandidate(candidateRecord, criteria, options));
   }
 
   finalizeCandidate(candidateRecord, criteria, options = {}) {
@@ -334,7 +357,7 @@ class OpenAlexCandidateSource extends sourceArchitecture.CandidateSource {
       { text: `Has ${candidateRecord.publications.length} recent OpenAlex-indexed publication(s) matching this project.`, sourceIds: candidateRecord.sourceIds.slice(0, 2) },
       { text: `Matched research terms: ${unique(candidateRecord._matchedQueries).slice(0, 3).join(", ")}.`, sourceIds: candidateRecord.sourceIds.slice(0, 2) },
       { text: `Publication metadata links the author to ${candidateRecord.currentOrganisation}.`, sourceIds: candidateRecord.sourceIds.slice(0, 1) },
-      ...(options.candidateStage === "early-career" ? [{ text: "Early-career mode prioritizes authors with first-author or non-PI-style publication evidence; graduation status still needs manual verification.", sourceIds: candidateRecord.sourceIds.slice(0, 2) }] : []),
+      ...(options.candidateStage === "early-career" ? [{ text: "Strict early-career mode requires first-author evidence and filters high-output PI-style profiles where OpenAlex author metrics are available.", sourceIds: candidateRecord.sourceIds.slice(0, 2) }] : []),
       ...(options.searchMode === "swiss-campus" ? [{ text: "Swiss university affiliation appears in OpenAlex publication authorship metadata.", sourceIds: candidateRecord.sourceIds.slice(0, 2) }] : []),
     ];
     const score = scoreOpenAlexCandidate(candidateRecord, criteria);
@@ -1268,9 +1291,15 @@ function scoreOpenAlexCandidate(candidate, criteria) {
 function isExcludedByCandidateStage(candidate, options = {}) {
   if (options.candidateStage !== "early-career") return false;
   const positions = candidate.authorPositions || [];
-  const hasFirstOrMiddleAuthorEvidence = positions.some((position) => ["first", "middle"].includes(position));
-  const hasOnlyLastAuthorEvidence = positions.length > 0 && positions.every((position) => position === "last");
-  return hasOnlyLastAuthorEvidence || (!hasFirstOrMiddleAuthorEvidence && candidate.publications.length >= 3);
+  const hasFirstAuthorEvidence = positions.includes("first");
+  const hasLastAuthorEvidence = positions.includes("last");
+  const hasSeniorMetricSignal =
+    Number(candidate.openAlexWorksCount || 0) >= 45 ||
+    Number(candidate.openAlexCitedByCount || 0) >= 2500 ||
+    Number(candidate.openAlexHIndex || 0) >= 18;
+  if (!hasFirstAuthorEvidence) return true;
+  if (hasSeniorMetricSignal) return true;
+  return hasLastAuthorEvidence && positions.filter((position) => position === "first").length < 2;
 }
 
 function buildOpenAlexQueries(criteria, options = {}) {
