@@ -1,13 +1,13 @@
 # AI Talent Research Workspace
 
-Simple Phase 1 MVP prototype for technical recruiters researching specialised candidates.
+Simple MVP prototype for technical recruiters researching specialised candidates with free live OpenAlex publication search.
 
 ## Core MVP in 10 points
 
 1. Recruiter enters a natural-language talent requirement.
-2. Mock AI extracts structured criteria and expands related terms.
+2. A free rule-based parser extracts structured criteria and expands related terms.
 3. Recruiter can add or remove criteria before research starts.
-4. Mock source provider searches 14 realistic public-profile-style candidates.
+4. OpenAlex live search retrieves real public scholarly works and aggregates authors as candidates.
 5. Candidate cards show score, top reasons, expertise, confidence, and status.
 6. Candidate Brief shows evidence-linked reasons, score breakdown, timeline, publications, sources, and uncertainty.
 7. Recruiter can change status, add notes, tags, rejection reason, public URL, verified information, and corrections.
@@ -21,19 +21,20 @@ The current repository is a plain static web app, so Phase 1 is implemented as a
 
 - `index.html`: application shell and dialogs.
 - `styles.css`: responsive research-workspace UI.
-- `app.js`: mock LLM service, source-provider interfaces, mock candidate source, search-link provider, scoring, persistence, and UI rendering.
+- `app.js`: rule-based JD parser, source-provider interfaces, OpenAlex source, search-link provider, scoring, persistence, and UI rendering.
 
 The JavaScript intentionally mirrors the requested service boundaries:
 
 - `MockLLMService`
 - `CandidateSource`
+- `OpenAlexCandidateSource`
 - `MockCandidateSource`
 - `SearchLinkProvider`
 
 ## Assumptions
 
-- Phase 1 can run without paid AI APIs, backend dependencies, or network access.
-- Mock source URLs are placeholders for source-attribution behavior.
+- The live candidate search uses OpenAlex public scholarly records and requires browser network access.
+- The JD parser is not a paid LLM yet; it uses local rules and technical term extraction.
 - LinkedIn and Google Scholar remain manual verification links only.
 - Candidate status and recruiter notes are stored in browser `localStorage`.
 
@@ -51,13 +52,14 @@ python3 -m http.server 8011
 
 Then visit `http://127.0.0.1:8011`.
 
-## Mock-data functions
+## Free live-data functions
 
 - `MockLLMService.extractCriteria`
 - `MockLLMService.expandResearchTerms`
 - `MockLLMService.explainCandidateMatch`
-- `MockCandidateSource.search`
-- `scoreCandidate`
+- `OpenAlexCandidateSource.search`
+- `OpenAlexCandidateSource.aggregateAuthors`
+- `scoreOpenAlexCandidate`
 - `renderSimilarCandidates`
 
 ## Not yet implemented
@@ -67,7 +69,6 @@ Then visit `http://127.0.0.1:8011`.
 - Pydantic models
 - React/TypeScript/Vite frontend
 - Backend tests and frontend production build
-- OpenAlex integration
 - GitHub public API integration
 - Real LLM provider
 - Database migrations

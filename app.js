@@ -12,6 +12,15 @@ const REJECTION_REASONS = [
   "Information could not be verified",
   "Other",
 ];
+const TECHNICAL_TERM_LIBRARY = [
+  "CUDA", "Triton", "MLIR", "TVM", "LLVM", "XLA", "JAX", "PyTorch", "TensorFlow",
+  "robotic planning", "motion planning", "reinforcement learning", "LLM evaluation",
+  "multimodal", "vision-language models", "computer vision", "natural language processing",
+  "retrieval augmented generation", "RAG", "AI compiler", "compiler optimisation",
+  "kernel optimisation", "GPU kernels", "distributed training", "model serving",
+  "benchmarking", "model evaluation", "foundation models", "transformers",
+  "graph neural networks", "autonomous systems", "speech recognition", "edge AI",
+];
 
 const state = {
   projects: [],
@@ -45,6 +54,7 @@ const sourceArchitecture = {
 class MockLLMService {
   async extractCriteria(userInput) {
     const text = userInput.toLowerCase();
+    const jdTerms = extractJdTerms(userInput);
     const criteria = {
       target_roles: pickByText(text, {
         researcher: ["Research Scientist", "Senior Research Scientist", "Applied Scientist"],
@@ -52,21 +62,21 @@ class MockLLMService {
         phd: ["PhD Candidate", "Postdoctoral Researcher", "Research Scientist"],
       }, ["Research Scientist", "Applied Scientist"]),
       seniority: text.includes("senior") || text.includes("principal") ? "senior" : text.includes("phd") ? "doctoral" : "not specified",
-      core_technical_skills: extractKnownTerms(text, ["CUDA", "Triton", "MLIR", "TVM", "LLVM", "robotic planning", "LLM evaluation", "multimodal", "compiler optimisation", "kernel optimisation"]),
-      research_topics: extractResearchTopics(text),
+      core_technical_skills: unique([...extractKnownTerms(text, TECHNICAL_TERM_LIBRARY), ...jdTerms.skills]),
+      research_topics: unique([...extractResearchTopics(text), ...jdTerms.topics]),
       related_terminology: [],
       publication_keywords: [],
-      target_companies: extractKnownTerms(text, ["DeepMind", "Meta", "NVIDIA", "Huawei", "Google", "Microsoft", "ETH"]),
+      target_companies: unique([...extractKnownTerms(text, ["DeepMind", "Meta", "NVIDIA", "Huawei", "Google", "Microsoft", "Amazon", "Apple", "Intel", "ARM", "Qualcomm", "Anthropic", "OpenAI"]), ...jdTerms.organisations]),
       relevant_industries: pickIndustries(text),
-      universities: extractKnownTerms(text, ["ETH Zurich", "EPFL", "Oxford", "Cambridge", "TU Munich", "Imperial College London"]),
+      universities: unique([...extractKnownTerms(text, ["ETH Zurich", "EPFL", "Oxford", "Cambridge", "TU Munich", "Imperial College London", "Stanford", "MIT", "Carnegie Mellon", "Berkeley"]), ...jdTerms.universities]),
       academic_background: text.includes("phd") ? ["PhD", "doctoral research"] : [],
-      location: extractKnownTerms(text, ["Europe", "Switzerland", "Zurich", "Germany", "UK", "London", "France", "Paris", "Netherlands"]),
+      location: unique([...extractKnownTerms(text, ["Europe", "Switzerland", "Zurich", "Germany", "UK", "London", "France", "Paris", "Netherlands", "United States", "China", "Singapore", "Canada"]), ...jdTerms.locations]),
       required_criteria: [],
       preferred_criteria: [],
       exclusion_criteria: [],
     };
     criteria.related_terminology = expandTerms([...criteria.core_technical_skills, ...criteria.research_topics]);
-    criteria.publication_keywords = unique([...criteria.research_topics, ...criteria.related_terminology]).slice(0, 10);
+    criteria.publication_keywords = unique([...criteria.research_topics, ...criteria.core_technical_skills, ...criteria.related_terminology, ...jdTerms.phrases]).slice(0, 12);
     return fillEmptyCriteria(criteria);
   }
 
@@ -108,6 +118,164 @@ class MockCandidateSource extends sourceArchitecture.CandidateSource {
   }
 }
 
+class OpenAlexCandidateSource extends sourceArchitecture.CandidateSource {
+  constructor() {
+    super("OpenAlexSource", sourceArchitecture.AccessMode.API);
+  }
+
+  async search(criteria, limit = 16) {
+    const queries = buildOpenAlexQueries(criteria).slice(0, 4);
+    if (!queries.length) {
+      throw new Error("No searchable research terms were extracted from this requirement.");
+    }
+    const workMap = new Map();
+    for (const query of queries) {
+      const works = await this.fetchWorks(query);
+      works.forEach((work) => workMap.set(work.id, { ...work, matchedQuery: query }));
+    }
+    return this.aggregateAuthors([...workMap.values()], criteria)
+      .sort((a, b) => b.totalScore - a.totalScore)
+      .slice(0, limit);
+  }
+
+  async fetchWorks(query) {
+    const params = new URLSearchParams({
+      search: query,
+      filter: "from_publication_date:2021-01-01,is_retracted:false",
+      sort: "relevance_score:desc",
+      "per-page": "20",
+      select: "id,doi,title,display_name,publication_year,primary_location,authorships,topics,keywords,cited_by_count,relevance_score",
+    });
+    const response = await fetch(`https://api.openalex.org/works?${params.toString()}`, {
+      headers: { Accept: "application/json" },
+    });
+    if (!response.ok) {
+      throw new Error(`OpenAlex request failed with status ${response.status}`);
+    }
+    const payload = await response.json();
+    return payload.results || [];
+  }
+
+  aggregateAuthors(works, criteria) {
+    const authors = new Map();
+    works.forEach((work) => {
+      (work.authorships || []).forEach((authorship) => {
+        const author = authorship.author || {};
+        if (!author.id || !author.display_name) return;
+        if (!authors.has(author.id)) {
+          authors.set(author.id, {
+            id: `openalex-${author.id.split("/").pop()}`,
+            openAlexAuthorId: author.id,
+            fullName: author.display_name,
+            currentTitle: "Research author",
+            currentOrganisation: "",
+            previousOrganisations: [],
+            location: "",
+            education: "Evidence unavailable",
+            university: "",
+            skills: [],
+            researchTopics: [],
+            summary: "",
+            publications: [],
+            sourceIds: [],
+            sourceRecords: [],
+            githubUrl: "",
+            personalWebsite: author.id,
+            orcidUrl: author.orcid || "",
+            linkedinSearchLink: "",
+            scholarSearchLink: "",
+            timeline: [],
+            matchReasons: [],
+            missingInformation: [
+              "Current employer and title are not verified; OpenAlex affiliations may come from publication metadata.",
+              "Employment dates are unavailable.",
+              "GitHub and LinkedIn profiles require manual verification.",
+            ],
+            enteredManually: false,
+            createdAt: TODAY,
+            updatedAt: TODAY,
+            _institutions: [],
+            _countries: [],
+            _citations: 0,
+            _matchedQueries: [],
+          });
+        }
+        const candidateRecord = authors.get(author.id);
+        const institutions = (authorship.institutions || []).map((institution) => institution.display_name).filter(Boolean);
+        const countries = authorship.countries || [];
+        candidateRecord._institutions.push(...institutions);
+        candidateRecord._countries.push(...countries);
+        candidateRecord._matchedQueries.push(work.matchedQuery);
+        candidateRecord._citations += Number(work.cited_by_count || 0);
+        const sourceUrl = work.primary_location?.landing_page_url || work.doi || work.id;
+        const venue = work.primary_location?.source?.display_name || work.primary_location?.raw_source_name || "OpenAlex record";
+        candidateRecord.publications.push({
+          title: work.display_name || work.title || "Untitled work",
+          year: work.publication_year || "Date not verified",
+          venue,
+          abstract: "",
+          sourceUrl,
+          relevanceExplanation: `Matched OpenAlex query: ${work.matchedQuery}`,
+          relevanceScore: Math.round(work.relevance_score || 0),
+        });
+        const sourceId = `source-${candidateRecord.id}-${work.id.split("/").pop()}`;
+        candidateRecord.sourceIds.push(sourceId);
+        candidateRecord.sourceRecords.push({
+          id: sourceId,
+          sourceType: "OpenAlex work",
+          sourceTitle: work.display_name || work.title || "Untitled work",
+          sourceUrl: work.id,
+          extractedFacts: [
+            `Publication year: ${work.publication_year || "Date not verified"}`,
+            `Venue/source: ${venue}`,
+            `Matched query: ${work.matchedQuery}`,
+          ],
+          sourceConfidence: "High",
+          retrievalDate: TODAY,
+          enteredManually: false,
+        });
+        candidateRecord.researchTopics.push(...extractWorkTopics(work), work.matchedQuery);
+        candidateRecord.skills.push(...extractWorkKeywords(work), ...criteria.core_technical_skills);
+      });
+    });
+
+    return [...authors.values()].map((candidateRecord) => this.finalizeCandidate(candidateRecord, criteria));
+  }
+
+  finalizeCandidate(candidateRecord, criteria) {
+    candidateRecord.publications = uniqueBy(candidateRecord.publications, (publication) => publication.sourceUrl || publication.title)
+      .sort((a, b) => (Number(b.year) || 0) - (Number(a.year) || 0))
+      .slice(0, 5);
+    candidateRecord.sourceRecords = uniqueBy(candidateRecord.sourceRecords, (record) => record.sourceUrl || record.sourceTitle);
+    candidateRecord.sourceIds = candidateRecord.sourceRecords.map((record) => record.id);
+    candidateRecord.currentOrganisation = mostCommon(candidateRecord._institutions) || "Evidence unavailable";
+    candidateRecord.location = mostCommon(candidateRecord._countries) || "Evidence unavailable";
+    candidateRecord.university = candidateRecord.currentOrganisation;
+    candidateRecord.skills = unique(candidateRecord.skills).slice(0, 8);
+    candidateRecord.researchTopics = unique(candidateRecord.researchTopics).slice(0, 8);
+    candidateRecord.summary = `OpenAlex found ${candidateRecord.publications.length} recent public work(s) connected to this requirement.`;
+    candidateRecord.timeline = candidateRecord.publications.map((publication) => ({
+      date: String(publication.year || "Date not verified"),
+      label: publication.title,
+      source: "OpenAlex work",
+    }));
+    candidateRecord.matchReasons = [
+      { text: `Has ${candidateRecord.publications.length} recent OpenAlex-indexed publication(s) matching this project.`, sourceIds: candidateRecord.sourceIds.slice(0, 2) },
+      { text: `Matched research terms: ${unique(candidateRecord._matchedQueries).slice(0, 3).join(", ")}.`, sourceIds: candidateRecord.sourceIds.slice(0, 2) },
+      { text: `Publication metadata links the author to ${candidateRecord.currentOrganisation}.`, sourceIds: candidateRecord.sourceIds.slice(0, 1) },
+    ];
+    const score = scoreOpenAlexCandidate(candidateRecord, criteria);
+    candidateRecord.scoreBreakdown = score.breakdown;
+    candidateRecord.totalScore = score.total;
+    candidateRecord.evidenceConfidence = computeConfidence(candidateRecord);
+    delete candidateRecord._institutions;
+    delete candidateRecord._countries;
+    delete candidateRecord._citations;
+    delete candidateRecord._matchedQueries;
+    return candidateRecord;
+  }
+}
+
 class SearchLinkProvider extends sourceArchitecture.CandidateSource {
   constructor() {
     super("SearchLinkProvider", sourceArchitecture.AccessMode.SEARCH_LINK);
@@ -127,6 +295,7 @@ class SearchLinkProvider extends sourceArchitecture.CandidateSource {
 
 const llmService = new MockLLMService();
 const mockSource = new MockCandidateSource();
+const openAlexSource = new OpenAlexCandidateSource();
 const linkProvider = new SearchLinkProvider();
 
 const MOCK_CANDIDATES = [
@@ -522,18 +691,26 @@ async function startResearch() {
     toast("Create or select a project and review criteria first.");
     return;
   }
-  setLoading($("#startResearchBtn"), "Searching mock sources...");
+  setLoading($("#startResearchBtn"), "Searching OpenAlex...");
   project.searchTerms = await llmService.expandResearchTerms(project.criteria);
-  const results = await mockSource.search(project.criteria, 16);
-  project.results = await Promise.all(results.map(async (candidateRecord) => {
-    const reasons = await llmService.explainCandidateMatch(candidateRecord, project.criteria, { total: candidateRecord.totalScore });
-    return {
-      ...candidateRecord,
-      matchReasons: reasons.length ? reasons : [{ text: "Evidence unavailable", sourceIds: [] }],
-      evidenceConfidence: computeConfidence(candidateRecord),
-      reviewStatus: getCandidateState(candidateRecord.id).status,
-    };
-  }));
+  try {
+    const results = await openAlexSource.search(project.criteria, 16);
+    project.results = await Promise.all(results.map(async (candidateRecord) => {
+      const reasons = await llmService.explainCandidateMatch(candidateRecord, project.criteria, { total: candidateRecord.totalScore });
+      return {
+        ...candidateRecord,
+        matchReasons: reasons.length ? reasons : candidateRecord.matchReasons,
+        evidenceConfidence: computeConfidence(candidateRecord),
+        reviewStatus: getCandidateState(candidateRecord.id).status,
+      };
+    }));
+  } catch (error) {
+    project.results = [];
+    clearLoading($("#startResearchBtn"), "Start Research");
+    toast(`OpenAlex search failed: ${error.message}`);
+    renderProjectList();
+    return;
+  }
   project.status = "researched";
   project.updatedAt = TODAY;
   saveState();
@@ -627,7 +804,7 @@ function candidateCardTemplate(candidate) {
 
 function openCandidate(candidateId) {
   const project = activeProject();
-  const candidate = [...(project?.results || []), ...MOCK_CANDIDATES, ...state.manualCandidates].find((item) => item.id === candidateId);
+  const candidate = [...(project?.results || []), ...state.manualCandidates].find((item) => item.id === candidateId);
   if (!candidate) return;
   const persisted = getCandidateState(candidate.id);
   const links = linkProvider.searchLinks(candidate);
@@ -795,7 +972,8 @@ function saveCandidateActions(candidateId) {
 }
 
 function renderSimilarCandidates(candidate) {
-  const similar = [...MOCK_CANDIDATES, ...state.manualCandidates]
+  const project = activeProject();
+  const similar = [...(project?.results || []), ...state.manualCandidates]
     .filter((item) => item.id !== candidate.id)
     .map((item) => ({
       item,
@@ -812,7 +990,7 @@ function renderSimilarCandidates(candidate) {
       <p>Similar because both candidates share ${sharedTerms(candidate, item).slice(0, 3).join(", ")}.</p>
       <button type="button" data-open-candidate="${item.id}">Open Brief</button>
     </article>
-  `).join("") : "<p class=\"hint\">No similar candidates in the current mock dataset.</p>";
+  `).join("") : "<p class=\"hint\">No similar candidates in the current project results.</p>";
   $all("[data-open-candidate]", container).forEach((button) => button.addEventListener("click", () => openCandidate(button.dataset.openCandidate)));
 }
 
@@ -826,7 +1004,7 @@ function renderShortlist() {
     $("#shortlistGrid").innerHTML = `<div class="empty-state">Select or create a project first.</div>`;
     return;
   }
-  const all = [...project.results, ...MOCK_CANDIDATES, ...state.manualCandidates];
+  const all = [...project.results, ...state.manualCandidates];
   const shortlist = uniqueById(all).filter((candidate) => ["Shortlisted", "Strong Fit"].includes(getCandidateState(candidate.id).status));
   $("#shortlistGrid").innerHTML = shortlist.length ? shortlist.map((candidate) => candidateCardTemplate({
     ...candidate,
@@ -917,6 +1095,90 @@ function scoreCandidate(candidate, criteria) {
   return { total: clamp(total, 0, 100), breakdown };
 }
 
+function scoreOpenAlexCandidate(candidate, criteria) {
+  const terms = unique(Object.values(criteria || {}).flat().map(String));
+  const topicText = [...candidate.skills, ...candidate.researchTopics, ...candidate.publications.map((publication) => publication.title)].join(" ").toLowerCase();
+  const matchedTermCount = terms.filter((term) => topicText.includes(term.toLowerCase()) || fuzzyIncludes(topicText, term.toLowerCase())).length;
+  const recentCount = candidate.publications.filter((publication) => Number(publication.year) >= 2023).length;
+  const hasInstitution = candidate.currentOrganisation && candidate.currentOrganisation !== "Evidence unavailable";
+  const breakdown = {
+    technical: clamp(matchedTermCount * 5, 0, 30),
+    publications: clamp(candidate.publications.length * 5 + recentCount * 3, 0, 25),
+    role: 10,
+    education: 0,
+    employer: hasInstitution ? 7 : 0,
+    location: candidate.location && candidate.location !== "Evidence unavailable" ? 3 : 0,
+  };
+  const total = clamp(Object.values(breakdown).reduce((sum, value) => sum + value, 0), 25, 100);
+  return { total, breakdown };
+}
+
+function buildOpenAlexQueries(criteria) {
+  const highSignal = unique([
+    ...criteria.publication_keywords,
+    ...criteria.research_topics,
+    ...criteria.core_technical_skills,
+  ])
+    .filter((term) => term.length > 2 && !["not specified", "Research Scientist", "Applied Scientist"].includes(term));
+  const compound = [];
+  if (criteria.research_topics[0] && criteria.core_technical_skills[0]) {
+    compound.push(`${criteria.research_topics[0]} ${criteria.core_technical_skills[0]}`);
+  }
+  if (criteria.research_topics[0] && criteria.location[0]) {
+    compound.push(`${criteria.research_topics[0]} ${criteria.location[0]}`);
+  }
+  return unique([...compound, ...highSignal]).slice(0, 6);
+}
+
+function extractWorkTopics(work) {
+  return unique([
+    ...(work.topics || []).map((topic) => topic.display_name),
+    work.primary_topic?.display_name,
+  ]).slice(0, 8);
+}
+
+function extractWorkKeywords(work) {
+  return unique((work.keywords || []).map((keyword) => keyword.display_name)).slice(0, 8);
+}
+
+function mostCommon(values) {
+  const counts = values.filter(Boolean).reduce((map, value) => {
+    map.set(value, (map.get(value) || 0) + 1);
+    return map;
+  }, new Map());
+  return [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || "";
+}
+
+function extractJdTerms(input) {
+  const text = input.toLowerCase();
+  const skills = extractKnownTerms(text, TECHNICAL_TERM_LIBRARY);
+  const topics = extractResearchTopics(text);
+  const phrases = extractTechnicalPhrases(input);
+  const organisations = extractCapitalizedPhrases(input, /(lab|labs|research|ai|systems|technologies|university|institute|inc|corp|corporation|group)/i).slice(0, 8);
+  const universities = organisations.filter((item) => /(university|institute|eth|epfl|mit|stanford|cambridge|oxford)/i.test(item));
+  const locations = extractKnownTerms(text, ["Europe", "Switzerland", "Zurich", "Germany", "UK", "London", "France", "Paris", "Netherlands", "United States", "China", "Singapore", "Canada"]);
+  return { skills, topics, phrases, organisations, universities, locations };
+}
+
+function extractTechnicalPhrases(input) {
+  const stop = new Set(["with", "from", "that", "this", "have", "will", "role", "team", "work", "working", "experience", "candidate", "engineer", "researcher", "scientist"]);
+  const normalized = input.replace(/[^a-zA-Z0-9+.#-]+/g, " ");
+  const words = normalized.split(/\s+/).filter((word) => word.length > 2 && !stop.has(word.toLowerCase()));
+  const phrases = [];
+  for (let index = 0; index < words.length - 1; index += 1) {
+    const pair = `${words[index]} ${words[index + 1]}`;
+    if (/(model|learning|vision|language|compiler|robot|planning|kernel|evaluation|multimodal|cuda|llm|graph|distributed|inference|training|retrieval|benchmark)/i.test(pair)) {
+      phrases.push(pair);
+    }
+  }
+  return unique(phrases).slice(0, 8);
+}
+
+function extractCapitalizedPhrases(input, qualifier) {
+  const matches = input.match(/\b[A-Z][A-Za-z&.-]*(?:\s+[A-Z][A-Za-z&.-]*){0,4}\b/g) || [];
+  return unique(matches.filter((phrase) => qualifier.test(phrase)));
+}
+
 function extractResearchTopics(text) {
   const topicMap = {
     multimodal: ["multimodal foundation models", "vision-language models", "multimodal evaluation"],
@@ -924,11 +1186,23 @@ function extractResearchTopics(text) {
     cuda: ["GPU kernels", "CUDA kernel optimisation"],
     kernel: ["kernel optimisation", "GPU computing"],
     compiler: ["AI compilers", "machine learning compilers", "tensor compiler optimisation"],
+    "ai compiler": ["AI compilers", "machine learning compilers", "compiler infrastructure"],
     mlir: ["MLIR", "compiler infrastructure"],
     tvm: ["TVM", "tensor compiler"],
     triton: ["Triton", "kernel fusion"],
     robotic: ["robotic planning", "motion planning"],
     planning: ["robotic planning", "autonomous systems"],
+    "computer vision": ["computer vision", "visual recognition", "image understanding"],
+    "natural language": ["natural language processing", "language models"],
+    nlp: ["natural language processing", "language models"],
+    rag: ["retrieval augmented generation", "information retrieval"],
+    retrieval: ["retrieval augmented generation", "information retrieval"],
+    "distributed training": ["distributed training", "large-scale model training"],
+    inference: ["model inference", "model serving", "AI systems"],
+    "foundation model": ["foundation models", "large language models"],
+    transformer: ["transformers", "attention models"],
+    graph: ["graph neural networks", "graph learning"],
+    speech: ["speech recognition", "audio-language models"],
   };
   return unique(Object.entries(topicMap).flatMap(([needle, topics]) => text.includes(needle) ? topics : []));
 }
@@ -1120,6 +1394,16 @@ function uniqueById(values) {
   return values.filter((value) => {
     if (seen.has(value.id)) return false;
     seen.add(value.id);
+    return true;
+  });
+}
+
+function uniqueBy(values, keyFn) {
+  const seen = new Set();
+  return values.filter((value) => {
+    const key = keyFn(value);
+    if (seen.has(key)) return false;
+    seen.add(key);
     return true;
   });
 }
