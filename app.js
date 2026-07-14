@@ -374,6 +374,122 @@ class OpenAlexCandidateSource extends sourceArchitecture.CandidateSource {
   }
 }
 
+class GitHubCandidateSource extends sourceArchitecture.CandidateSource {
+  constructor() {
+    super("GitHubSource", sourceArchitecture.AccessMode.API);
+  }
+
+  async search(criteria, limit = 8) {
+    const queries = buildGitHubQueries(criteria).slice(0, 3);
+    if (!queries.length) return [];
+    const repoMap = new Map();
+    for (const query of queries) {
+      const repos = await this.fetchRepositories(query);
+      repos.forEach((repo) => {
+        const owner = repo.owner?.login;
+        if (!owner) return;
+        const existing = repoMap.get(owner) || { owner, repos: [], matchedQueries: [] };
+        existing.repos.push(repo);
+        existing.matchedQueries.push(query);
+        repoMap.set(owner, existing);
+      });
+    }
+    const leads = await Promise.all([...repoMap.values()].slice(0, limit * 2).map((entry) => this.buildLead(entry, criteria)));
+    return leads
+      .filter(Boolean)
+      .sort((a, b) => b.totalScore - a.totalScore)
+      .slice(0, limit);
+  }
+
+  async fetchRepositories(query) {
+    const params = new URLSearchParams({
+      q: `${query} in:name,description,readme`,
+      sort: "stars",
+      order: "desc",
+      per_page: "10",
+    });
+    const response = await fetch(`https://api.github.com/search/repositories?${params.toString()}`, {
+      headers: { Accept: "application/vnd.github+json" },
+    });
+    if (!response.ok) {
+      throw new Error(`GitHub repository search failed with status ${response.status}`);
+    }
+    const payload = await response.json();
+    return payload.items || [];
+  }
+
+  async fetchUser(login) {
+    const response = await fetch(`https://api.github.com/users/${encodeURIComponent(login)}`, {
+      headers: { Accept: "application/vnd.github+json" },
+    });
+    if (!response.ok) return null;
+    return response.json();
+  }
+
+  async buildLead(entry, criteria) {
+    const profile = await this.fetchUser(entry.owner);
+    const repos = uniqueBy(entry.repos, (repo) => repo.html_url).slice(0, 4);
+    const sourceRecords = repos.map((repo, index) => ({
+      id: `github-source-${entry.owner}-${index}`,
+      sourceType: "GitHub repository",
+      sourceTitle: repo.full_name || repo.name || "GitHub repository",
+      sourceUrl: repo.html_url || "",
+      extractedFacts: [
+        `Repository description: ${repo.description || "Not provided"}`,
+        `Stars: ${repo.stargazers_count || 0}`,
+        `Primary language: ${repo.language || "Evidence unavailable"}`,
+      ],
+      sourceConfidence: repo.stargazers_count >= 20 ? "Medium" : "Low",
+      retrievalDate: TODAY,
+      enteredManually: false,
+    }));
+    const skills = inferGitHubSkills(repos, criteria);
+    const candidate = {
+      id: `github-${entry.owner}`,
+      fullName: profile?.name || entry.owner,
+      currentTitle: "GitHub technical lead",
+      currentOrganisation: profile?.company || "Evidence unavailable",
+      previousOrganisations: [],
+      location: profile?.location || "Evidence unavailable",
+      education: "Evidence unavailable",
+      university: "Evidence unavailable",
+      skills,
+      researchTopics: unique([...skills, ...entry.matchedQueries]).slice(0, 8),
+      summary: `GitHub found ${repos.length} public repository lead(s) connected to this requirement.`,
+      publications: [],
+      sourceIds: sourceRecords.map((record) => record.id),
+      sourceRecords,
+      githubUrl: profile?.html_url || `https://github.com/${entry.owner}`,
+      personalWebsite: profile?.blog || profile?.html_url || `https://github.com/${entry.owner}`,
+      orcidUrl: "",
+      linkedinSearchLink: "",
+      scholarSearchLink: "",
+      timeline: repos.map((repo) => ({
+        date: repo.updated_at ? repo.updated_at.slice(0, 10) : "Date not verified",
+        label: repo.full_name || repo.name,
+        source: "GitHub repository",
+      })),
+      matchReasons: [
+        { text: `Owns or contributes to GitHub repositories matching: ${unique(entry.matchedQueries).slice(0, 3).join(", ")}.`, sourceIds: sourceRecords.slice(0, 2).map((record) => record.id) },
+        { text: `Repository evidence includes ${repos.map((repo) => repo.full_name).filter(Boolean).slice(0, 2).join(", ")}.`, sourceIds: sourceRecords.slice(0, 2).map((record) => record.id) },
+      ],
+      missingInformation: [
+        "Identity, current employer, seniority, and availability require manual verification.",
+        "GitHub activity does not prove employment history or degree status.",
+        "LinkedIn, company page, patent, and web evidence should be checked before outreach.",
+      ],
+      enteredManually: false,
+      createdAt: TODAY,
+      updatedAt: TODAY,
+    };
+    const score = scoreGitHubCandidate(candidate, repos, criteria);
+    candidate.scoreBreakdown = score.breakdown;
+    candidate.totalScore = score.total;
+    candidate.evidenceConfidence = computeConfidence(candidate);
+    return candidate;
+  }
+}
+
 class SearchLinkProvider extends sourceArchitecture.CandidateSource {
   constructor() {
     super("SearchLinkProvider", sourceArchitecture.AccessMode.SEARCH_LINK);
@@ -393,6 +509,7 @@ class SearchLinkProvider extends sourceArchitecture.CandidateSource {
 
 const llmService = new CriteriaAnalysisService();
 const openAlexSource = new OpenAlexCandidateSource();
+const githubSource = new GitHubCandidateSource();
 const linkProvider = new SearchLinkProvider();
 
 const MOCK_CANDIDATES = [
@@ -857,7 +974,18 @@ async function startResearch() {
   setLoading($("#startResearchBtn"), project.searchMode === "swiss-campus" ? "Searching Swiss universities..." : "Searching OpenAlex...");
   project.searchTerms = await llmService.expandResearchTerms(project.criteria);
   try {
-    const results = await openAlexSource.search(project.criteria, 16, { searchMode: project.searchMode, candidateStage: project.candidateStage });
+    setLoading($("#startResearchBtn"), "Searching public sources...");
+    const [openAlexOutcome, githubOutcome] = await Promise.allSettled([
+      openAlexSource.search(project.criteria, 16, { searchMode: project.searchMode, candidateStage: project.candidateStage }),
+      githubSource.search(project.criteria, 8),
+    ]);
+    const sourceErrors = [openAlexOutcome, githubOutcome]
+      .filter((outcome) => outcome.status === "rejected")
+      .map((outcome) => outcome.reason?.message || "Source unavailable");
+    const results = mergeCandidateResults([
+      ...(openAlexOutcome.status === "fulfilled" ? openAlexOutcome.value : []),
+      ...(githubOutcome.status === "fulfilled" ? githubOutcome.value : []),
+    ]);
     project.results = await Promise.all(results.map(async (candidateRecord) => {
       const reasons = await llmService.explainCandidateMatch(candidateRecord, project.criteria, { total: candidateRecord.totalScore });
       return {
@@ -867,10 +995,13 @@ async function startResearch() {
         reviewStatus: getCandidateState(candidateRecord.id).status,
       };
     }));
+    if (sourceErrors.length) {
+      toast(`Some sources were unavailable: ${sourceErrors.join("; ")}`);
+    }
   } catch (error) {
     project.results = [];
     clearLoading($("#startResearchBtn"), "Start Research");
-    toast(`OpenAlex search failed: ${error.message}`);
+    toast(`Search failed: ${error.message}`);
     renderProjectList();
     return;
   }
@@ -881,9 +1012,7 @@ async function startResearch() {
   renderStrategy();
   renderCandidates();
   if (!project.results.length) {
-    toast(project.searchMode === "swiss-campus"
-      ? "No Swiss university-affiliated OpenAlex authors found. Try broader research terms."
-      : "No OpenAlex authors found. Try broader research terms.");
+    toast("No public-source candidates found. Try broader research terms.");
   }
   $("#resultsSection").classList.remove("is-hidden");
   $("#resultsSection").scrollIntoView({ behavior: "smooth", block: "start" });
@@ -912,11 +1041,8 @@ function renderCandidates() {
     return;
   }
   const filtered = getFilteredResults();
-  const modeLabel = [
-    project.searchMode === "swiss-campus" ? "Swiss university-affiliated" : "OpenAlex",
-    project.candidateStage === "early-career" ? "early-career" : "",
-  ].filter(Boolean).join(" ");
-  $("#resultsSummary").textContent = `${filtered.length} ${modeLabel} candidate${filtered.length === 1 ? "" : "s"} shown for ${project.title}. Scores prioritize recruiter review only.`;
+  const modeLabel = project.candidateStage === "early-career" ? "strict early-career public-source" : "public-source";
+  $("#resultsSummary").textContent = `${filtered.length} ${modeLabel} candidate${filtered.length === 1 ? "" : "s"} shown for ${project.title}. OpenAlex and GitHub evidence are mixed and ranked by overall fit.`;
   grid.innerHTML = filtered.length ? filtered.map(candidateCardTemplate).join("") : `<div class="empty-state">No candidates match the current filters.</div>`;
   $all("[data-open-candidate]", grid).forEach((button) => button.addEventListener("click", () => openCandidate(button.dataset.openCandidate)));
 }
@@ -943,6 +1069,8 @@ function getFilteredResults() {
 
 function candidateCardTemplate(candidate) {
   const persisted = getCandidateState(candidate.id);
+  const sourceBadges = evidenceSourceBadges(candidate);
+  const verificationLinks = buildVerificationSearches(candidate, activeProject()?.criteria || fillEmptyCriteria({})).slice(0, 3);
   return `
     <article class="candidate-card">
       <div>
@@ -953,9 +1081,10 @@ function candidateCardTemplate(candidate) {
         </ul>
       </div>
       <div class="score-row">
-        <span>Match</span>
+        <span>Overall fit</span>
         <strong class="score">${candidate.totalScore}/100</strong>
       </div>
+      <div class="chips evidence-badges">${sourceBadges.map((source) => `<span class="source-badge">${escapeHtml(source)}</span>`).join("")}</div>
       <div>
         <strong>Why relevant</strong>
         <ul class="tiny-list">${candidate.matchReasons.slice(0, 3).map((reason) => `<li>${escapeHtml(reason.text)}</li>`).join("")}</ul>
@@ -965,8 +1094,11 @@ function candidateCardTemplate(candidate) {
         <p>${candidate.skills.slice(0, 4).map(escapeHtml).join(" · ") || "Evidence unavailable"}</p>
       </div>
       <div class="score-row">
-        <span>${candidate.publications.length} relevant publication${candidate.publications.length === 1 ? "" : "s"}</span>
+        <span>${candidate.sourceRecords.length} evidence item${candidate.sourceRecords.length === 1 ? "" : "s"}</span>
         <span class="${confidenceClass(candidate.evidenceConfidence)}">Evidence confidence: ${candidate.evidenceConfidence}</span>
+      </div>
+      <div class="quick-links">
+        ${verificationLinks.map((link) => `<a href="${link.url}" target="_blank" rel="noreferrer">${escapeHtml(link.label)}</a>`).join("")}
       </div>
       <span class="badge">Status: ${escapeHtml(persisted.status)}</span>
       <button class="primary" type="button" data-open-candidate="${candidate.id}">Open Candidate Brief</button>
@@ -992,6 +1124,8 @@ function briefTemplate(candidate, persisted, links) {
   const totalScore = candidate.totalScore || scoreCandidate(candidate, criteria).total;
   const confidence = candidate.evidenceConfidence || computeConfidence(candidate);
   const sources = candidate.sourceRecords || [];
+  const sourceBadges = evidenceSourceBadges(candidate);
+  const verificationLinks = buildVerificationSearches(candidate, criteria);
   return `
     <header class="brief-header">
       <div>
@@ -1001,6 +1135,7 @@ function briefTemplate(candidate, persisted, links) {
         <div class="chips">
           <span class="badge">Score: ${totalScore}/100</span>
           <span class="badge ${confidenceClass(confidence)}">Confidence: ${confidence}</span>
+          ${sourceBadges.map((source) => `<span class="source-badge">${escapeHtml(source)}</span>`).join("")}
           ${candidate.enteredManually ? "<span class=\"manual-label\">Recruiter-entered</span>" : "<span class=\"ai-label\">AI-generated summary</span>"}
           ${project?.searchMode === "swiss-campus" ? "<span class=\"badge\">Swiss university evidence</span>" : ""}
         </div>
@@ -1035,6 +1170,7 @@ function briefTemplate(candidate, persisted, links) {
             <li>Education relevance: ${scoreBreakdown.education}/10</li>
             <li>Employer or industry relevance: ${scoreBreakdown.employer}/10</li>
             <li>Location relevance: ${scoreBreakdown.location}/5</li>
+            ${scoreBreakdown.activity !== undefined ? `<li>Open-source activity: ${scoreBreakdown.activity}/25</li>` : ""}
             <li><strong>Total: ${totalScore}/100</strong></li>
           </ul>
           <p class="hint">Score is only for prioritising recruiter review. It is not a hiring or rejection recommendation.</p>
@@ -1060,6 +1196,13 @@ function briefTemplate(candidate, persisted, links) {
         <section class="brief-section">
           <h3>Source evidence</h3>
           <ul class="evidence-list">${sources.map(sourceTemplate).join("") || "<li>Evidence unavailable</li>"}</ul>
+        </section>
+
+        <section class="brief-section">
+          <h3>Suggested verification searches</h3>
+          <div class="verification-link-grid">
+            ${verificationLinks.map((link) => `<a href="${link.url}" target="_blank" rel="noreferrer">${escapeHtml(link.label)}</a>`).join("")}
+          </div>
         </section>
 
         <section class="brief-section">
@@ -1286,6 +1429,78 @@ function scoreOpenAlexCandidate(candidate, criteria) {
   };
   const total = clamp(Object.values(breakdown).reduce((sum, value) => sum + value, 0), 25, 100);
   return { total, breakdown };
+}
+
+function scoreGitHubCandidate(candidate, repos, criteria) {
+  const terms = unique([
+    ...criteria.core_technical_skills,
+    ...criteria.research_topics,
+    ...criteria.related_terminology,
+    ...criteria.jd_keywords,
+  ]);
+  const repoText = repos.map((repo) => `${repo.full_name} ${repo.description || ""} ${repo.language || ""}`).join(" ").toLowerCase();
+  const matchedTermCount = terms.filter((term) => repoText.includes(term.toLowerCase()) || fuzzyIncludes(repoText, term.toLowerCase())).length;
+  const stars = repos.reduce((sum, repo) => sum + Number(repo.stargazers_count || 0), 0);
+  const recentRepos = repos.filter((repo) => repo.updated_at && new Date(repo.updated_at).getFullYear() >= 2024).length;
+  const breakdown = {
+    technical: clamp(matchedTermCount * 6, 0, 30),
+    publications: 0,
+    role: 8,
+    education: 0,
+    employer: candidate.currentOrganisation !== "Evidence unavailable" ? 5 : 0,
+    location: candidate.location !== "Evidence unavailable" ? 4 : 0,
+    activity: clamp(recentRepos * 5 + Math.log10(stars + 1) * 8, 0, 25),
+  };
+  const total = clamp(Object.values(breakdown).reduce((sum, value) => sum + value, 0) + 18, 20, 100);
+  return { total, breakdown };
+}
+
+function mergeCandidateResults(candidates) {
+  const merged = new Map();
+  candidates.forEach((candidate) => {
+    const key = normalizedCandidateKey(candidate);
+    if (!merged.has(key)) {
+      merged.set(key, candidate);
+      return;
+    }
+    const existing = merged.get(key);
+    existing.sourceRecords = uniqueBy([...(existing.sourceRecords || []), ...(candidate.sourceRecords || [])], (record) => record.sourceUrl || record.sourceTitle);
+    existing.sourceIds = existing.sourceRecords.map((record) => record.id);
+    existing.skills = unique([...(existing.skills || []), ...(candidate.skills || [])]).slice(0, 10);
+    existing.researchTopics = unique([...(existing.researchTopics || []), ...(candidate.researchTopics || [])]).slice(0, 10);
+    existing.matchReasons = [...(existing.matchReasons || []), ...(candidate.matchReasons || [])].slice(0, 6);
+    existing.publications = uniqueBy([...(existing.publications || []), ...(candidate.publications || [])], (publication) => publication.sourceUrl || publication.title).slice(0, 6);
+    existing.githubUrl = existing.githubUrl || candidate.githubUrl;
+    existing.personalWebsite = existing.personalWebsite || candidate.personalWebsite;
+    existing.totalScore = clamp(Math.max(existing.totalScore || 0, candidate.totalScore || 0) + 6, 0, 100);
+    existing.evidenceConfidence = computeConfidence(existing);
+  });
+  return [...merged.values()];
+}
+
+function normalizedCandidateKey(candidate) {
+  const name = String(candidate.fullName || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  const github = String(candidate.githubUrl || "").toLowerCase().replace(/^https?:\/\/github\.com\//, "").split("/")[0];
+  return github || name || candidate.id;
+}
+
+function buildGitHubQueries(criteria) {
+  return unique([
+    ...criteria.core_technical_skills,
+    ...criteria.research_topics,
+    ...criteria.related_terminology,
+    ...criteria.jd_keywords,
+  ])
+    .filter((term) => term.length > 2 && !["not specified", "Research Scientist", "Applied Scientist"].includes(term))
+    .slice(0, 6);
+}
+
+function inferGitHubSkills(repos, criteria) {
+  const repoText = repos.map((repo) => `${repo.full_name} ${repo.description || ""} ${repo.language || ""}`).join(" ").toLowerCase();
+  return unique([
+    ...criteria.core_technical_skills.filter((term) => repoText.includes(term.toLowerCase()) || fuzzyIncludes(repoText, term.toLowerCase())),
+    ...repos.map((repo) => repo.language).filter(Boolean),
+  ]).slice(0, 8);
 }
 
 function isExcludedByCandidateStage(candidate, options = {}) {
@@ -1641,6 +1856,39 @@ function sourceTemplate(record) {
       Extracted facts: ${record.extractedFacts.map(escapeHtml).join(", ") || "Evidence unavailable"}
     </li>
   `;
+}
+
+function evidenceSourceBadges(candidate) {
+  const sources = new Set();
+  (candidate.sourceRecords || []).forEach((record) => {
+    const type = String(record.sourceType || "").toLowerCase();
+    if (type.includes("openalex") || type.includes("publication")) sources.add("OpenAlex");
+    if (type.includes("github")) sources.add("GitHub");
+    if (type.includes("patent")) sources.add("Patent");
+    if (type.includes("manual")) sources.add("Manual");
+    if (!sources.size && type) sources.add(record.sourceType);
+  });
+  if (candidate.githubUrl) sources.add("GitHub");
+  if (!sources.size) sources.add("Web");
+  return [...sources].slice(0, 5);
+}
+
+function buildVerificationSearches(candidate, criteria) {
+  const terms = unique([
+    ...criteria.core_technical_skills,
+    ...criteria.research_topics,
+    ...criteria.target_companies,
+    ...criteria.universities,
+  ]).slice(0, 4).join(" ");
+  const person = `${candidate.fullName || ""} ${candidate.currentOrganisation || ""}`.trim();
+  const technical = `${person} ${terms}`.trim();
+  return [
+    { label: "LinkedIn", url: `https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(technical)}` },
+    { label: "GitHub", url: candidate.githubUrl || `https://github.com/search?q=${encodeURIComponent(technical)}&type=users` },
+    { label: "Patents", url: `https://patents.google.com/?q=${encodeURIComponent(technical)}` },
+    { label: "Web", url: `https://www.google.com/search?q=${encodeURIComponent(technical)}` },
+    { label: "Company pages", url: `https://www.google.com/search?q=${encodeURIComponent(`${technical} site:*.com profile OR team OR staff`)}` },
+  ];
 }
 
 function fact(label, value) {
